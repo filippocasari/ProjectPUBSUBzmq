@@ -1,6 +1,6 @@
 {
-  "msg_rate_sec": 2,
-  "number_of_messages": 100,
+  "msg_rate_sec": 1,
+  "number_of_messages": 10,
   "topic": "FRIDGE",
   "connection_type": "tcp",
   "endpoint_inproc": "example",

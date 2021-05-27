@@ -5,17 +5,19 @@
 #include <czmq.h>
 #include <json-c/json.h>
 #include <math.h>
+
 //default endpoint
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *endpoint_inprocess = "inproc://example";
-
+const char *json_file_config;
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 
 //thread of publisher
 static void
 publisher_thread(zsock_t *pipe, void *args) {
     //path of json file for configuration
-    const char *string_json_path = "/home/filippocasari/CLionProjects/ProjectPUBSUBzmq/parameters.json";
+
+    const char *string_json_path = args;
     //json obj for deserialization
     json_object *PARAM;
 
@@ -73,9 +75,9 @@ publisher_thread(zsock_t *pipe, void *args) {
             if (strcmp(key, "topic") == 0) {
                 topic = value;
             }
-            if(strcmp(key, "endpoint_inproc") == 0) {
-                    endpoint_inproc = value;
-                }
+            if (strcmp(key, "endpoint_inproc") == 0) {
+                endpoint_inproc = value;
+            }
         }
         // create a new endpoint composed of the items inside the json file
         char endpoint[30];
@@ -84,22 +86,18 @@ publisher_thread(zsock_t *pipe, void *args) {
         endpoint_customized = strcat(endpoint_customized, "://");
 
         //only for tcp, not for in process connection
-        if (strcmp(type_connection, "tcp") == 0)
-        {
+        if (strcmp(type_connection, "tcp") == 0) {
             endpoint_customized = strcat(endpoint_customized, ip);
             endpoint_customized = strcat(endpoint_customized, ":");
             endpoint_customized = strcat(endpoint_customized, port);
-        }
-        else if(strcmp(type_connection, "inproc")==0)
-        {
+        } else if (strcmp(type_connection, "inproc") == 0) {
             endpoint_customized = strcat(endpoint_customized, endpoint_inproc);
         }
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
 
         pub = zsock_new_pub(endpoint_customized);
 
-    } else
-    {
+    } else {
         //default endpoint
         pub = zsock_new_pub(ENDPOINT);
     }
@@ -119,12 +117,14 @@ publisher_thread(zsock_t *pipe, void *args) {
     while (!zctx_interrupted && count < num_mex) {
 
         long double milli_secs_of_sleeping = (1.0 / msg_rate_sec) * 1000;
+        printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
+        printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
         zclock_sleep((int) milli_secs_of_sleeping); //  Wait for x seconds
 
         char *string; // 12 byte for representation of timestamp in micro secs
         long timestamp = zclock_usecs(); // catching timestamp
-        int nDigits = floor(1+ log10(abs((int) timestamp)));
-        string = (char *) malloc((nDigits+1)*sizeof(char));
+        int nDigits = floor(1 + log10(abs((int) timestamp)));
+        string = (char *) malloc((nDigits + 1) * sizeof(char));
 
         printf("TIMESTAMP: %ld\n", timestamp);
         char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent
@@ -150,11 +150,37 @@ publisher_thread(zsock_t *pipe, void *args) {
     zsock_destroy(&pub);
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
 
-    //start a new thread for publisher
-    zactor_t *pub_actor = zactor_new(publisher_thread, NULL);
+    if (argc < 1) {
+        printf("NO INPUT JSON FILE...EXIT\n");
+        return -1;
+    } else {
+        int i;
+        size_t strsize = 0;
+        for (i = 1; i < argc; i++) {
+            strsize += strlen(argv[i]);
+            if (argc > i + 1)
+                strsize++;
+        }
+        strsize = (int) strsize;
+        char *cmdstring;
+        cmdstring = malloc(strsize);
+        cmdstring[0] = '\0';
 
-    zactor_destroy(&pub_actor);
+        for (i = 1; i < argc; i++) {
+            strcat(cmdstring, argv[i]);
+            if (argc > i + 1)
+                strcat(cmdstring, " ");
+        }
+        printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
+        zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
+        free(cmdstring);
+
+        zactor_destroy(&pub_actor);
+    }
+
+
+
     return 0;
 }
