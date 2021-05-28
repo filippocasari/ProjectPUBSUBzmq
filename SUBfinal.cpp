@@ -26,7 +26,6 @@ void create_new_consumers(blocking_queue<long> *queue) {
             if (strcmp(value, "console") == 0) {
                 console = true;
             }
-
         }
         if (strcmp(key, "experiment_name") == 0)
             name_of_experiment = json_object_get_string(val);
@@ -40,8 +39,6 @@ void create_new_consumers(blocking_queue<long> *queue) {
     int count = 0;
     for (int i = 0; i < NUM_CONSUMERS; i++) { //same as producers
         consumers.emplace_back([&queue, console, &myfile, name_of_csv_file, &count]() {
-
-            //int count = 0; //count for tracking, if count is "x" => shut down the thread
             while (long a = (int) queue->pop()) { // polling thread
                 if (console) {
                     std::cout << "\nTHREAD CONSUMER, POPPING ELEMENT : " << a << std::endl;
@@ -50,12 +47,10 @@ void create_new_consumers(blocking_queue<long> *queue) {
                     myfile << "end_to_end_delay," + std::to_string(count) + "," + std::to_string(a) + "\n";
                     myfile.close();
                     count++;
-
                 }
             }
         });
     }
-
     std::for_each(consumers.begin(), consumers.end(), [](std::thread &thread) {
         thread.join();
     });
@@ -80,10 +75,9 @@ void add_value(const char *metric_name, long value, blocking_queue<long> *queue)
 
 static void
 subscriber_thread(zsock_t *pipe, void *args) {
-
     // -----------------------------------------------------------------------------------------------------
     blocking_queue<long> queue(QUEUE_CAPACITY); //initialize queue
-
+    // -----------------------------------------------------------------------------------------------------
     // create producers
     std::vector<std::thread> producers;
     std::thread t([&queue]() {
@@ -92,9 +86,7 @@ subscriber_thread(zsock_t *pipe, void *args) {
     });//vector of producers
 
     //--------------------------------------------------------------------------------------------------------
-    auto *sub = static_cast<zsock_t *>(args);
-
-    //assert(sub);
+    auto *sub = static_cast<zsock_t *>(args); // create new sub socket
     puts("sub connected");
 
     int count = 0;
@@ -145,34 +137,36 @@ subscriber_thread(zsock_t *pipe, void *args) {
 
 
 int main(int argc, char *argv[]) {
-    char *cmdstring;
-    if (argc < 1)
+    char *cmdstring; // string of args
+    if (argc < 1) // exit if argc is less then 1
     {
         printf("NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT\n");
         return 1;
     } else
     {
         int i;
-        size_t strsize = 0;
+        size_t strsize = 0; //size of the string to allocate memory
         for (i = 1; i < argc; i++)
         {
             strsize += strlen(argv[i]);
             if (argc > i + 1)
                 strsize++;
         }
-        strsize = (int) strsize;
+        strsize = (int) strsize; // converting into an int value
 
-        cmdstring = static_cast<char *>(malloc(strsize));
-        cmdstring[0] = '\0';
+        cmdstring = static_cast<char *>(malloc(strsize)); // malloc for the string cmd string
+        cmdstring[0] = '\0'; // initialize the string
 
         for (i = 1; i < argc; i++) {
             strcat(cmdstring, argv[i]);
             if (argc > i + 1)
-                strcat(cmdstring, " ");
+                strcat(cmdstring, " "); //concat the string with a blank
         }
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
     }
-    string_json_path = cmdstring;
+    //path of json file
+    string_json_path = cmdstring; // file passed from the bash script or manually from terminal
+    // start deserialization
     json_object *PARAM;
     const char *endpoint_inproc;
     char *endpoint_customized;
