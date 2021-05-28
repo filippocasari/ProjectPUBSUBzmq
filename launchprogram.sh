@@ -4,9 +4,12 @@
 cmake CMakeLists.txt
 cd ./cmake-build-debug || exit
 
-
-./TEST1
-
 systemctl restart chronyd || exit
-sleep 2
-./PUB
+{
+  ./TEST1 /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/parameters.json
+}&
+sleep 1
+./PUB /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/parameters.json
+find . -name '*.csv' -exec echo {} \;
+
+
