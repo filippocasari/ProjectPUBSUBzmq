@@ -10,6 +10,7 @@ systemctl restart chronyd || exit
 }&
 sleep 1
 ./PUB /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/parameters.json
-find . -name '*.csv' -exec echo {} \;
+nano ./;
+
 
 

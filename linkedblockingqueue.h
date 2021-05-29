@@ -2,8 +2,8 @@
 // Created by filippocasari on 27/05/21.
 //
 
-#ifndef PROJECTPUBSUBZMQ_LINKEDBLOCKINGQUEUE_H
-#define PROJECTPUBSUBZMQ_LINKEDBLOCKINGQUEUE_H
+#ifndef PROJECTPUBSUBZMQ_LINKEDBLOCKINGQUEUEITEMS_H
+#define PROJECTPUBSUBZMQ_LINKEDBLOCKINGQUEUEITEMS_H
 #include <mutex>
 #include <condition_variable>
 #include <deque>
@@ -47,7 +47,7 @@ public:
             while (_queue.size() >= _capacity) {
                 _not_full.wait(lock);
             }
-            std::cout << "pushing element " << elem << std::endl;
+            //std::cout << "pushing element " << (bool) elem << std::endl;
             _queue.push(elem);
         }
         _not_empty.notify_all();
@@ -84,4 +84,4 @@ public:
         return _queue.front();
     }
 };
-#endif //PROJECTPUBSUBZMQ_LINKEDBLOCKINGQUEUE_H
+#endif //PROJECTPUBSUBZMQ_LINKEDBLOCKINGQUEUEITEMS_H
