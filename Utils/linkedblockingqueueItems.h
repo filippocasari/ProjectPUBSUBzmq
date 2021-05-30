@@ -1,11 +1,13 @@
 #include <condition_variable>
 #include <queue>
 #include <cstring>
+#include <iostream>
+#include "Item.h"
 
 template <typename T> class BlockingQueue {
     std::condition_variable _cvCanPop;
     std::mutex _sync;
-    std::queue<T> _qu;
+    std::queue<Item> _qu;
     bool _bShutdown = false;
     size_t _capacity;
 
@@ -13,7 +15,7 @@ public:
     inline explicit BlockingQueue(size_t capacity) : _capacity(capacity) {
             // empty
     }
-    void Push(const T& item)
+    void Push(const Item& item)
     {
 
         std::unique_lock<std::mutex> lock(_sync);
@@ -32,7 +34,7 @@ public:
         _cvCanPop.notify_all();
     }
 
-    bool Pop(T &item) {
+    bool Pop(Item *item) {
         std::unique_lock<std::mutex> lock(_sync);
         for (;;) {
             if (_qu.empty()) {
@@ -44,7 +46,7 @@ public:
             }
             _cvCanPop.wait(lock);
         }
-        item = std::move(_qu.front());
+        *item = (_qu.front());
         _qu.pop();
         return true;
     }

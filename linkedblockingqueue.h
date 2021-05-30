@@ -64,7 +64,7 @@ public:
             }
             returned_value= _queue.front();
 
-            std::cout << "popping element " << returned_value << std::endl;
+            //std::cout << "popping element " << returned_value << std::endl;
             _queue.pop();
 
 
