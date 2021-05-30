@@ -110,12 +110,11 @@ void create_new_consumers(BlockingQueue<Item> *queue) {
 void add_value(std::string *metric_name, zmsg_t *msg, BlockingQueue<Item> *queue, const long end) {
     // create producers
     Item item = Item(msg, end, *metric_name);
-
+    queue->Push(item); // push element
     std::cout << "THREAD PRODUCER: IS PUSHING" << std::endl;
     std::cout << "Item.msg\n";
     zmsg_print(msg);
     std::cout << "timestamp caught: " << item.timestamp;
-    queue->Push(item); // push element
     std::cout << "enqueued item " << std::endl;
 }
 
