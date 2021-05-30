@@ -9,7 +9,7 @@
 
 #define NUM_PRODUCERS 1
 #define NUM_CONSUMERS 5
-#define QUEUE_CAPACITY 5
+#define QUEUE_CAPACITY 100
 
 
 #define NUM_SUB 1
@@ -20,14 +20,15 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *string_json_path;
 
 
-long managing_payload(Item_t item) {
+long managing_payload(Item *item) {
 
     char *end_pointer_string;
     long start;
     long end_to_end_delay = 0;
     char *frame;
-    zmsg_t *msg =zmsg_new();
-    msg= item.msg;
+    zmsg_t *msg =item->msg;
+    std::cout << "size of msg: " << zmsg_size(msg) << std::endl;
+
     while (zmsg_size(msg) > 0) {
 
         frame = zmsg_popstr(msg);
@@ -37,7 +38,7 @@ long managing_payload(Item_t item) {
             start = strtol(frame, &end_pointer_string, 10);
             frame = zmsg_popstr(msg);
             zsys_info("PAYLOAD > %s", frame);
-            end_to_end_delay = item.timestamp - start;
+            end_to_end_delay = item->timestamp - start;
             printf("END TO END DELAY : %ld [micro secs]\n", end_to_end_delay);
             //zsys_info("> %s", frame);
             //free(frame);
@@ -50,7 +51,7 @@ long managing_payload(Item_t item) {
     return end_to_end_delay;
 }
 
-void create_new_consumers(BlockingQueue<Item_t> *queue) {
+void create_new_consumers(BlockingQueue<Item> *queue) {
     bool console = false;
     std::string name_of_experiment;
     json_object *PARAM;
@@ -73,25 +74,32 @@ void create_new_consumers(BlockingQueue<Item_t> *queue) {
     std::ofstream myfile;
     std::string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
     int count = 0;
+
     for (int i = 0; i < NUM_CONSUMERS; i++) { //same as producers
         consumers.emplace_back([&queue, console, &myfile, name_of_csv_file, &count]() {
-            Item_t *item = Item_new(nullptr, 0, nullptr);
-            while (queue->Pop(*item)) { // polling thread
 
-                    puts("created new item...");
-                    long end_to_end_delay = managing_payload(*item);
-                    puts("managing message...");
-                    if (console) {
-                        std::cout << "Metric name: " << item->name_of_metric << std::endl << "value: "
-                                  << end_to_end_delay;
-                    } else {
-                        myfile.open(name_of_csv_file, std::ios::app);
-                        myfile << item->name_of_metric +"," +std::to_string(count) + "," + std::to_string(end_to_end_delay) +
-                                  "\n";
-                        myfile.close();
-                        count++;
-                    }
+            Item item = Item();
+            while (queue->Pop(item)) {
+
+                puts("created new item...");
+                long end_to_end_delay = 0;
+
+                end_to_end_delay = managing_payload(&item);
+                puts("managing message...");
+                if (console) {
+                    std::cout << "Metric name: " << item.name_metric << std::endl << "value: "
+                              << end_to_end_delay;
+                } else {
+                    myfile.open(name_of_csv_file, std::ios::app);
+                    myfile << item.name_metric + "," + std::to_string(count) + "," +
+                              std::to_string(end_to_end_delay) +
+                              "\n";
+                    myfile.close();
+                    count++;
+                }
+                item=Item();
             }
+
         });
     }
     std::for_each(consumers.begin(), consumers.end(), [](std::thread &thread) {
@@ -99,24 +107,28 @@ void create_new_consumers(BlockingQueue<Item_t> *queue) {
     });
 }
 
-void add_value(char *metric_name, zmsg_t *msg, BlockingQueue<Item_t> *queue, const long end) {
+void add_value(std::string *metric_name, zmsg_t *msg, BlockingQueue<Item> *queue, const long end) {
     // create producers
-    Item_t *item = Item_new(msg, end, metric_name);
+    Item item = Item(msg, end, *metric_name);
 
-    std::cout << "THREAD PRODUCER:  IS PUSHING" << std::endl;
-    queue->Push(*item); // push element
+    std::cout << "THREAD PRODUCER: IS PUSHING" << std::endl;
+    std::cout << "Item.msg\n";
+    zmsg_print(msg);
+    std::cout << "timestamp caught: " << item.timestamp;
+    queue->Push(item); // push element
+    std::cout << "enqueued item " << std::endl;
 }
 
 static void
 subscriber_thread(zsock_t *pipe, void *args) {
     // -----------------------------------------------------------------------------------------------------
-    BlockingQueue<Item_t> queue(QUEUE_CAPACITY); //initialize queue
+    BlockingQueue<Item> queue(QUEUE_CAPACITY); //initialize queue
     // -----------------------------------------------------------------------------------------------------
     // create producers
 
     std::cout << "start new threads consumers\n";
 
-    std::thread thread_start_consumers([ &queue]() {
+    std::thread thread_start_consumers([&queue]() {
         create_new_consumers(&queue);
 
     });// create new thread to manage payload
@@ -137,8 +149,8 @@ subscriber_thread(zsock_t *pipe, void *args) {
         zsys_info("Recv on %s", topic);
         std::thread thread_producer([&msg, &queue, &end]() {
             std::cout << "start new thread producer\nadding value...\n";
-            char *metric= "end_to_end_delay";
-            add_value(metric, msg, &queue, end);
+            std::string metric = "end_to_end_delay";
+            add_value(&metric, msg, &queue, end);
         });// create new thread to manage payload
         thread_producer.join();
         free(topic);

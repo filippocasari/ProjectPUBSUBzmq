@@ -1,5 +1,6 @@
 #include <condition_variable>
 #include <queue>
+#include <cstring>
 
 template <typename T> class BlockingQueue {
     std::condition_variable _cvCanPop;
@@ -14,14 +15,12 @@ public:
     }
     void Push(const T& item)
     {
-        {
 
-            std::unique_lock<std::mutex> lock(_sync);
-            while (_qu.size() >= _capacity){
-                _cvCanPop.wait(lock);
-            }
-            _qu.push(item);
+        std::unique_lock<std::mutex> lock(_sync);
+        while (_qu.size() >= _capacity){
+            _cvCanPop.wait(lock);
         }
+        _qu.push(item);
         _cvCanPop.notify_one();
     }
 
