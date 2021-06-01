@@ -5,7 +5,7 @@
 #include <iostream>
 #include <thread>
 #include <algorithm>
-#include "Utils/Item.h"
+#include "Utils/Item2.h"
 
 #define NUM_PRODUCERS 1
 #define NUM_CONSUMERS 1
@@ -22,35 +22,35 @@ const char *string_json_path;
 
 long managing_payload(zmsg_t *msg, long end) {
 
-    char *end_pointer_string;
-    long start;
-    long end_to_end_delay = 0;
-    char *frame;
-    std::cout << "size of msg: " << zmsg_size(msg) << std::endl;
+char *end_pointer_string;
+long start;
+long end_to_end_delay = 0;
+char *frame;
+std::cout << "size of msg: " << zmsg_size(msg) << std::endl;
 
-    while (zmsg_size(msg) > 0) {
+while (zmsg_size(msg) > 0) {
 
-        frame = zmsg_popstr(msg);
-        if (strcmp(frame, "TIMESTAMP") == 0) {
-            frame = zmsg_popstr(msg);
-            zsys_info("> %s", frame);
-            start = strtol(frame, &end_pointer_string, 10);
-            frame = zmsg_popstr(msg);
-            zsys_info("PAYLOAD > %s", frame);
-            end_to_end_delay = end - start;
-            printf("END TO END DELAY : %ld [micro secs]\n", end_to_end_delay);
-            //zsys_info("> %s", frame);
-            //free(frame);
-            break;
-        } else {
-            std::cout << "error...this message does not contain any timestamp";
-            break;
-        }
-    }
-    return end_to_end_delay;
+frame = zmsg_popstr(msg);
+if (strcmp(frame, "TIMESTAMP") == 0) {
+frame = zmsg_popstr(msg);
+zsys_info("> %s", frame);
+start = strtol(frame, &end_pointer_string, 10);
+frame = zmsg_popstr(msg);
+zsys_info("PAYLOAD > %s", frame);
+end_to_end_delay = end - start;
+printf("END TO END DELAY : %ld [micro secs]\n", end_to_end_delay);
+//zsys_info("> %s", frame);
+//free(frame);
+break;
+} else {
+std::cout << "error...this message does not contain any timestamp";
+break;
+}
+}
+return end_to_end_delay;
 }
 
-void create_new_consumers(BlockingQueue<Item> *queue) {
+void create_new_consumers(BlockingQueue<Item*> *queue) {
     bool console = false;
     std::string name_of_experiment;
     json_object *PARAM;
@@ -77,22 +77,21 @@ void create_new_consumers(BlockingQueue<Item> *queue) {
     for (int i = 0; i < NUM_CONSUMERS; i++) { //same as producers
         consumers.emplace_back([&queue, console, &myfile, name_of_csv_file, &count]() {
 
-            Item it=Item();
-            Item *item=&it;
-            while (queue->Pop(it)) {
+            Item item=Item();
+            while (queue->Pop(item)) {
 
                 puts("created new item...");
 
                 long end_to_end_delay = 0;
 
-                end_to_end_delay = managing_payload(item->msg, item->timestamp);
+                end_to_end_delay = managing_payload(item.msg, item.timestamp);
                 puts("managing message...");
                 if (console) {
-                    std::cout << "Metric name: " << item->name_metric << std::endl << "value: "
+                    std::cout << "Metric name: " << item.name_metric << std::endl << "value: "
                               << end_to_end_delay<<std::endl;
                 } else {
                     myfile.open(name_of_csv_file, std::ios::app);
-                    myfile << item->name_metric + "," + std::to_string(count) + "," +
+                    myfile << item.name_metric + "," + std::to_string(count) + "," +
                               std::to_string(end_to_end_delay) +
                               "\n";
                     myfile.close();
@@ -109,10 +108,11 @@ void create_new_consumers(BlockingQueue<Item> *queue) {
     });
 }
 
-void add_value(std::string *metric_name, zmsg_t *msg, BlockingQueue<Item> *queue, const long end) {
+void add_value(std::string *metric_name, zmsg_t *msg, BlockingQueue<Item*> *queue, const long end) {
     // create producers
     Item item = Item(msg, end, *metric_name);
-    queue->Push(item); // push element
+    Item *it=&item;
+    queue->Push(it); // push element
     //std::cout << "THREAD PRODUCER: IS PUSHING" << std::endl;
     //std::cout << "Item.msg\n";
     //zmsg_print(msg);
@@ -123,7 +123,7 @@ void add_value(std::string *metric_name, zmsg_t *msg, BlockingQueue<Item> *queue
 static void
 subscriber_thread(zsock_t *pipe, void *args) {
     // -----------------------------------------------------------------------------------------------------
-    BlockingQueue<Item> queue(QUEUE_CAPACITY); //initialize queue
+    BlockingQueue<Item*> queue(QUEUE_CAPACITY); //initialize queue
     // -----------------------------------------------------------------------------------------------------
     // create producers
 
@@ -285,3 +285,4 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+

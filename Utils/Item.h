@@ -34,18 +34,28 @@ Item_init(){
 }*/
 class Item {
 public:
-
     std::string name_metric;
     zmsg_t *msg=zmsg_new();
     long timestamp{};
+    Item() = default;
+    explicit Item(Item *pItem) {
+        this->name_metric=pItem->name_metric;
+        this->timestamp=pItem->timestamp;
+        this->msg=pItem->msg;
+    }
 
     Item(zmsg_t *mex, long ts, std::string name) {
         msg = mex;
         timestamp = ts;
         name_metric = std::move(name);
     }
+    Item(const Item& item){
+        msg=item.msg;
+        timestamp=item.timestamp;
+        name_metric=item.name_metric;
+    }
 
-    Item() = default;
+
 };
 
 #endif //PROJECTPUBSUBZMQ_ITEM_H

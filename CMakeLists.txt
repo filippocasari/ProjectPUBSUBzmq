@@ -4,7 +4,7 @@ project(ProjectPUBSUBzmq)
 set(CMAKE_CXX_STANDARD 11)
 
 add_library(linkedblockingqueue.h STATIC SUBfinal.cpp)
-
+add_library(Utils/Item.h SHARED SUBfinal2.cpp)
 link_libraries("-lpthread")
 link_libraries("-lczmq")
 link_libraries("-lzmq")
@@ -15,3 +15,4 @@ add_executable(SUB1 SUBfinal.cpp)
 add_executable(PUB simplePUB.c)
 add_executable(Item Utils/Item.cpp)
 add_executable(SUB2 SUBfinal2.cpp)
+add_executable(SUB3 SUBfinal3.cpp)
