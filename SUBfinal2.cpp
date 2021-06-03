@@ -20,18 +20,18 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *string_json_path;
 
 
-long managing_payload(zmsg_t *msg, long end) {
+long managing_payload(zmsg_t * msg, const long end) {
 
     char *end_pointer_string;
     long start;
     long end_to_end_delay = 0;
     char *frame;
-    std::cout << "size of msg: " << zmsg_size(msg) << std::endl;
+    std::cout << "size of msg: " <<zmsg_size(msg)<<std::endl;
 
-    while (zmsg_size(msg) > 0) {
+    while (zmsg_size(msg)> 0) {
 
         frame = zmsg_popstr(msg);
-        if (strcmp(frame, "TIMESTAMP") == 0) {
+        if (strcmp(frame,"TIMESTAMP") == 0) {
             frame = zmsg_popstr(msg);
             zsys_info("> %s", frame);
             start = strtol(frame, &end_pointer_string, 10);
@@ -39,15 +39,14 @@ long managing_payload(zmsg_t *msg, long end) {
             zsys_info("PAYLOAD > %s", frame);
             end_to_end_delay = end - start;
             printf("END TO END DELAY : %ld [micro secs]\n", end_to_end_delay);
-            //zsys_info("> %s", frame);
-            //free(frame);
-            break;
-        } else {
+            return end_to_end_delay;
+        } else
+        {
             std::cout << "error...this message does not contain any timestamp";
-            break;
+            return 0;
         }
     }
-    return end_to_end_delay;
+    return 0;
 }
 
 void create_new_consumers(BlockingQueue<Item> *queue) {
@@ -77,29 +76,24 @@ void create_new_consumers(BlockingQueue<Item> *queue) {
     for (int i = 0; i < NUM_CONSUMERS; i++) { //same as producers
         consumers.emplace_back([&queue, console, &myfile, name_of_csv_file, &count]() {
 
-            Item it=Item();
-            Item *item=&it;
-            while (queue->Pop(it)) {
+            Item item ;
+            puts("created new item...");
+            long end_to_end_delay;
+            while (queue->Pop(item)) {
+                end_to_end_delay = managing_payload(item.msg, item.timestamp);
 
-                puts("created new item...");
-
-                long end_to_end_delay = 0;
-
-                end_to_end_delay = managing_payload(item->msg, item->timestamp);
                 puts("managing message...");
                 if (console) {
-                    std::cout << "Metric name: " << item->name_metric << std::endl << "value: "
-                              << end_to_end_delay<<std::endl;
+                    std::cout << "Metric name: " << item.name_metric << std::endl << "value: "
+                              << end_to_end_delay << std::endl;
                 } else {
                     myfile.open(name_of_csv_file, std::ios::app);
-                    myfile << item->name_metric + "," + std::to_string(count) + "," +
+                    myfile << item.name_metric + "," + std::to_string(count) + "," +
                               std::to_string(end_to_end_delay) +
                               "\n";
                     myfile.close();
                     count++;
                 }
-
-                zclock_sleep(1000);
             }
 
         });
@@ -153,11 +147,13 @@ subscriber_thread(zsock_t *pipe, void *args) {
             std::string metric = "end_to_end_delay";
             add_value(&metric, msg, &queue, end);
         });// create new thread to manage payload
+        thread_producer.join();
         free(topic);
         zmsg_destroy(&msg);
         count++;
-        thread_producer.join();
+
     }
+    thread_start_consumers.join();
     zsock_destroy (&sub);
 }
 
@@ -213,10 +209,10 @@ int main(int argc, char *argv[]) {
 
             if (json_object_is_type(val, json_type_int)) {
                 int_value = (int) json_object_get_int64(val);
-                if (strcmp(key, "number_of_messages") == 0)
+                /*if (strcmp(key, "number_of_messages") == 0)
                     num_mex = int_value;
                 if (strcmp(key, "payload_size_bytes") == 0)
-                    payload_size = int_value;
+                    payload_size = int_value;*/
                 if (strcmp(key, "num_of_subs") == 0)
                     num_of_subs = int_value;
 
@@ -267,7 +263,7 @@ int main(int argc, char *argv[]) {
     zsock_t *subscribers[num_of_subs];
     for (int i = 0; i < num_of_subs; i++) {
         if (PARAM != nullptr) {
-            zclock_log("file json is being used");
+            zclock_log("\nfile json is being used");
             subscribers[i] = zsock_new_sub(endpoint_customized, topic);
         } else {
             subscribers[i] = zsock_new_sub(ENDPOINT, "ENGINE");

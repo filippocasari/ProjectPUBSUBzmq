@@ -7,7 +7,7 @@
   "payload_size_bytes": 25,
   "ip": "127.0.0.1",
   "port": "6000",
-  "metrics_output_type": "console",
+  "metrics_output_type": "csv",
   "experiment_name": "test 0_3",
   "num_of_subs": 1,
   "num_of_consumer_threads_for_writing_log": 5,
