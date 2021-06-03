@@ -14,6 +14,7 @@
 
 #define NUM_SUB 1
 #define ENDPOINT endpoint_tcp
+using namespace std;
 //#define MSECS_MAX_WAITING 10000
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 //const char *endpoint_inprocess = "inproc://example";
@@ -23,20 +24,20 @@ const char *string_json_path;
 void managing_payload(zmsg_t *msg,BlockingQueue<Item2> *queue, long end )
 {
 
-    char *end_pointer_string;
-    long start;
+    //char *end_pointer_string;
+    //long start;
     char *frame;
     Item2 item;
-    std::cout << "size of msg: " <<zmsg_size(msg)<<std::endl;
+    cout << "size of msg: " <<zmsg_size(msg)<<std::endl;
 
     while (zmsg_size(msg)> 0) {
         frame = zmsg_popstr(msg);
         if (strcmp(frame,"TIMESTAMP") == 0) {
             frame = zmsg_popstr(msg);
             zsys_info("> %s", frame);
-            std::string frame_string=frame;
-            item=Item2(frame_string,end, "end_to_end_delay");
-            start = strtol(frame, &end_pointer_string, 10);
+            string start=frame;
+            //start = strtol(frame, &end_pointer_string, 10);
+            item=Item2(start,end, "end_to_end_delay");
             frame = zmsg_popstr(msg);
             queue->Push(item);
             zsys_info("PAYLOAD > %s", frame);
@@ -83,10 +84,8 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
             Item2 item = Item2();
 
             while (queue->Pop(item)) {
-
                 puts("created new item...");
-
-                long end_to_end_delay = 0;
+                long end_to_end_delay ;
                 long start= std::stol(item.ts_start);
                 std::cout<<"end : "<<item.ts_end<<" start: "<<start;
                 end_to_end_delay = item.ts_end- start;
@@ -100,7 +99,7 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
                               std::to_string(end_to_end_delay) +
                               "\n";
                     myfile.close();
-                    zclock_log("Passaggio 6");
+
                     count++;
                 }
             }
@@ -121,11 +120,9 @@ subscriber_thread(zsock_t *pipe, void *args) {
     // -----------------------------------------------------------------------------------------------------
     // create producers
 
-
-
-    std::thread thread_start_consumers([&queue]() {
+    thread thread_start_consumers([&queue]() {
         create_new_consumers(&queue);
-        std::cout << "start new threads consumers\n";
+        cout << "start new threads consumers\n";
     });// create new thread to manage payload
 
 
@@ -143,20 +140,25 @@ subscriber_thread(zsock_t *pipe, void *args) {
         end = zclock_usecs();
         zsys_info("Recv on %s", topic);
 
-        std::cout << "start new thread producer\nadding value...\n";
-        std::string metric = "end_to_end_delay";
-        managing_payload(msg, &queue, end);
+
+        string metric = "end_to_end_delay";
+        thread producer([msg, &queue, &end]()
+        {
+            printf("start new thread producer\nadding value...\n");
+            managing_payload(msg, &queue, end);
+        });
         free(topic);
         count++;
-        //thread_producer.join();
+        producer.join();
     }
+    thread_start_consumers.join();
     zsock_destroy (&sub);
 }
 
 
 int main(int argc, char *argv[]) {
     char *cmdstring; // string of args
-    if (argc < 1) // exit if argc is less then 1
+    if (argc < 2) // exit if argc is less then 2
     {
         printf("NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT\n");
         return 1;
@@ -196,8 +198,8 @@ int main(int argc, char *argv[]) {
         const char *port;
         const char *ip;
         const char *output_file;
-        int payload_size;
-        int num_mex;
+        //int payload_size;
+        //int num_mex;
         int int_value;
 
         const char *value;
@@ -205,10 +207,10 @@ int main(int argc, char *argv[]) {
 
             if (json_object_is_type(val, json_type_int)) {
                 int_value = (int) json_object_get_int64(val);
-                if (strcmp(key, "number_of_messages") == 0)
+                /*if (strcmp(key, "number_of_messages") == 0)
                     num_mex = int_value;
                 if (strcmp(key, "payload_size_bytes") == 0)
-                    payload_size = int_value;
+                    payload_size = int_value;*/
                 if (strcmp(key, "num_of_subs") == 0)
                     num_of_subs = int_value;
 
@@ -265,9 +267,9 @@ int main(int argc, char *argv[]) {
             subscribers[i] = zsock_new_sub(ENDPOINT, "ENGINE");
         }
         sub_threads[i] = zactor_new(subscriber_thread, subscribers[i]);
-        std::string name;
+        string name;
         name = topic + std::to_string(i);
-        std::cout << "Starting new sub thread :" + name << std::endl;
+        cout << "Starting new sub thread :" + name << std::endl;
     }
 
     for (int i = 0; i < num_of_subs; i++) {
