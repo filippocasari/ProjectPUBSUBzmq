@@ -23,7 +23,6 @@ const char *string_json_path;
 
 void managing_payload(zmsg_t *msg,BlockingQueue<Item2> *queue, long end )
 {
-
     //char *end_pointer_string;
     //long start;
     char *frame;
@@ -124,7 +123,6 @@ subscriber_thread(zsock_t *pipe, void *args) {
         create_new_consumers(&queue);
         cout << "start new threads consumers\n";
     });// create new thread to manage payload
-
 
     //--------------------------------------------------------------------------------------------------------
     auto *sub = static_cast<zsock_t *>(args); // create new sub socket
