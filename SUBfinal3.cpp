@@ -10,10 +10,9 @@
 #define NUM_PRODUCERS 1
 #define NUM_CONSUMERS 4
 #define QUEUE_CAPACITY 10
-
-
-#define NUM_SUB 1
+#define NUM_SUBS 1
 #define ENDPOINT endpoint_tcp
+
 using namespace std;
 //#define MSECS_MAX_WAITING 10000
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
@@ -21,104 +20,97 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *string_json_path;
 
 
-void managing_payload(zmsg_t *msg,BlockingQueue<Item2> *queue, long end )
-{
+void payload_managing(zmsg_t *msg, BlockingQueue<Item2> *queue, long end) {
     //char *end_pointer_string;
     //long start;
     char *frame;
     Item2 item;
-    cout << "size of msg: " <<zmsg_size(msg)<<std::endl;
+    cout << "size of msg: " << zmsg_size(msg) << std::endl;
 
-    while (zmsg_size(msg)> 0) {
+    while (zmsg_size(msg) > 0) {
         frame = zmsg_popstr(msg);
-        if (strcmp(frame,"TIMESTAMP") == 0) {
+        if (strcmp(frame, "TIMESTAMP") == 0) {
             frame = zmsg_popstr(msg);
             zsys_info("> %s", frame);
-            string start=frame;
-            //start = strtol(frame, &end_pointer_string, 10);
-            item=Item2(start,end, "end_to_end_delay");
+            string start = frame;
+            item = Item2(start, end, "end_to_end_delay");
             frame = zmsg_popstr(msg);
             queue->Push(item);
             zsys_info("PAYLOAD > %s", frame);
             break;
-        }
-        else
-        {
-            std::cout << "error...this message does not contain any timestamp";
+        } else {
+            puts("error...this message does not contain any timestamp");
             break;
         }
     }
 
-        zmsg_destroy(&msg);
+    zmsg_destroy(&msg);
 
 }
 
 void create_new_consumers(BlockingQueue<Item2> *queue) {
     bool console = false;
+    int num_consumers = NUM_CONSUMERS;
     std::string name_of_experiment;
     json_object *PARAM;
     PARAM = json_object_from_file(string_json_path);
-    json_object_object_foreach(PARAM, key, val) {
+    json_object_object_foreach(PARAM, key, val)
+    {
         if (strcmp(key, "metrics_output_type") == 0) {
             char *value = const_cast<char *>(json_object_get_string(val));
             if (strcmp(value, "console") == 0)
                 console = true;
             else
-                std::cout << "creating new file csv\n";
-
+                puts("creating new file csv");
         }
         if (strcmp(key, "experiment_name") == 0)
             name_of_experiment = json_object_get_string(val);
-
+        if(strcmp(key, "num_consumer_threads")==0)
+            num_consumers= (int) strtol(json_object_get_string(val), nullptr, 10);
     }
-    std::vector<std::thread> consumers; // create a vector of consumers
-    consumers.reserve(NUM_CONSUMERS);
-    std::ofstream myfile;
-    std::string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
+    vector <thread> consumers; // create a vector of consumers
+    consumers.reserve(num_consumers);
+    ofstream config_file;
+    string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
     int count = 0;
 
-    for (int i = 0; i < NUM_CONSUMERS; i++) { //same as producers
-        consumers.emplace_back([&queue, console, &myfile, name_of_csv_file, &count]() {
+    for (int i = 0; i < num_consumers; i++) { //same as producers
+        consumers.emplace_back([&queue, console, &config_file, name_of_csv_file, &count]() {
 
             Item2 item = Item2();
 
             while (queue->Pop(item)) {
                 puts("created new item...");
-                long end_to_end_delay ;
-                long start= std::stol(item.ts_start);
-                std::cout<<"end : "<<item.ts_end<<" start: "<<start;
-                end_to_end_delay = item.ts_end- start;
+                long end_to_end_delay;
+                long start = std::stol(item.ts_start);
+                cout << "end : " << item.ts_end << " start: " << start;
+                end_to_end_delay = item.ts_end - start;
                 puts("\nmanaging message...");
                 if (console) {
                     std::cout << "Metric name: " << item.name_metric << std::endl << "value: "
                               << end_to_end_delay << std::endl;
                 } else {
-                    myfile.open(name_of_csv_file, std::ios::app);
-                    myfile << item.name_metric + "," + std::to_string(count) + "," +
-                              std::to_string(end_to_end_delay) +
-                              "\n";
-                    myfile.close();
-
+                    config_file.open(name_of_csv_file, std::ios::app);
+                    config_file << item.name_metric + "," + std::to_string(count) + "," +
+                                   std::to_string(end_to_end_delay) +
+                                   "\n";
+                    config_file.close();
                     count++;
                 }
             }
 
         });
     }
-    std::for_each(consumers.begin(), consumers.end(), [](std::thread &thread) {
+    for_each(consumers.begin(), consumers.end(), [](thread &thread) {
         thread.join();
     });
 }
-
-
 
 static void
 subscriber_thread(zsock_t *pipe, void *args) {
     // -----------------------------------------------------------------------------------------------------
     BlockingQueue<Item2> queue(QUEUE_CAPACITY); //initialize queue
-    // -----------------------------------------------------------------------------------------------------
-    // create producers
-
+    // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
     thread thread_start_consumers([&queue]() {
         create_new_consumers(&queue);
         cout << "start new threads consumers\n";
@@ -132,25 +124,22 @@ subscriber_thread(zsock_t *pipe, void *args) {
     //long time_of_waiting = 0;
     while (!zctx_interrupted /*&& time_of_waiting<MSECS_MAX_WAITING*/) {
         char *topic;
-        zmsg_t * msg;
+        zmsg_t *msg;
         long end;
         zsock_recv(sub, "sm", &topic, &msg);
         end = zclock_usecs();
         zsys_info("Recv on %s", topic);
-
-
         string metric = "end_to_end_delay";
-        thread producer([msg, &queue, &end]()
-        {
+        thread producer([msg, &queue, &end]() {
             printf("start new thread producer\nadding value...\n");
-            managing_payload(msg, &queue, end);
+            payload_managing(msg, &queue, end);
         });
         free(topic);
         count++;
         producer.join();
     }
     thread_start_consumers.join();
-    zsock_destroy (&sub);
+    zsock_destroy(&sub);
 }
 
 
@@ -187,7 +176,7 @@ int main(int argc, char *argv[]) {
     const char *endpoint_inproc;
     char *endpoint_customized;
     const char *topic;
-    int num_of_subs;
+    int num_of_subs=NUM_SUBS;
     PARAM = json_object_from_file(string_json_path);
 
     if (PARAM != nullptr) {
@@ -201,7 +190,8 @@ int main(int argc, char *argv[]) {
         int int_value;
 
         const char *value;
-        json_object_object_foreach(PARAM, key, val) {
+        json_object_object_foreach(PARAM, key, val)
+        {
 
             if (json_object_is_type(val, json_type_int)) {
                 int_value = (int) json_object_get_int64(val);
@@ -216,8 +206,7 @@ int main(int argc, char *argv[]) {
                 value = json_object_get_string(val);
             }
 
-
-            printf("\t%s: %s\n", key, json_object_to_json_string(val));
+            printf("\t%s: %s\n", key, value);
             if (strcmp(key, "connection_type") == 0) {
                 type_connection = value;
                 printf("connection type found: %s\n", type_connection);
@@ -252,9 +241,7 @@ int main(int argc, char *argv[]) {
         }
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
     }
-    // default settings for default mode
-    if (PARAM == nullptr)
-        num_of_subs = NUM_SUB;
+
     zactor_t *sub_threads[num_of_subs];
     zsock_t *subscribers[num_of_subs];
     for (int i = 0; i < num_of_subs; i++) {
@@ -262,14 +249,16 @@ int main(int argc, char *argv[]) {
             zclock_log("file json is being used");
             subscribers[i] = zsock_new_sub(endpoint_customized, topic);
         } else {
-            subscribers[i] = zsock_new_sub(ENDPOINT, "ENGINE");
+            subscribers[i] = zsock_new_sub(ENDPOINT, "ENGINE"); // default sub for the "Engine" topic
         }
         sub_threads[i] = zactor_new(subscriber_thread, subscribers[i]);
         string name;
         name = topic + std::to_string(i);
-        cout << "Starting new sub thread :" + name << std::endl;
+        cout << "Starting new sub thread :" + name <<endl;
     }
-
+    /*
+     * destroying zactors of subs
+     */
     for (int i = 0; i < num_of_subs; i++) {
         zactor_destroy(&sub_threads[i]);
         zsock_destroy(&subscribers[i]);

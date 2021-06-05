@@ -12,7 +12,7 @@
 #define QUEUE_CAPACITY 10
 
 
-#define NUM_SUB 1
+#define NUM_SUBS 1
 #define ENDPOINT endpoint_tcp
 //#define MSECS_MAX_WAITING 10000
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
@@ -258,7 +258,7 @@ int main(int argc, char *argv[]) {
     }
     // default settings for default mode
     if (PARAM == nullptr)
-        num_of_subs = NUM_SUB;
+        num_of_subs = NUM_SUBS;
     zactor_t *sub_threads[num_of_subs];
     zsock_t *subscribers[num_of_subs];
     for (int i = 0; i < num_of_subs; i++) {

@@ -11,7 +11,7 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *endpoint_inprocess = "inproc://example";
 const char *json_file_config;
 #define ENDPOINT endpoint_tcp // it can be set by the developer
-
+#define NUM_MEX_DEFAULT 10
 //thread of publisher
 static void
 publisher_thread(zsock_t *pipe, void *args) {
@@ -20,9 +20,8 @@ publisher_thread(zsock_t *pipe, void *args) {
     const char *string_json_path = args;
     //json obj for deserialization
     json_object *PARAM;
-
     int payload_size = 10; //payload, 10 default bytes
-    int num_mex = 10; // maximum messages for the publisher, 10 default
+    int num_mex = NUM_MEX_DEFAULT; // maximum messages for the publisher, 10 default
     const char *topic; // name of the topic
     const char *endpoint_inproc;
     int msg_rate_sec = 1; //message rate, mex/sec
@@ -58,7 +57,6 @@ publisher_thread(zsock_t *pipe, void *args) {
             if (strcmp(key, "connection_type") == 0) {
                 type_connection = value;
                 printf("connection type found: %s\n", type_connection);
-
             }
             if (strcmp(key, "ip") == 0) {
                 ip = value;
@@ -102,12 +100,6 @@ publisher_thread(zsock_t *pipe, void *args) {
         pub = zsock_new_pub(ENDPOINT);
     }
 
-
-
-
-    /*void *publisher = zsock_new (ZMQ_PUB);
-    zsock_bind (publisher, "tcp://127.0.0.1:6000");
-    */
     int count = 0;
     puts("pub connected");
     //size_of_payload = (int) strtol(payload_size, NULL, 10);
