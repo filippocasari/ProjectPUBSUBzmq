@@ -73,7 +73,7 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
     ofstream config_file;
     string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
     int count = 0;
-
+    printf("Num of consumer threads: %d\n", num_consumers);
     for (int i = 0; i < num_consumers; i++) { //same as producers
         consumers.emplace_back([&queue, console, &config_file, name_of_csv_file, &count]() {
 
@@ -244,6 +244,7 @@ int main(int argc, char *argv[]) {
 
     zactor_t *sub_threads[num_of_subs];
     zsock_t *subscribers[num_of_subs];
+    printf("Numbers of SUBS : %d\n", num_of_subs);
     for (int i = 0; i < num_of_subs; i++) {
         if (PARAM != nullptr) {
             zclock_log("file json is being used");
