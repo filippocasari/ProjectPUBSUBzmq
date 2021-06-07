@@ -3,7 +3,7 @@ project(ProjectPUBSUBzmq)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_library(linkedblockingqueue.h STATIC SUBfinal.cpp)
+add_library(linkedblockingqueue.h STATIC SUB3final.cpp)
 link_libraries("-lpthread")
 link_libraries("-lczmq")
 link_libraries("-lzmq")

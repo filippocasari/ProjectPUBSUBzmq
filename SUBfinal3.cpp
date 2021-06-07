@@ -195,10 +195,6 @@ int main(int argc, char *argv[]) {
 
             if (json_object_is_type(val, json_type_int)) {
                 int_value = (int) json_object_get_int64(val);
-                /*if (strcmp(key, "number_of_messages") == 0)
-                    num_mex = int_value;
-                if (strcmp(key, "payload_size_bytes") == 0)
-                    payload_size = int_value;*/
                 if (strcmp(key, "num_of_subs") == 0)
                     num_of_subs = int_value;
 
@@ -240,6 +236,10 @@ int main(int argc, char *argv[]) {
             endpoint_customized = strcat(endpoint_customized, endpoint_inproc);
         }
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
+    }
+    else{
+        puts("FILE JSON NOT FOUND...EXIT");
+        return 2;
     }
 
     zactor_t *sub_threads[num_of_subs];

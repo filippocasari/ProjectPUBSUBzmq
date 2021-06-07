@@ -149,7 +149,6 @@ subscriber_thread(zsock_t *pipe, void *args) {
         });// create new thread to manage payload
         thread_producer.join();
         free(topic);
-        zmsg_destroy(&msg);
         count++;
 
     }
