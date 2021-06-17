@@ -16,8 +16,8 @@ num_test = 0
 dir_name="./fileJson/"
 if not os.path.exists(dir_name):
     os.mkdir(dir_name)
-for i in msg_rate:
-    for j in range_payload:
+for i in range_payload:
+    for j in msg_rate:
         string_name = "./fileJson/parameters_test_" + str(num_test) + ".json"
         num_test += 1
 
