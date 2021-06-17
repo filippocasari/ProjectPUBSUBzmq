@@ -21,8 +21,8 @@ for i in range_payload:
         string_name = "./fileJson/parameters_test_" + str(num_test) + ".json"
         num_test += 1
 
-        data = {"msg_rate_sec": i, "number_of_messages": number_of_messages, "topic": topic,
-                "connection_type": connection_type, "endpoint_inproc": endpoint_inproc, "payload_size_bytes": j,
+        data = {"msg_rate_sec": j, "number_of_messages": number_of_messages, "topic": topic,
+                "connection_type": connection_type, "endpoint_inproc": endpoint_inproc, "payload_size_bytes": i,
                 "ip": ip,
                 "port": port, "metrics_output_type": metrics_output_type,
                 "experiment_name": string_name, "num_of_subs": num_of_subs,
