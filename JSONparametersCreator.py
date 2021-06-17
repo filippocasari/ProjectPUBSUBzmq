@@ -1,0 +1,32 @@
+import sys
+import json
+
+msg_rate = [1, 5, 10, 25, 50, 100]
+range_payload = [10, 25, 50, 100, 200, 500, 1000]
+topic = "FRIDGE"
+connection_type = "tcp"
+endpoint_inproc = "example"
+ip = "127.0.0.1"
+port = 6000
+metrics_output_type = "csv"
+num_of_subs = 1
+num_consumer_threads = 5
+number_of_messages = 1000
+num_test = 0
+for i in msg_rate:
+    for j in range_payload:
+        string_name = "parameters_test_" + str(num_test) + ".json"
+        num_test += 1
+
+        data = {"msg_rate_sec": i, "number_of_messages": number_of_messages, "topic": topic,
+                "connection_type": connection_type, "endpoint_inproc": endpoint_inproc, "payload_size_bytes": j,
+                "ip": ip,
+                "port": port, "metrics_output_type": metrics_output_type,
+                "experiment_name": string_name, "num_of_subs": num_of_subs,
+                "num_consumer_threads": num_consumer_threads}
+        try:
+            with open(string_name, 'w') as outfile:
+                json.dump(data, outfile, indent=2)
+            print("file json created, name = " + string_name)
+        except:
+            print("Error, we can not write", sys.stderr)

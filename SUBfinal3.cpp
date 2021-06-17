@@ -193,13 +193,13 @@ int main(int argc, char *argv[]) {
         json_object_object_foreach(PARAM, key, val)
         {
 
+            value = json_object_get_string(val);
+
             if (json_object_is_type(val, json_type_int)) {
                 int_value = (int) json_object_get_int64(val);
                 if (strcmp(key, "num_of_subs") == 0)
                     num_of_subs = int_value;
 
-            } else {
-                value = json_object_get_string(val);
             }
 
             printf("\t%s: %s\n", key, value);
