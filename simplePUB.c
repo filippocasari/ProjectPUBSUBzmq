@@ -149,15 +149,15 @@ int main(int argc, char *argv[]) {
         return -1;
     } else {
         int i;
-        size_t strsize = 0;
+        size_t str_size = 0;
         for (i = 1; i < argc; i++) {
-            strsize += strlen(argv[i]);
+            str_size += strlen(argv[i]);
             if (argc > i + 1)
-                strsize++;
+                str_size++;
         }
-        strsize = (int) strsize;
+        str_size = (int) str_size;
         char *cmdstring;
-        cmdstring = malloc(strsize);
+        cmdstring = malloc(str_size);
         cmdstring[0] = '\0';
 
         for (i = 1; i < argc; i++) {
