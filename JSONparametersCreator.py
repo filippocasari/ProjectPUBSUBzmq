@@ -7,7 +7,7 @@ topic = "FRIDGE"
 connection_type = "tcp"
 endpoint_inproc = "example"
 ip = "127.0.0.1"
-port = 6000
+port = "6000"
 metrics_output_type = "csv"
 num_of_subs = 1
 num_consumer_threads = 5
@@ -18,7 +18,7 @@ if not os.path.exists(dir_name):
     os.mkdir(dir_name)
 for i in range_payload:
     for j in msg_rate:
-        string_name = "./fileJson/parameters_test_" + str(num_test) + ".json"
+        string_name = "parameters_test_" + str(num_test) + ".json"
         num_test += 1
 
         data = {"msg_rate_sec": j, "number_of_messages": number_of_messages, "topic": topic,
@@ -28,7 +28,7 @@ for i in range_payload:
                 "experiment_name": string_name, "num_of_subs": num_of_subs,
                 "num_consumer_threads": num_consumer_threads}
         try:
-            with open(string_name, 'w') as outfile:
+            with open(dir_name+string_name, 'w') as outfile:
                 json.dump(data, outfile, indent=2)
             print("file json created, name = " + string_name)
         except:
