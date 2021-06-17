@@ -1,6 +1,6 @@
 import sys
 import json
-
+import os
 msg_rate = [1, 5, 10, 25, 50, 100]
 range_payload = [10, 25, 50, 100, 200, 500, 1000]
 topic = "FRIDGE"
@@ -13,9 +13,12 @@ num_of_subs = 1
 num_consumer_threads = 5
 number_of_messages = 1000
 num_test = 0
+dir_name="./fileJson/"
+if not os.path.exists(dir_name):
+    os.mkdir(dir_name)
 for i in msg_rate:
     for j in range_payload:
-        string_name = "parameters_test_" + str(num_test) + ".json"
+        string_name = "./fileJson/parameters_test_" + str(num_test) + ".json"
         num_test += 1
 
         data = {"msg_rate_sec": i, "number_of_messages": number_of_messages, "topic": topic,
