@@ -12,6 +12,7 @@
 #define QUEUE_CAPACITY 10
 #define NUM_SUBS 1
 #define ENDPOINT endpoint_tcp
+#define FOLDER_EXPERIMENT "./Results/"
 
 using namespace std;
 //#define MSECS_MAX_WAITING 10000
@@ -71,7 +72,8 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
     vector <thread> consumers; // create a vector of consumers
     consumers.reserve(num_consumers);
     ofstream config_file;
-    string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
+
+    string name_of_csv_file =name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
     int count = 0;
     printf("Num of consumer threads: %d\n", num_consumers);
     for (int i = 0; i < num_consumers; i++) { //same as producers
