@@ -19,33 +19,42 @@ using namespace std;
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 //const char *endpoint_inprocess = "inproc://example";
 const char *string_json_path;
+bool is_open = false;
 
+void payload_managing(zmsg_t * msg, BlockingQueue<Item2> * queue, long
+end) {
+//char *end_pointer_string;
+//long start;
+char *frame;
+Item2 item;
+cout << "size of msg: " <<
+zmsg_size(msg)
+<<
+std::endl;
 
-void payload_managing(zmsg_t *msg, BlockingQueue<Item2> *queue, long end) {
-    //char *end_pointer_string;
-    //long start;
-    char *frame;
-    Item2 item;
-    cout << "size of msg: " << zmsg_size(msg) << std::endl;
+while (
+zmsg_size(msg)
+> 0) {
+frame = zmsg_popstr(msg);
+if (
+strcmp(frame,
+"TIMESTAMP") == 0) {
+frame = zmsg_popstr(msg);
+zsys_info("> %s", frame);
+string start = frame;
+item = Item2(start, end, "end_to_end_delay");
+frame = zmsg_popstr(msg);
+queue->
+Push(item);
+zsys_info("PAYLOAD > %s", frame);
+break;
+} else {
+puts("error...this message does not contain any timestamp");
+break;
+}
+}
 
-    while (zmsg_size(msg) > 0) {
-        frame = zmsg_popstr(msg);
-        if (strcmp(frame, "TIMESTAMP") == 0) {
-            frame = zmsg_popstr(msg);
-            zsys_info("> %s", frame);
-            string start = frame;
-            item = Item2(start, end, "end_to_end_delay");
-            frame = zmsg_popstr(msg);
-            queue->Push(item);
-            zsys_info("PAYLOAD > %s", frame);
-            break;
-        } else {
-            puts("error...this message does not contain any timestamp");
-            break;
-        }
-    }
-
-    zmsg_destroy(&msg);
+zmsg_destroy(&msg);
 
 }
 
@@ -55,8 +64,7 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
     std::string name_of_experiment;
     json_object *PARAM;
     PARAM = json_object_from_file(string_json_path);
-    json_object_object_foreach(PARAM, key, val)
-    {
+    json_object_object_foreach(PARAM, key, val) {
         if (strcmp(key, "metrics_output_type") == 0) {
             char *value = const_cast<char *>(json_object_get_string(val));
             if (strcmp(value, "console") == 0)
@@ -66,14 +74,14 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
         }
         if (strcmp(key, "experiment_name") == 0)
             name_of_experiment = json_object_get_string(val);
-        if(strcmp(key, "num_consumer_threads")==0)
-            num_consumers= (int) strtol(json_object_get_string(val), nullptr, 10);
+        if (strcmp(key, "num_consumer_threads") == 0)
+            num_consumers = (int) strtol(json_object_get_string(val), nullptr, 10);
     }
-    vector <thread> consumers; // create a vector of consumers
+    vector<thread> consumers; // create a vector of consumers
     consumers.reserve(num_consumers);
     ofstream config_file;
 
-    string name_of_csv_file =name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
+    string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
     int count = 0;
     printf("Num of consumer threads: %d\n", num_consumers);
     for (int i = 0; i < num_consumers; i++) { //same as producers
@@ -92,12 +100,18 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
                     std::cout << "Metric name: " << item.name_metric << std::endl << "value: "
                               << end_to_end_delay << std::endl;
                 } else {
-                    config_file.open(name_of_csv_file, std::ios::app);
-                    config_file << item.name_metric + "," + std::to_string(count) + "," +
-                                   std::to_string(end_to_end_delay) +
-                                   "\n";
-                    config_file.close();
-                    count++;
+                        config_file.open("./ResultsCsv/" + name_of_csv_file, std::ios::app);
+                        if (!is_open)
+                        {
+                            config_file << "metric,number,value\n";
+                            is_open=true;
+                        }
+
+                        config_file << item.name_metric + "," + std::to_string(count) + "," +
+                                       std::to_string(end_to_end_delay) +
+                                       "\n";
+                        config_file.close();
+                        count++;
                 }
             }
 
@@ -126,7 +140,7 @@ subscriber_thread(zsock_t *pipe, void *args) {
     //long time_of_waiting = 0;
     while (!zctx_interrupted /*&& time_of_waiting<MSECS_MAX_WAITING*/) {
         char *topic;
-        zmsg_t *msg;
+        zmsg_t * msg;
         long end;
         zsock_recv(sub, "sm", &topic, &msg);
         end = zclock_usecs();
@@ -178,7 +192,7 @@ int main(int argc, char *argv[]) {
     const char *endpoint_inproc;
     char *endpoint_customized;
     const char *topic;
-    int num_of_subs=NUM_SUBS;
+    int num_of_subs = NUM_SUBS;
     PARAM = json_object_from_file(string_json_path);
 
     if (PARAM != nullptr) {
@@ -192,8 +206,7 @@ int main(int argc, char *argv[]) {
         int int_value;
 
         const char *value;
-        json_object_object_foreach(PARAM, key, val)
-        {
+        json_object_object_foreach(PARAM, key, val) {
 
             value = json_object_get_string(val);
 
@@ -238,8 +251,7 @@ int main(int argc, char *argv[]) {
             endpoint_customized = strcat(endpoint_customized, endpoint_inproc);
         }
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
-    }
-    else{
+    } else {
         puts("FILE JSON NOT FOUND...EXIT");
         return 2;
     }
@@ -257,7 +269,7 @@ int main(int argc, char *argv[]) {
         sub_threads[i] = zactor_new(subscriber_thread, subscribers[i]);
         string name;
         name = topic + std::to_string(i);
-        cout << "Starting new sub thread :" + name <<endl;
+        cout << "Starting new sub thread :" + name << endl;
     }
     /*
      * destroying zactors of subs
