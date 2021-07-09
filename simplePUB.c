@@ -120,32 +120,33 @@ publisher_thread(zsock_t *pipe, void *args) {
         string = (char *) malloc((nDigits + 1) * sizeof(char));
         sprintf(string, "%ld", timestamp); // fresh copy into the string
         printf("TIMESTAMP: %ld\n", timestamp);
-        if (payload_size > (long) strlen(string)) {
-            puts("PAYLOAD IS NOT NULL");
-            char string_residual_payload[(payload_size - strlen(string))];
-        } else {
-            char string_residual_payload ='\0';
-            printf("String of zeros: %c\n", string_residual_payload);
-        }
-        char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent
         zmsg_t *msg = zmsg_new(); // creating new zmq message
         int rc = zmsg_pushstr(msg, string);
         assert(rc == 0);
         printf("SIZE OF RESIDUAL STRING (OF ZEROS) : %ld\n", payload_size- strlen(string));
         if (payload_size > (long) strlen(string)) {
+            puts("PAYLOAD IS NOT NULL");
+            char string_residual_payload[(payload_size - strlen(string))];
             for (int i = 0; i < (payload_size - strlen(string)); i++) {
                 string_residual_payload[i] = '0';
             }
-            string_residual_payload[payload_size] = '\0';
+            string_residual_payload[payload_size - strlen(string)] = '\0';
             printf("String of zeros: %s\n", string_residual_payload);
+
+
+            if (zsock_send(pub, "ssss", topic, "TIMESTAMP", string, string_residual_payload) == -1)
+                break;              //  Interrupted
+        } else {
+            char string_residual_payload ='\0';
+            //printf("String of zeros: %c\n", string_residual_payload);
+            if (zsock_send(pub, "sss", topic, "TIMESTAMP", string) == -1)
+                break;
         }
+        //char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent
 
 
         assert(rc == 0);
-        rc = zmsg_addstr(msg, string_residual_payload);
 
-        if (zsock_send(pub, "ssss", topic, "TIMESTAMP", string, string_residual_payload) == -1)
-            break;              //  Interrupted
         zclock_log("Message No. %d", count);
         free(string);
         count++;

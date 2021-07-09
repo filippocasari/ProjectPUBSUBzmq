@@ -103,12 +103,12 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
                         config_file.open("./ResultsCsv/" + name_of_csv_file, std::ios::app);
                         if (!is_open)
                         {
-                            config_file << "metric,number,value\n";
+                            config_file << "metric,number,value,timestamp\n";
                             is_open=true;
                         }
 
-                        config_file << item.name_metric + "," + std::to_string(count) + "," +
-                                       std::to_string(end_to_end_delay) +
+                        config_file << item.name_metric + "," +to_string(count) + "," +
+                                       to_string(end_to_end_delay) + ","+to_string(item.ts_end)+
                                        "\n";
                         config_file.close();
                         count++;
