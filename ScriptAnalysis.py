@@ -5,6 +5,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+def barplot_err(x, y, xerr=None, yerr=None, data=None, **kwargs):
+
+    _data = []
+    for _i in data.index:
+
+        _data_i = pd.concat([data.loc[_i:_i]]*3, ignore_index=True, sort=False)
+        _row = data.loc[_i]
+        if xerr is not None:
+            _data_i[x] = [_row[x]-_row[xerr], _row[x], _row[x]+_row[xerr]]
+        if yerr is not None:
+            _data_i[y] = [_row[y]-_row[yerr], _row[y], _row[y]+_row[yerr]]
+        _data.append(_data_i)
+
+    _data = pd.concat(_data, ignore_index=True, sort=False)
+
+    _ax = sns.barplot(x=x,y=y,data=_data,ci='sd' ,**kwargs)
+
+    return _ax
+
+
 
 def change_in_millsec(i):
     i = i / 1000
@@ -32,12 +52,12 @@ plt.legend([string_for_legend], loc="upper left")
 plt.show()
 msg_rate = [1, 5, 10, 25, 50, 100]
 range_payload = [10, 25, 50, 100, 200, 500, 1000]
-array_msg_rate_mean = []
-array_variances=[]
+
 count = 0
 fail_load_csv = False
 for payload in range_payload:
-
+    array_msg_rate_mean = []
+    array_variances = []
     for i in msg_rate:
 
         try:
@@ -49,14 +69,18 @@ for payload in range_payload:
         with open('fileJson/test_' + str(count) + ".json") as f:
             json_data = json.load(f)
         print("With payload: ", json_data["payload_size_bytes"], " settled")
-        mean = df_temp.mean()['value']/1000
-        var=df_temp.var()['value']/1000
+        mean = df_temp.mean()['value'] / 1000
+        var = df_temp.var()['value'] / 1000
         array_msg_rate_mean.append(mean)
         array_variances.append(var)
         print("with message rate ", i, " ,mean ", df_temp.mean()['value'])
         count += 1
     if fail_load_csv == False:
-        data=pd.DataFrame({'msg rate':msg_rate, 'mean':array_msg_rate_mean, 'variance':array_variances})
-        sns.catplot(data=data, x='msg rate', y='mean', kind="bar", hue="variance")
+        data = pd.DataFrame({'msg rate': msg_rate, 'mean': array_msg_rate_mean, 'variance': array_variances})
+
+        #barplot_err(y="mean", x="msg rate", yerr="variance",
+          #          capsize=.2, data=data)
+        sns.barplot(y="mean", x="msg rate", data=data)
+        plt.title('with bytes payload: '+str(json_data["payload_size_bytes"]))
 
         plt.show()
