@@ -152,6 +152,7 @@ publisher_thread(zsock_t *pipe, void *args) {
         count++;
     }
     zsock_destroy(&pub);
+
 }
 
 int main(int argc, char *argv[]) {
