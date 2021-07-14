@@ -14,7 +14,7 @@
 #define ENDPOINT endpoint_tcp
 #define NUM_MEX_MAX 1000
 #define FOLDER_EXPERIMENT "./Results/"
-
+#define SIGTERM_MSG "SIGTERM received.\n"
 using namespace std;
 //#define MSECS_MAX_WAITING 10000
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
@@ -22,44 +22,62 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *string_json_path;
 bool is_open = false;
 
-void payload_managing(zmsg_t * msg, BlockingQueue<Item2> * queue, long
+
+void sig_term_handler(int signum, siginfo_t *info, void *ptr) {
+    write(STDERR_FILENO, SIGTERM_MSG, sizeof(SIGTERM_MSG));
+}
+
+
+void catch_sigterm() {
+    static struct sigaction _sigact;
+
+    memset(&_sigact, 0, sizeof(_sigact));
+    _sigact.sa_sigaction = sig_term_handler;
+    _sigact.sa_flags = SA_SIGINFO;
+
+    sigaction(SIGTERM, &_sigact, nullptr);
+}
+
+
+void payload_managing(zmsg_t *msg, BlockingQueue<Item2> *queue, long
 end) {
 //char *end_pointer_string;
 //long start;
-char *frame;
-Item2 item;
-cout << "size of msg: " <<
-zmsg_size(msg)
-<<
-std::endl;
+    char *frame;
+    Item2 item;
+    cout << "size of msg: " <<
+         zmsg_size(msg)
+         <<
+         std::endl;
 
-while (
-zmsg_size(msg)
-> 0) {
-frame = zmsg_popstr(msg);
-if (
-strcmp(frame,
-"TIMESTAMP") == 0) {
-frame = zmsg_popstr(msg);
-zsys_info("> %s", frame);
-string start = frame;
-item = Item2(start, end, "end_to_end_delay");
-frame = zmsg_popstr(msg);
-queue->
-Push(item);
-zsys_info("PAYLOAD > %s", frame);
-break;
-} else {
-puts("error...this message does not contain any timestamp");
-break;
-}
-}
+    while (
+            zmsg_size(msg)
+            > 0) {
+        frame = zmsg_popstr(msg);
+        if (
+                strcmp(frame,
+                       "TIMESTAMP") == 0) {
+            frame = zmsg_popstr(msg);
+            zsys_info("> %s", frame);
+            string start = frame;
+            item = Item2(start, end, "end_to_end_delay");
+            frame = zmsg_popstr(msg);
+            queue->
+                    Push(item);
+            zsys_info("PAYLOAD > %s", frame);
+            break;
+        } else {
+            puts("error...this message does not contain any timestamp");
+            break;
+        }
+    }
 
-zmsg_destroy(&msg);
+    zmsg_destroy(&msg);
 
 }
 
 void create_new_consumers(BlockingQueue<Item2> *queue) {
+    catch_sigterm();
     bool console = false;
     int num_consumers = NUM_CONSUMERS;
     std::string name_of_experiment;
@@ -90,7 +108,7 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
 
             Item2 item = Item2();
 
-            while (queue->Pop(item) && !zctx_interrupted) {
+            while (queue->Pop(item) && !zctx_interrupted && !zsys_interrupted) {
                 puts("created new item...");
                 long end_to_end_delay;
                 long start = std::stol(item.ts_start);
@@ -101,18 +119,17 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
                     std::cout << "Metric name: " << item.name_metric << std::endl << "value: "
                               << end_to_end_delay << std::endl;
                 } else {
-                        config_file.open("./ResultsCsv_1/" + name_of_csv_file, std::ios::app);
-                        if (!is_open)
-                        {
-                            config_file << "metric,number,value,timestamp\n";
-                            is_open=true;
-                        }
+                    config_file.open("./ResultsCsv_1/" + name_of_csv_file, std::ios::app);
+                    if (!is_open) {
+                        config_file << "metric,number,value,timestamp\n";
+                        is_open = true;
+                    }
 
-                        config_file << item.name_metric + "," +to_string(count) + "," +
-                                       to_string(end_to_end_delay) + ","+to_string(item.ts_end)+
-                                       "\n";
-                        config_file.close();
-                        count++;
+                    config_file << item.name_metric + "," + to_string(count) + "," +
+                                   to_string(end_to_end_delay) + "," + to_string(item.ts_end) +
+                                   "\n";
+                    config_file.close();
+                    count++;
                 }
             }
 
@@ -125,6 +142,7 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
 
 static void
 subscriber_thread(zsock_t *pipe, void *args) {
+    catch_sigterm();
     // -----------------------------------------------------------------------------------------------------
     BlockingQueue<Item2> queue(QUEUE_CAPACITY); //initialize queue
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
@@ -139,11 +157,11 @@ subscriber_thread(zsock_t *pipe, void *args) {
 
     int count = 0;
     //long time_of_waiting = 0;
-    int c=0;
-    while (!zctx_interrupted && c<NUM_MEX_MAX) {
+    int c = 0;
+    while (!zctx_interrupted && c < NUM_MEX_MAX && !zsys_interrupted) {
         c++;
         char *topic;
-        zmsg_t * msg;
+        zmsg_t *msg;
         long end;
         zsock_recv(sub, "sm", &topic, &msg);
         end = zclock_usecs();
@@ -163,6 +181,7 @@ subscriber_thread(zsock_t *pipe, void *args) {
 
 
 int main(int argc, char *argv[]) {
+    catch_sigterm();
     char *cmdstring; // string of args
     if (argc < 2) // exit if argc is less then 2
     {
@@ -270,13 +289,14 @@ int main(int argc, char *argv[]) {
         cout << "Starting new sub thread :" + name << endl;
 
         sub_threads[i] = zactor_new(subscriber_thread, subscribers[i]);
-
+        cout << "new actor created..."<<endl;
 
     }
     /*
      * destroying zactors of subs
      */
     for (int i = 0; i < num_of_subs; i++) {
+        printf("destroying zactor and zsocket: No.%d\n", i);
         zactor_destroy(&sub_threads[i]);
         zsock_destroy(&subscribers[i]);
     }

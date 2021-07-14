@@ -12,6 +12,29 @@ const char *endpoint_inprocess = "inproc://example";
 const char *json_file_config;
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
+#define SIGTERM_MSG "SIGTERM received.\n"
+
+void sig_term_handler(int signum, siginfo_t *info, void *ptr)
+{
+    write(STDERR_FILENO, SIGTERM_MSG, sizeof(SIGTERM_MSG));
+}
+
+
+
+void catch_sigterm()
+{
+    static struct sigaction _sigact;
+
+    memset(&_sigact, 0, sizeof(_sigact));
+    _sigact.sa_sigaction = sig_term_handler;
+    _sigact.sa_flags = SA_SIGINFO;
+
+    sigaction(SIGTERM, &_sigact, NULL);
+}
+
+
+
+
 
 //thread of publisher
 static void
@@ -154,7 +177,7 @@ publisher_thread(zsock_t *pipe, void *args) {
 }
 
 int main(int argc, char *argv[]) {
-
+    catch_sigterm();
     if (argc < 1) {
         printf("NO INPUT JSON FILE...EXIT\n");
         return -1;

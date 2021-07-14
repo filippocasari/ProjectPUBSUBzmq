@@ -41,6 +41,9 @@ for ((c = 1; c <=41; c++)); do
   fi
 
   echo "kill SUB and PUB"
+  pkill -15 SUB3
+  pkill -15 PUB
+  sleep 5
   killall SUB3
   killall PUB
   sleep 10 #sleep 10 secs until next test
