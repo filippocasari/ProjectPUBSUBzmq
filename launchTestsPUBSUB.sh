@@ -5,7 +5,7 @@ cmake CMakeLists.txt
 
 test="/home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_"
 systemctl restart chronyd || exit
-for ((c = 1; c <=41; c++)); do
+for ((c = 4; c <=41; c++)); do
   trap - SIGINT
   date
   date +"%FORMAT"
