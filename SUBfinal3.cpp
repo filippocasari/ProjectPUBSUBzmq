@@ -12,6 +12,7 @@
 #define QUEUE_CAPACITY 10
 #define NUM_SUBS 1
 #define ENDPOINT endpoint_tcp
+#define NUM_MEX_MAX 1000
 #define FOLDER_EXPERIMENT "./Results/"
 
 using namespace std;
@@ -89,7 +90,7 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
 
             Item2 item = Item2();
 
-            while (queue->Pop(item)) {
+            while (queue->Pop(item) && !zctx_interrupted) {
                 puts("created new item...");
                 long end_to_end_delay;
                 long start = std::stol(item.ts_start);
@@ -100,7 +101,7 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
                     std::cout << "Metric name: " << item.name_metric << std::endl << "value: "
                               << end_to_end_delay << std::endl;
                 } else {
-                        config_file.open("./ResultsCsv/" + name_of_csv_file, std::ios::app);
+                        config_file.open("./ResultsCsv_1/" + name_of_csv_file, std::ios::app);
                         if (!is_open)
                         {
                             config_file << "metric,number,value,timestamp\n";
@@ -138,7 +139,9 @@ subscriber_thread(zsock_t *pipe, void *args) {
 
     int count = 0;
     //long time_of_waiting = 0;
-    while (!zctx_interrupted /*&& time_of_waiting<MSECS_MAX_WAITING*/) {
+    int c=0;
+    while (!zctx_interrupted && c<NUM_MEX_MAX) {
+        c++;
         char *topic;
         zmsg_t * msg;
         long end;
@@ -260,16 +263,15 @@ int main(int argc, char *argv[]) {
     zsock_t *subscribers[num_of_subs];
     printf("Numbers of SUBS : %d\n", num_of_subs);
     for (int i = 0; i < num_of_subs; i++) {
-        if (PARAM != nullptr) {
-            zclock_log("file json is being used");
-            subscribers[i] = zsock_new_sub(endpoint_customized, topic);
-        } else {
-            subscribers[i] = zsock_new_sub(ENDPOINT, "ENGINE"); // default sub for the "Engine" topic
-        }
-        sub_threads[i] = zactor_new(subscriber_thread, subscribers[i]);
+        zclock_log("file json is being used");
+        subscribers[i] = zsock_new_sub(endpoint_customized, topic);
         string name;
         name = topic + std::to_string(i);
         cout << "Starting new sub thread :" + name << endl;
+
+        sub_threads[i] = zactor_new(subscriber_thread, subscribers[i]);
+
+
     }
     /*
      * destroying zactors of subs

@@ -6,7 +6,7 @@ cmake CMakeLists.txt
 
 test="/home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_"
 systemctl restart chronyd || exit
-for (( c=0; c<=42; c++ ))
+for (( c=0; c<=41; c++ ))
 do
    trap - SIGINT
    echo "Start test $c "
@@ -16,7 +16,13 @@ do
     #./SUB3 /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
   }&
   #./PUB /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
-  ./PUB "$test$c.json"
+  {
+     ./PUB "$test$c.json"
+  }&
+  sleep 4m
+  killall SUB3
+  killall PUB
+
 done
 
 

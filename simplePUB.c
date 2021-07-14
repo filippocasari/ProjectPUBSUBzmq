@@ -108,10 +108,12 @@ publisher_thread(zsock_t *pipe, void *args) {
 
     printf("PAYLOAD SIZE: %d\n", payload_size);
     while (!zctx_interrupted && count < num_mex) {
-
-        long double milli_secs_of_sleeping = (1.0 / msg_rate_sec) * 1000;
+        zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
+        if (mex_interrupt)
+            break;
+        long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
         printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
-        printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
+        //printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
         zclock_sleep((int) milli_secs_of_sleeping); //  Wait for x seconds
 
         char *string; // 12 byte for representation of timestamp in micro secs
@@ -131,8 +133,7 @@ publisher_thread(zsock_t *pipe, void *args) {
                 string_residual_payload[i] = '0';
             }
             string_residual_payload[payload_size - strlen(string)] = '\0';
-            printf("String of zeros: %s\n", string_residual_payload);
-
+            //printf("String of zeros: %s\n", string_residual_payload);
 
             if (zsock_send(pub, "ssss", topic, "TIMESTAMP", string, string_residual_payload) == -1)
                 break;              //  Interrupted
@@ -143,10 +144,7 @@ publisher_thread(zsock_t *pipe, void *args) {
                 break;
         }
         //char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent
-
-
         assert(rc == 0);
-
         zclock_log("Message No. %d", count);
         free(string);
         count++;
@@ -180,6 +178,7 @@ int main(int argc, char *argv[]) {
         }
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
         zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
+        zstr_sendx (pub_actor, "BREAK", NULL);
         free(cmdstring);
 
         zactor_destroy(&pub_actor);
