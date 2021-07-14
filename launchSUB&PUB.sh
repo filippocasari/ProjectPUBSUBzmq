@@ -19,7 +19,15 @@ do
   {
      ./PUB "$test$c.json"
   }&
-  sleep 4m
+
+  if [ $(($c % 6)) -eq 0 ]
+  then
+    echo "starting sleep 17 minutes fot the test"
+    sleep 17m
+  else
+    echo "starting sleep 4 minutes fot the test"
+    sleep 4m
+  fi
   killall SUB3
   killall PUB
 
