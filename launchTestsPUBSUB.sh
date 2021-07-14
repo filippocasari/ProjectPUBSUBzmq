@@ -30,6 +30,7 @@ do
   fi
   killall SUB3
   killall PUB
+  sleep 10
 
 done
 
