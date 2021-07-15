@@ -236,7 +236,6 @@ int main(int argc, char *argv[]) {
                 int_value = (int) json_object_get_int64(val);
                 if (strcmp(key, "num_of_subs") == 0)
                     num_of_subs = int_value;
-
             }
 
             printf("\t%s: %s\n", key, value);
@@ -275,6 +274,7 @@ int main(int argc, char *argv[]) {
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
     } else {
         puts("FILE JSON NOT FOUND...EXIT");
+        free(cmdstring);
         return 2;
     }
 
@@ -285,9 +285,8 @@ int main(int argc, char *argv[]) {
         zclock_log("file json is being used");
         subscribers[i] = zsock_new_sub(endpoint_customized, topic);
         string name;
-        name = topic + std::to_string(i);
+        name = topic + to_string(i);
         cout << "Starting new sub thread :" + name << endl;
-
         sub_threads[i] = zactor_new(subscriber_thread, subscribers[i]);
         cout << "new actor created..."<<endl;
 

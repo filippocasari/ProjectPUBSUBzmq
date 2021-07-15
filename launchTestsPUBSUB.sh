@@ -5,13 +5,14 @@ cmake CMakeLists.txt
 
 test="/home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_"
 systemctl restart chronyd || exit
-for ((c = 4; c <=41; c++)); do
+for ((c = 0; c <=41; c++)); do
   trap - SIGINT
   date
   date +"%FORMAT"
   var=$(date)
-  var=$(date)
+  echo "##########################################################"
   echo "Start test $c at $var"
+  echo "##########################################################"
 
   {
     ./SUB3 "$test$c.json"
@@ -40,12 +41,14 @@ for ((c = 4; c <=41; c++)); do
     sleep 2m
   fi
 
-  echo "kill SUB and PUB"
-  pkill -15 SUB3
-  pkill -15 PUB
-  sleep 5
-  killall SUB3
-  killall PUB
+  echo "send SIGTERM TO SUB and PUB"
+  start-stop-daemon --stop --oknodo --retry 15 -n SUB3
+  start-stop-daemon --stop --oknodo --retry 15 -n PUB
+
+  #sleep 5
+  #echo "send SIGKILL TO SUB and PUB"
+  #killall SUB3
+  #killall PUB
   sleep 10 #sleep 10 secs until next test
 
 done

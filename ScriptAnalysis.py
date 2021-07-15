@@ -54,6 +54,7 @@ range_payload = [10, 25, 50, 100, 200, 500, 1000]
 
 count = 0
 fail_load_csv = False
+
 for payload in range_payload:
     array_msg_rate_mean = []
     array_variances = []

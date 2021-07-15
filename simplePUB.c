@@ -131,9 +131,9 @@ publisher_thread(zsock_t *pipe, void *args) {
 
     printf("PAYLOAD SIZE: %d\n", payload_size);
     while (!zctx_interrupted && count < num_mex) {
-        zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
-        if (mex_interrupt)
-            break;
+        //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
+        //if (mex_interrupt)
+           // break;
         long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
         printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
         //printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
@@ -200,10 +200,11 @@ int main(int argc, char *argv[]) {
                 strcat(cmdstring, " ");
         }
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
-        zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
-        zstr_sendx (pub_actor, "BREAK", NULL);
-        free(cmdstring);
 
+        zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
+        free(cmdstring);
+        //zstr_sendx (pub_actor, "BREAK", NULL);
+        puts("destroying zactor PUB");
         zactor_destroy(&pub_actor);
     }
 
