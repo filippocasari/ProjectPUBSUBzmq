@@ -1,7 +1,7 @@
 import sys
 import json
 import os
-msg_rate = [1, 5, 10, 25, 50, 100]
+msg_rate = [5, 10, 25, 50, 100]
 range_payload = [10, 25, 50, 100, 200, 500, 1000]
 topic = "FRIDGE"
 connection_type = "tcp"

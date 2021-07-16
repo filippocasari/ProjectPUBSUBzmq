@@ -81,6 +81,7 @@ for payload in range_payload:
     data = pd.DataFrame({'msg rate': msg_rate, 'mean': array_msg_rate_mean, 'variance': array_variances})
     sns.barplot(y="mean", x="msg rate", data=data)
     plt.title('with bytes payload: ' + str(payload))
+    plt.legend()
     plt.show()
         # barplot_err(y="mean", x="msg rate", yerr="variance",
         #          capsize=.2, data=data)

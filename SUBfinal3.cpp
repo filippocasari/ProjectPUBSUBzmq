@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
         }
         strsize = (int) strsize; // converting into an int value
 
-        cmdstring = static_cast<char *>(malloc(strsize)); // malloc for the string cmd string
+        cmdstring = (char*)(malloc(strsize*sizeof(char))); // malloc for the string cmd string
         cmdstring[0] = '\0'; // initialize the string
 
         for (i = 1; i < argc; i++) {

@@ -21,29 +21,20 @@ for ((c = 0; c <=41; c++)); do
   #./SUB3 /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
   #./PUB /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
 
-  {
-    ./PUB "$test$c.json"
-  }&
-  echo "##########################################################"
-  if [ $(($c % 6)) -eq 0 ]; then
-
-    echo "starting sleep 17 minutes fot the test"
+  # shellcheck disable=SC2046
+  succ=$( ./PUB "$test$c.json" )
+  if [ $succ -eq 0 ]; then
+    echo" test suceeded..."
+    sleep 5
     echo "##########################################################"
-    sleep 17m
-  elif [ $(($c % 6)) -eq 1 ]; then
+    echo "send SIGTERM and SIGKILL TO SUB"
 
-    echo "starting sleep 4 minutes fot the test"
-    echo "##########################################################"
-    sleep 4m
   else
-    echo "starting sleep 2 minutes fot the test"
-    echo "##########################################################"
-    sleep 2m
+    echo " test failed"
   fi
-
-  echo "send SIGTERM TO SUB and PUB"
   start-stop-daemon --stop --oknodo --retry 15 -n SUB3
-  start-stop-daemon --stop --oknodo --retry 15 -n PUB
+
+ # start-stop-daemon --stop --oknodo --retry 15 -n PUB
 
   #sleep 5
   #echo "send SIGKILL TO SUB and PUB"

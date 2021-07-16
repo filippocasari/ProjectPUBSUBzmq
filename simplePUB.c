@@ -19,8 +19,6 @@ void sig_term_handler(int signum, siginfo_t *info, void *ptr)
     write(STDERR_FILENO, SIGTERM_MSG, sizeof(SIGTERM_MSG));
 }
 
-
-
 void catch_sigterm()
 {
     static struct sigaction _sigact;
@@ -32,13 +30,9 @@ void catch_sigterm()
     sigaction(SIGTERM, &_sigact, NULL);
 }
 
-
-
-
-
 //thread of publisher
-static void
-publisher_thread(zsock_t *pipe, void *args) {
+void
+publisher_thread(char *args) {
     //path of json file for configuration
 
     const char *string_json_path = args;
@@ -64,15 +58,18 @@ publisher_thread(zsock_t *pipe, void *args) {
         json_object_object_foreach(PARAM, key, val) {
             //TODO check if the value is a double
             //check if the value is an int
+
+
             if (json_object_is_type(val, json_type_int)) {
                 int_value = (int) json_object_get_int64(val);
-                if (strcmp(key, "number_of_messages") == 0)
-                    num_mex = int_value;
-                if (strcmp(key, "payload_size_bytes") == 0)
-                    payload_size = int_value;
                 if (strcmp(key, "msg_rate_sec") == 0) {
-                    msg_rate_sec = int_value;
+                    msg_rate_sec = (int) json_object_get_int64(val);
                 }
+                else if (strcmp(key, "number_of_messages") == 0)
+                    num_mex = int_value;
+                else if (strcmp(key, "payload_size_bytes") == 0)
+                    payload_size = int_value;
+                printf("key: %s, value: %d", key, int_value);
             } else {
                 value = json_object_get_string(val);
             }
@@ -130,6 +127,7 @@ publisher_thread(zsock_t *pipe, void *args) {
     //max_mex = strtol(num_mex, NULL, 10);
 
     printf("PAYLOAD SIZE: %d\n", payload_size);
+    printf("message rate: %d\n", msg_rate_sec);
     while (!zctx_interrupted && count < num_mex) {
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)
@@ -173,7 +171,6 @@ publisher_thread(zsock_t *pipe, void *args) {
         count++;
     }
     zsock_destroy(&pub);
-
 }
 
 int main(int argc, char *argv[]) {
@@ -191,7 +188,7 @@ int main(int argc, char *argv[]) {
         }
         str_size = (int) str_size;
         char *cmdstring;
-        cmdstring = malloc(str_size);
+        cmdstring = (char*)malloc(str_size*sizeof(char));
         cmdstring[0] = '\0';
 
         for (i = 1; i < argc; i++) {
@@ -200,14 +197,13 @@ int main(int argc, char *argv[]) {
                 strcat(cmdstring, " ");
         }
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
-
-        zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
+        publisher_thread(&cmdstring);
+        //zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
         free(cmdstring);
         //zstr_sendx (pub_actor, "BREAK", NULL);
-        puts("destroying zactor PUB");
-        zactor_destroy(&pub_actor);
+        //puts("destroying zactor PUB");
+        //zactor_destroy(&pub_actor);
     }
-
 
     return 0;
 }
