@@ -22,7 +22,8 @@ for ((c = 0; c <=41; c++)); do
   #./PUB /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
 
   # shellcheck disable=SC2046
-  succ=$( ./PUB "$test$c.json" )
+  ./PUB "$test$c.json"
+  succ=$?
   if [ $succ -eq 0 ]; then
     echo" test suceeded..."
     sleep 5

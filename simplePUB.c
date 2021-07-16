@@ -58,45 +58,39 @@ publisher_thread(char *args) {
         json_object_object_foreach(PARAM, key, val) {
             //TODO check if the value is a double
             //check if the value is an int
-
-
-            if (json_object_is_type(val, json_type_int)) {
-                int_value = (int) json_object_get_int64(val);
-                if (strcmp(key, "msg_rate_sec") == 0) {
-                    msg_rate_sec = (int) json_object_get_int64(val);
-                }
-                else if (strcmp(key, "number_of_messages") == 0)
-                    num_mex = int_value;
-                else if (strcmp(key, "payload_size_bytes") == 0)
-                    payload_size = int_value;
-                printf("key: %s, value: %d", key, int_value);
-            } else {
-                value = json_object_get_string(val);
+            //int_value = (int) json_object_get_int64(val);
+            if (strcmp(key, "msg_rate_sec") == 0) {
+                msg_rate_sec = (int) json_object_get_int64(val);
             }
-
-            printf("\t%s: %s\n", key, json_object_to_json_string(val));
-            if (strcmp(key, "connection_type") == 0) {
+            else if (strcmp(key, "number_of_messages") == 0)
+                num_mex = (int) json_object_get_int64(val);
+            else if (strcmp(key, "payload_size_bytes") == 0)
+                payload_size = (int) json_object_get_int64(val);
+            else if (strcmp(key, "connection_type") == 0) {
                 type_connection = value;
                 printf("connection type found: %s\n", type_connection);
             }
-            if (strcmp(key, "ip") == 0) {
+            else if (strcmp(key, "ip") == 0) {
                 ip = value;
                 printf("ip found: %s\n", ip);
             }
-            if (strcmp(key, "port") == 0) {
+            else if (strcmp(key, "port") == 0) {
                 port = value;
                 printf("port found: %s\n", port);
             }
-            if (strcmp(key, "metric output file") == 0) {
+            else if (strcmp(key, "metric output file") == 0) {
                 output_file = value;
                 printf("output file found: %s\n", output_file);
             }
-            if (strcmp(key, "topic") == 0) {
+            else if (strcmp(key, "topic") == 0) {
                 topic = value;
             }
-            if (strcmp(key, "endpoint_inproc") == 0) {
+            else if (strcmp(key, "endpoint_inproc") == 0) {
                 endpoint_inproc = value;
             }
+            value = json_object_get_string(val);
+            printf("key: %s, value: %s", key,value);
+
         }
         // create a new endpoint composed of the items inside the json file
         char endpoint[30];
