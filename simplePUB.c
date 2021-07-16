@@ -56,44 +56,45 @@ publisher_thread(char *args) {
         // starting a new for each for the couple key, value
 
         json_object_object_foreach(PARAM, key, val) {
+            value = json_object_get_string(val);
             //TODO check if the value is a double
             //check if the value is an int
             //int_value = (int) json_object_get_int64(val);
             if (strcmp(key, "msg_rate_sec") == 0) {
                 msg_rate_sec = (int) json_object_get_int64(val);
             }
-            else if (strcmp(key, "number_of_messages") == 0)
+            if (strcmp(key, "number_of_messages") == 0)
                 num_mex = (int) json_object_get_int64(val);
-            else if (strcmp(key, "payload_size_bytes") == 0)
+            if (strcmp(key, "payload_size_bytes") == 0)
                 payload_size = (int) json_object_get_int64(val);
-            else if (strcmp(key, "connection_type") == 0) {
+            if (strcmp(key, "connection_type") == 0) {
                 type_connection = value;
                 printf("connection type found: %s\n", type_connection);
             }
-            else if (strcmp(key, "ip") == 0) {
+            if (strcmp(key, "ip") == 0) {
                 ip = value;
                 printf("ip found: %s\n", ip);
             }
-            else if (strcmp(key, "port") == 0) {
+            if (strcmp(key, "port") == 0) {
                 port = value;
                 printf("port found: %s\n", port);
             }
-            else if (strcmp(key, "metric output file") == 0) {
+            if (strcmp(key, "metric output file") == 0) {
                 output_file = value;
                 printf("output file found: %s\n", output_file);
             }
-            else if (strcmp(key, "topic") == 0) {
+            if (strcmp(key, "topic") == 0) {
                 topic = value;
             }
-            else if (strcmp(key, "endpoint_inproc") == 0) {
+            if (strcmp(key, "endpoint_inproc") == 0) {
                 endpoint_inproc = value;
             }
-            value = json_object_get_string(val);
-            printf("key: %s, value: %s", key,value);
+
+            //printf("key: %s, value: %s\n", key,value);
 
         }
         // create a new endpoint composed of the items inside the json file
-        char endpoint[30];
+        char endpoint[20];
 
         char *endpoint_customized = strcat(endpoint, type_connection);
         endpoint_customized = strcat(endpoint_customized, "://");
@@ -109,6 +110,7 @@ publisher_thread(char *args) {
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
 
         pub = zsock_new_pub(endpoint_customized);
+
 
     } else {
         //default endpoint
@@ -159,7 +161,7 @@ publisher_thread(char *args) {
                 break;
         }
         //char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent
-        assert(rc == 0);
+
         zclock_log("Message No. %d", count);
         free(string);
         count++;
@@ -191,7 +193,7 @@ int main(int argc, char *argv[]) {
                 strcat(cmdstring, " ");
         }
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
-        publisher_thread(&cmdstring);
+        publisher_thread(cmdstring);
         //zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
         free(cmdstring);
         //zstr_sendx (pub_actor, "BREAK", NULL);
