@@ -11,7 +11,7 @@ systemctl restart chronyd || exit
 
 for ((i = 0; i<=10; i++)); do
 
-  for ((c = 0; c <=34; c++)); do
+  for ((c = 2; c <=34; c++)); do
     date +"%FORMAT"
     var=$(date)
     echo "##########################################################"
