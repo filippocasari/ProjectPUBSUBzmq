@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
         printf("NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT\n");
         return 1;
     } else {
-        int i;
+
         size_t strsize = 0; //size of the string to allocate memory
 
         strsize += (int) strlen(argv[1]);
