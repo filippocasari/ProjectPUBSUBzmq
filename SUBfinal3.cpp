@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "Utils/Item2.h"
 
+#define PATH_CSV "./ResultsCsv_1/"
 #define NUM_PRODUCERS 1
 #define NUM_CONSUMERS 4
 #define QUEUE_CAPACITY 10
@@ -20,6 +21,7 @@ using namespace std;
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 //const char *endpoint_inprocess = "inproc://example";
 const char *string_json_path;
+char *path_csv = nullptr;
 bool is_open = false;
 
 
@@ -64,7 +66,7 @@ end) {
             frame = zmsg_popstr(msg);
             queue->
                     Push(item);
-            zsys_info("PAYLOAD > %s", frame);
+            //zsys_info("PAYLOAD > %s", frame);
             break;
         } else {
             puts("error...this message does not contain any timestamp");
@@ -82,6 +84,8 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
     int num_consumers = NUM_CONSUMERS;
     std::string name_of_experiment;
     json_object *PARAM;
+    int msg_rate;
+    int payload;
     PARAM = json_object_from_file(string_json_path);
     json_object_object_foreach(PARAM, key, val) {
         if (strcmp(key, "metrics_output_type") == 0) {
@@ -95,6 +99,12 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
             name_of_experiment = json_object_get_string(val);
         if (strcmp(key, "num_consumer_threads") == 0)
             num_consumers = (int) strtol(json_object_get_string(val), nullptr, 10);
+        if(strcmp(key, "msg_rate_sec")==0){
+            msg_rate= (int) strtol(json_object_get_string(val), nullptr, 10);
+        }
+        if(strcmp(key, "payload_size_bytes")==0){
+            payload= (int) strtol(json_object_get_string(val), nullptr, 10);
+        }
     }
     vector<thread> consumers; // create a vector of consumers
     consumers.reserve(num_consumers);
@@ -104,7 +114,7 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
     int count = 0;
     printf("Num of consumer threads: %d\n", num_consumers);
     for (int i = 0; i < num_consumers; i++) { //same as producers
-        consumers.emplace_back([&queue, console, &config_file, name_of_csv_file, &count]() {
+        consumers.emplace_back([&queue, console, &config_file, name_of_csv_file, &count, &msg_rate, &payload]() {
 
             Item2 item = Item2();
 
@@ -119,14 +129,16 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
                     std::cout << "Metric name: " << item.name_metric << std::endl << "value: "
                               << end_to_end_delay << std::endl;
                 } else {
-                    config_file.open("./ResultsCsv_1/" + name_of_csv_file, std::ios::app);
+
+                    config_file.open(path_csv + name_of_csv_file, ios::app);
                     if (!is_open) {
-                        config_file << "metric,number,value,timestamp\n";
+                        config_file << "metric,number,value,timestamp,message rate,payload size\n";
                         is_open = true;
                     }
 
                     config_file << item.name_metric + "," + to_string(count) + "," +
-                                   to_string(end_to_end_delay) + "," + to_string(item.ts_end) +
+                                   to_string(end_to_end_delay) + "," + to_string(item.ts_end) +","+ to_string(msg_rate)+","+
+                                                                                                                        to_string(payload)+
                                    "\n";
                     config_file.close();
                     count++;
@@ -183,32 +195,43 @@ subscriber_thread(zsock_t *pipe, void *args) {
 int main(int argc, char *argv[]) {
     catch_sigterm();
     char *cmdstring; // string of args
-    if (argc < 2) // exit if argc is less then 2
+    if (argc == 1) // exit if argc is less then 2
     {
         printf("NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT\n");
         return 1;
     } else {
         int i;
         size_t strsize = 0; //size of the string to allocate memory
-        for (i = 1; i < argc; i++) {
-            strsize += strlen(argv[i]);
-            if (argc > i + 1)
-                strsize++;
-        }
-        strsize = (int) strsize; // converting into an int value
 
-        cmdstring = (char*)(malloc(strsize*sizeof(char))); // malloc for the string cmd string
-        cmdstring[0] = '\0'; // initialize the string
+        strsize += (int) strlen(argv[1]);
 
-        for (i = 1; i < argc; i++) {
-            strcat(cmdstring, argv[i]);
-            if (argc > i + 1)
-                strcat(cmdstring, " "); //concat the string with a blank
+        if (argc==2)
+        {
+            cout<<"Path for csv not chosen..."<<endl;
+            return 2;
         }
+        size_t strsize_2= (int) strlen(argv[2]);
+        path_csv = argv[2];
+        DIR* dir = opendir(path_csv);
+        if (dir) {
+            cout<<"path csv already exists"<<endl;
+            closedir(dir);
+        } else if (ENOENT == errno) {
+            int a = mkdir(path_csv, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            if (a !=0){
+                return 3;
+            }
+        }else{
+            return 4;
+        }
+        cout<<"PATH chosen: "<<path_csv<<endl;
+         // initialize the string
+        cmdstring=argv[1];
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
     }
     //path of json file
     string_json_path = cmdstring; // file passed from the bash script or manually from terminal
+
     // start deserialization
     json_object *PARAM;
     const char *endpoint_inproc;
@@ -274,10 +297,8 @@ int main(int argc, char *argv[]) {
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
     } else {
         puts("FILE JSON NOT FOUND...EXIT");
-        free(cmdstring);
         return 2;
     }
-
     zactor_t *sub_threads[num_of_subs];
     zsock_t *subscribers[num_of_subs];
     printf("Numbers of SUBS : %d\n", num_of_subs);
@@ -288,7 +309,7 @@ int main(int argc, char *argv[]) {
         name = topic + to_string(i);
         cout << "Starting new sub thread :" + name << endl;
         sub_threads[i] = zactor_new(subscriber_thread, subscribers[i]);
-        cout << "new actor created..."<<endl;
+        cout << "new actor created..." << endl;
 
     }
     /*
@@ -299,6 +320,7 @@ int main(int argc, char *argv[]) {
         zactor_destroy(&sub_threads[i]);
         zsock_destroy(&subscribers[i]);
     }
+
 
     return 0;
 }

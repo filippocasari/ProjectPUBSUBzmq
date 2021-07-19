@@ -32,18 +32,18 @@ void catch_sigterm()
 
 //thread of publisher
 void
-publisher_thread(char *args) {
+publisher_thread(const char *path) {
     //path of json file for configuration
 
-    const char *string_json_path = args;
+
     //json obj for deserialization
-    json_object *PARAM;
+    json_object *PARAM = json_object_from_file(path);
     int payload_size = 10; //payload, 10 default bytes
     int num_mex = NUM_MEX_DEFAULT; // maximum messages for the publisher, 10 default
     const char *topic; // name of the topic
     const char *endpoint_inproc;
     int msg_rate_sec = 1; //message rate, mex/sec
-    PARAM = json_object_from_file(string_json_path); // deserializing file
+     // deserializing file
     zsock_t *pub; // new sock pub
     if (PARAM != NULL) { // file json found
         puts("PARAMETERS PUBLISHER: ");
@@ -57,7 +57,6 @@ publisher_thread(char *args) {
 
         json_object_object_foreach(PARAM, key, val) {
             value = json_object_get_string(val);
-            //TODO check if the value is a double
             //check if the value is an int
             //int_value = (int) json_object_get_int64(val);
             if (strcmp(key, "msg_rate_sec") == 0) {
