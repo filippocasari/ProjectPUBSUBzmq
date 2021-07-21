@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 msg_rates = [5.0, 10.0, 25.0, 50.0, 100.0]
 range_payload = [10, 25, 50, 100, 200, 500, 1000]
-num_experiments = 2
+num_experiments = 10
 dir_base = "./ResultsCsv_"
 
 dataframe_ = pd.DataFrame()
