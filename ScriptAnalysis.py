@@ -1,7 +1,6 @@
 import pandas as pd
 import json
 
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -49,7 +48,7 @@ variance = df.var()['value']
 sns.relplot(x="timestamp", y="value", data=df, kind="line", ci="sd", hue=variance)
 plt.legend([string_for_legend], loc="upper left")
 plt.show()
-msg_rate = [1, 5, 10, 25, 50, 100]
+msg_rate = [5, 10, 25, 50, 100]
 range_payload = [10, 25, 50, 100, 200, 500, 1000]
 
 count = 0
@@ -61,7 +60,7 @@ for payload in range_payload:
     for i in msg_rate:
 
         try:
-            df_temp = pd.read_csv("ResultsCsv/test_" + str(count) + ".csv")
+            df_temp = pd.read_csv("ResultsCsv_1/test_" + str(count) + ".csv")
             fail_load_csv = False
             print("Lenght of csv: ", len(df_temp.index))
             print("packets lost :", 1000-len(df_temp.index))
