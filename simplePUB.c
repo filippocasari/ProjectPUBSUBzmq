@@ -1,7 +1,6 @@
 
 //  Espresso Pattern
 //  This shows how to capture data using a pub-sub proxy
-
 #include <czmq.h>
 #include <json-c/json.h>
 #include <math.h>
