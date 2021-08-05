@@ -1,14 +1,15 @@
 #!/bin/bash
 
-cmake CMakeLists.txt
+cmake CMakeLists.txt || echo "Error to load CMakeLists"
 #cd ./cmake-build-debug || exit
 #test_date=$(date +"%H:%M")
 test_path="fileJson/test_"
 
-directory_path="ResultsCsv_"
-
-systemctl restart chronyd || exit
-
+directory_path="ResultsCsv_" # can ben set by the user by argv
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd || exit
+else
+  echo " TESTS ON MAC OS"
+fi
 for ((i = 2; i<=10; i++)); do
 
   for ((c = 0; c <=34; c++)); do
@@ -36,7 +37,13 @@ for ((i = 2; i<=10; i++)); do
     else
       echo " test failed"
     fi
-    start-stop-daemon --stop --oknodo --retry 15 -n SUB3
+
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+      start-stop-daemon --stop --oknodo --retry 15 -n SUB3
+    else
+      kill -SIGTERM SUB3
+    fi
+
     echo "##########################################################"
     echo "End test $c at $var #########"
     echo "##########################################################"
