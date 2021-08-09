@@ -13,7 +13,7 @@
 #define QUEUE_CAPACITY 10
 #define NUM_SUBS 1
 #define ENDPOINT endpoint_tcp
-#define NUM_MEX_MAX 1000
+#define NUM_MEX_MAX 10000
 #define FOLDER_EXPERIMENT "./Results/"
 #define SIGTERM_MSG "SIGTERM received.\n"
 using namespace std;
@@ -151,7 +151,6 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
         thread.join();
     });
 }
-
 static void
 subscriber_thread(zsock_t *pipe, void *args) {
     catch_sigterm();
