@@ -13,13 +13,11 @@ const char *json_file_config;
 #define NUM_MEX_DEFAULT 10
 #define SIGTERM_MSG "SIGTERM received.\n"
 
-void sig_term_handler(int signum, siginfo_t *info, void *ptr)
-{
+void sig_term_handler(int signum, siginfo_t *info, void *ptr) {
     write(STDERR_FILENO, SIGTERM_MSG, sizeof(SIGTERM_MSG));
 }
 
-void catch_sigterm()
-{
+void catch_sigterm() {
     static struct sigaction _sigact;
 
     memset(&_sigact, 0, sizeof(_sigact));
@@ -42,7 +40,7 @@ publisher_thread(const char *path) {
     const char *topic; // name of the topic
     const char *endpoint_inproc;
     int msg_rate_sec = 1; //message rate, mex/sec
-     // deserializing file
+    // deserializing file
     zsock_t *pub; // new sock pub
     if (PARAM != NULL) { // file json found
         puts("PARAMETERS PUBLISHER: ");
@@ -125,7 +123,7 @@ publisher_thread(const char *path) {
     while (!zctx_interrupted && count < num_mex) {
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)
-           // break;
+        // break;
         long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
         printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
         //printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
@@ -140,7 +138,7 @@ publisher_thread(const char *path) {
         zmsg_t *msg = zmsg_new(); // creating new zmq message
         int rc = zmsg_pushstr(msg, string);
         assert(rc == 0);
-        printf("SIZE OF RESIDUAL STRING (OF ZEROS) : %ld\n", payload_size- strlen(string));
+        printf("SIZE OF RESIDUAL STRING (OF ZEROS) : %ld\n", payload_size - strlen(string));
         if (payload_size > (long) strlen(string)) {
             puts("PAYLOAD IS NOT NULL");
             char string_residual_payload[(payload_size - strlen(string))];
@@ -153,7 +151,7 @@ publisher_thread(const char *path) {
             if (zsock_send(pub, "ssss", topic, "TIMESTAMP", string, string_residual_payload) == -1)
                 break;              //  Interrupted
         } else {
-            char string_residual_payload ='\0';
+            char string_residual_payload = '\0';
             //printf("String of zeros: %c\n", string_residual_payload);
             if (zsock_send(pub, "sss", topic, "TIMESTAMP", string) == -1)
                 break;
@@ -182,7 +180,7 @@ int main(int argc, char *argv[]) {
         }
         str_size = (int) str_size;
         char *cmdstring;
-        cmdstring = (char*)malloc(str_size*sizeof(char));
+        cmdstring = (char *) malloc(str_size * sizeof(char));
         cmdstring[0] = '\0';
 
         for (i = 1; i < argc; i++) {

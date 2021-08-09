@@ -5,12 +5,13 @@ cmake CMakeLists.txt || echo "Error to load CMakeLists"
 #test_date=$(date +"%H:%M")
 test_path="fileJson/test_"
 
+
 directory_path="ResultsCsv_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd || exit
-else
+elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS"
 fi
-for ((i = 2; i<=10; i++)); do
+for ((i = 0; i<=10; i++)); do
 
   for ((c = 0; c <=34; c++)); do
     date +"%FORMAT"
@@ -27,6 +28,7 @@ for ((i = 2; i<=10; i++)); do
     #./PUB /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
 
     # shellcheck disable=SC2046
+
     ./PUB "$test_path$c.json"
     succ=$?
     if [ $succ -eq 0 ]; then

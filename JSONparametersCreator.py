@@ -1,9 +1,13 @@
 import sys
 import json
 import os
-msg_rate = [5, 10, 25, 50, 100]
-range_payload = [10, 25, 50, 100, 200, 500, 1000]
-topic = "FRIDGE"
+
+E_3 = 1000
+# msg_rate = [5, 10, 25, 50, 100]
+msg_rate = [250, 500, 1000, 10000]
+# range_payload = [10, 25, 50, 100, 200, 500, 1000]
+range_payload = [10 * E_3, 25 * E_3, 50 * E_3]
+topic = "CAR"
 connection_type = "tcp"
 endpoint_inproc = "example"
 ip = "127.0.0.1"
@@ -11,9 +15,9 @@ port = "6000"
 metrics_output_type = "csv"
 num_of_subs = 1
 num_consumer_threads = 5
-number_of_messages = 1000
+number_of_messages = 10000
 num_test = 0
-dir_name="./fileJson/"
+dir_name = "./fileJson/"
 if not os.path.exists(dir_name):
     os.mkdir(dir_name)
 for i in range_payload:
@@ -28,7 +32,7 @@ for i in range_payload:
                 "experiment_name": string_name, "num_of_subs": num_of_subs,
                 "num_consumer_threads": num_consumer_threads}
         try:
-            with open(dir_name+string_name+".json", 'w') as outfile:
+            with open(dir_name + string_name + ".json", 'w') as outfile:
                 json.dump(data, outfile, indent=2)
             print("file json created, name = " + string_name)
         except:
