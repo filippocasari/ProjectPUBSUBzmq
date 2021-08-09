@@ -34,6 +34,9 @@ public:
         }
         _cvCanPop.notify_all();
     }
+    bool isEmpty(){
+        return _qu.empty();
+    }
 
     bool Pop(T &item) {
         std::unique_lock<std::mutex> lock(_sync);

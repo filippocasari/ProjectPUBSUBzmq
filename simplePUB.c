@@ -120,7 +120,7 @@ publisher_thread(const char *path) {
 
     printf("PAYLOAD SIZE: %d\n", payload_size);
     printf("message rate: %d\n", msg_rate_sec);
-    while (!zctx_interrupted && count < num_mex) {
+    while (!zctx_interrupted && count < num_mex && !zsys_interrupted) {
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)
         // break;
@@ -166,7 +166,7 @@ publisher_thread(const char *path) {
 }
 
 int main(int argc, char *argv[]) {
-    catch_sigterm();
+
     if (argc < 1) {
         printf("NO INPUT JSON FILE...EXIT\n");
         return -1;

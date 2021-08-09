@@ -10,7 +10,7 @@
 #define PATH_CSV "./ResultsCsv_1/"
 #define NUM_PRODUCERS 1
 #define NUM_CONSUMERS 4
-#define QUEUE_CAPACITY 10
+#define QUEUE_CAPACITY 50
 #define NUM_SUBS 1
 #define ENDPOINT endpoint_tcp
 #define NUM_MEX_MAX 10000
@@ -78,8 +78,7 @@ end) {
 
 }
 
-void create_new_consumers(BlockingQueue<Item2> *queue) {
-    catch_sigterm();
+int create_new_consumers(BlockingQueue<Item2> *queue) {
     bool console = false;
     int num_consumers = NUM_CONSUMERS;
     std::string name_of_experiment;
@@ -113,12 +112,14 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
     string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
     int count = 0;
     printf("Num of consumer threads: %d\n", num_consumers);
+
     for (int i = 0; i < num_consumers; i++) { //same as producers
         consumers.emplace_back([&queue, console, &config_file, name_of_csv_file, &count, &msg_rate, &payload]() {
 
             Item2 item = Item2();
-
-            while (queue->Pop(item) && !zctx_interrupted && !zsys_interrupted) {
+            cout<<"new consumer thread created with ID: "<<this_thread::get_id()<<endl;
+            cout<<"pid of consumer: "<<getpid()<<endl;
+            while (queue->Pop(item) && !zsys_interrupted) {
                 puts("created new item...");
                 long end_to_end_delay;
                 long start = std::stol(item.ts_start);
@@ -147,19 +148,27 @@ void create_new_consumers(BlockingQueue<Item2> *queue) {
 
         });
     }
-    for_each(consumers.begin(), consumers.end(), [](thread &thread) {
-        thread.join();
-    });
+    for (int i=0; i<num_consumers; i++)
+    {
+        consumers[i].join();
+    }
+    printf("QUEUE IS EMPTY?: %d", queue->isEmpty());
+    queue->RequestShutdown();
+    return 0;
 }
 static void
 subscriber_thread(zsock_t *pipe, void *args) {
-    catch_sigterm();
+    zsock_signal(pipe, 0);
+    //catch_sigterm();
     // -----------------------------------------------------------------------------------------------------
     BlockingQueue<Item2> queue(QUEUE_CAPACITY); //initialize queue
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
     thread thread_start_consumers([&queue]() {
-        create_new_consumers(&queue);
-        cout << "start new threads consumers\n";
+
+        int succ=create_new_consumers(&queue);
+        printf("consumers terminate? %d", succ);
+
+
     });// create new thread to manage payload
 
     //--------------------------------------------------------------------------------------------------------
@@ -169,7 +178,9 @@ subscriber_thread(zsock_t *pipe, void *args) {
     int count = 0;
     //long time_of_waiting = 0;
     int c = 0;
-    while (!zctx_interrupted && c < NUM_MEX_MAX && !zsys_interrupted) {
+    bool terminated = false;
+    while ( c < NUM_MEX_MAX && !zsys_interrupted) {
+
         c++;
         char *topic;
         zmsg_t *msg;
@@ -316,10 +327,10 @@ int main(int argc, char *argv[]) {
      */
     for (int i = 0; i < num_of_subs; i++) {
         printf("destroying zactor and zsocket: No.%d\n", i);
+
         zactor_destroy(&sub_threads[i]);
         zsock_destroy(&subscribers[i]);
     }
-
 
     return 0;
 }
