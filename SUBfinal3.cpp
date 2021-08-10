@@ -10,7 +10,7 @@
 #define PATH_CSV "./ResultsCsv_1/"
 #define NUM_PRODUCERS 1
 #define NUM_CONSUMERS 4
-#define QUEUE_CAPACITY 50
+#define QUEUE_CAPACITY 1000
 #define NUM_SUBS 1
 #define ENDPOINT endpoint_tcp
 #define NUM_MEX_MAX 10000
@@ -23,7 +23,7 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *string_json_path;
 char *path_csv = nullptr;
 bool is_open = false;
-
+const char *type_test;
 
 void sig_term_handler(int signum, siginfo_t *info, void *ptr) {
     write(STDERR_FILENO, SIGTERM_MSG, sizeof(SIGTERM_MSG));
@@ -64,8 +64,7 @@ end) {
             string start = frame;
             item = Item2(start, end, "end_to_end_delay");
             frame = zmsg_popstr(msg);
-            queue->
-                    Push(item);
+            queue->Push(item);
             //zsys_info("PAYLOAD > %s", frame);
             break;
         } else {
@@ -119,7 +118,8 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
             Item2 item = Item2();
             cout<<"new consumer thread created with ID: "<<this_thread::get_id()<<endl;
             cout<<"pid of consumer: "<<getpid()<<endl;
-            while (queue->Pop(item) && !zsys_interrupted) {
+            int64_t time=zclock_time();
+            while (queue->Pop(item)) {
                 puts("created new item...");
                 long end_to_end_delay;
                 long start = std::stol(item.ts_start);
@@ -133,18 +133,24 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
 
                     config_file.open(path_csv + name_of_csv_file, ios::app);
                     if (!is_open) {
-                        config_file << "metric,number,value,timestamp,message rate,payload size\n";
+                        config_file << "number,value,timestamp,message rate,payload size\n";
                         is_open = true;
                     }
 
-                    config_file << item.name_metric + "," + to_string(count) + "," +
+                    config_file << to_string(count) + "," +
                                    to_string(end_to_end_delay) + "," + to_string(item.ts_end) +","+ to_string(msg_rate)+","+
                                                                                                                         to_string(payload)+
                                    "\n";
                     config_file.close();
                     count++;
                 }
+                if(zsys_interrupted){
+                    printf("QUEUE IS EMPTY?: %d", queue->isEmpty());
+                    queue->RequestShutdown();
+                    break;
+                }
             }
+            return 0;
 
         });
     }
@@ -152,8 +158,7 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
     {
         consumers[i].join();
     }
-    printf("QUEUE IS EMPTY?: %d", queue->isEmpty());
-    queue->RequestShutdown();
+
     return 0;
 }
 static void
@@ -167,7 +172,6 @@ subscriber_thread(zsock_t *pipe, void *args) {
 
         int succ=create_new_consumers(&queue);
         printf("consumers terminate? %d", succ);
-
 
     });// create new thread to manage payload
 
@@ -186,7 +190,12 @@ subscriber_thread(zsock_t *pipe, void *args) {
         zmsg_t *msg;
         long end;
         zsock_recv(sub, "sm", &topic, &msg);
-        end = zclock_usecs();
+        if(strcmp(type_test, "LAN")==0)
+            end = (long) zclock_time();
+        else if (strcmp(type_test, "LOCAL")==0)
+            end = zclock_usecs();
+        else
+            end = 0;
         zsys_info("Recv on %s", topic);
         string metric = "end_to_end_delay";
         thread producer([msg, &queue, &end]() {
@@ -275,8 +284,9 @@ int main(int argc, char *argv[]) {
             if (strcmp(key, "connection_type") == 0) {
                 type_connection = value;
                 printf("connection type found: %s\n", type_connection);
-
             }
+            if (strcmp(key, "type_test") == 0)
+                type_test = value;
             if (strcmp(key, "ip") == 0) {
                 ip = value;
                 printf("ip found: %s\n", ip);

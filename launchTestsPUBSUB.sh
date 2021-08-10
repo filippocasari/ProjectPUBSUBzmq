@@ -3,10 +3,10 @@
 cmake CMakeLists.txt || echo "Error to load CMakeLists"
 #cd ./cmake-build-debug || exit
 #test_date=$(date +"%H:%M")
-test_path="fileJson/test_"
+test_path="./fileJson/test_"
 
 
-directory_path="ResultsCsv_" # can ben set by the user by argv
+directory_path="./ResultsCsv_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd && echo "TEST ON LINUX" || exit
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS"
@@ -40,30 +40,32 @@ for ((i = 0; i<=2; i++)); do
     then
         sudo nice --19 ./PUB "$test_path$c.json"
         succ=$?
-    elif [[ "$OSTYPE" == "darwin"* ]];
+    elif [[ "$OSTYPE" == "darwin"* ]]
     then
         ./PUB "$test_path$c.json"
         succ=$?
     fi
 
-    if [ $succ -eq 0 ];
+    if [ $succ -eq 0 ]
     then
       echo "test succeeded..."
-      sleep 3
+      sleep 5
       echo "##########################################################"
       echo "send SIGTERM and SIGKILL TO SUB"
     else
       # shellcheck disable=SC1072
       echo " test failed"
+      echo "exit code: "$succ
     fi
 
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-      sleep 10
+    if [[ "$OSTYPE" == "linux-gnu"* ]]
+    then
+      sleep 20
       sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB3
       killall SUB3
     else
-      sleep 10
-      killall SUB3
+      sleep 20
+      kill SUB3
     fi
 
     echo "##########################################################"

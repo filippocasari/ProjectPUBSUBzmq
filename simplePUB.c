@@ -31,8 +31,6 @@ void catch_sigterm() {
 void
 publisher_thread(const char *path) {
     //path of json file for configuration
-
-
     //json obj for deserialization
     json_object *PARAM = json_object_from_file(path);
     int payload_size = 10; //payload, 10 default bytes
@@ -42,12 +40,14 @@ publisher_thread(const char *path) {
     int msg_rate_sec = 1; //message rate, mex/sec
     // deserializing file
     zsock_t *pub; // new sock pub
+    const char *type_test;
     if (PARAM != NULL) { // file json found
         puts("PARAMETERS PUBLISHER: ");
         const char *type_connection;
         const char *port;
         const char *ip;
         const char *output_file;
+
         int int_value;
         const char *value;
         // starting a new for each for the couple key, value
@@ -59,6 +59,8 @@ publisher_thread(const char *path) {
             if (strcmp(key, "msg_rate_sec") == 0) {
                 msg_rate_sec = (int) json_object_get_int64(val);
             }
+            if (strcmp(key, "type_test") == 0)
+                type_test = value;
             if (strcmp(key, "number_of_messages") == 0)
                 num_mex = (int) json_object_get_int64(val);
             if (strcmp(key, "payload_size_bytes") == 0)
@@ -104,8 +106,9 @@ publisher_thread(const char *path) {
             endpoint_customized = strcat(endpoint_customized, endpoint_inproc);
         }
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
-
-        pub = zsock_new_pub(endpoint_customized);
+        pub = zsock_new(ZMQ_PUB);
+        zsock_connect(pub, endpoint_customized);
+        //pub = zsock_new_pub(endpoint_customized);
 
 
     } else {
@@ -120,7 +123,7 @@ publisher_thread(const char *path) {
 
     printf("PAYLOAD SIZE: %d\n", payload_size);
     printf("message rate: %d\n", msg_rate_sec);
-    while (!zctx_interrupted && count < num_mex && !zsys_interrupted) {
+    while (count < num_mex && !zsys_interrupted) {
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)
         // break;
@@ -130,30 +133,42 @@ publisher_thread(const char *path) {
         zclock_sleep((int) milli_secs_of_sleeping); //  Wait for x seconds
 
         char *string; // 12 byte for representation of timestamp in micro secs
-        long timestamp = zclock_usecs(); // catching timestamp
+        int64_t timestamp;
+        if (strcmp(type_test, "LAN")==0)
+            timestamp= zclock_time();
+        else if(strcmp(type_test, "LOCAL")==0)
+            timestamp = zclock_usecs(); // catching timestamp
+        else
+            timestamp=0000000;
+
         int nDigits = floor(1 + log10(abs((int) timestamp)));
+
         string = (char *) malloc((nDigits + 1) * sizeof(char));
-        sprintf(string, "%ld", timestamp); // fresh copy into the string
-        printf("TIMESTAMP: %ld\n", timestamp);
+        sprintf(string, "%lld", timestamp); // fresh copy into the string
+        printf("TIMESTAMP: %lld\n", timestamp);
         zmsg_t *msg = zmsg_new(); // creating new zmq message
         int rc = zmsg_pushstr(msg, string);
         assert(rc == 0);
         printf("SIZE OF RESIDUAL STRING (OF ZEROS) : %ld\n", payload_size - strlen(string));
         if (payload_size > (long) strlen(string)) {
             puts("PAYLOAD IS NOT NULL");
-            char string_residual_payload[(payload_size - strlen(string))];
-            for (int i = 0; i < (payload_size - strlen(string)); i++) {
+            char string_residual_payload[(payload_size - (int)strlen(string))];
+            for (int i = 0; i < (int)(payload_size - (int)strlen(string)) -1; i++) {
                 string_residual_payload[i] = '0';
             }
-            string_residual_payload[payload_size - strlen(string)] = '\0';
+            string_residual_payload[payload_size - strlen(string)-1] = '\0';
             //printf("String of zeros: %s\n", string_residual_payload);
 
-            if (zsock_send(pub, "ssss", topic, "TIMESTAMP", string, string_residual_payload) == -1)
-                break;              //  Interrupted
+            if (zsock_send(pub, "ssss", topic, "TIMESTAMP", string, string_residual_payload) == -1) {
+                puts("error to send");
+                break;
+            }
+            //  Interrupted
         } else {
-            char string_residual_payload = '\0';
+
             //printf("String of zeros: %c\n", string_residual_payload);
             if (zsock_send(pub, "sss", topic, "TIMESTAMP", string) == -1)
+                puts("sending interrupted...");
                 break;
         }
         //char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent

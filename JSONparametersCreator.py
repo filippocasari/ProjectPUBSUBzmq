@@ -14,10 +14,11 @@ ip = "127.0.0.1"
 port = "6000"
 metrics_output_type = "csv"
 num_of_subs = 1
-num_consumer_threads = 10
+num_consumer_threads = 4
 number_of_messages = 10000
 num_test = 0
 dir_name = "./fileJson/"
+type_test="LAN"
 if not os.path.exists(dir_name):
     os.mkdir(dir_name)
 for i in range_payload:
@@ -30,6 +31,7 @@ for i in range_payload:
                 "ip": ip,
                 "port": port, "metrics_output_type": metrics_output_type,
                 "experiment_name": string_name, "num_of_subs": num_of_subs,
+                "type_test": "LAN",
                 "num_consumer_threads": num_consumer_threads}
         try:
             with open(dir_name + string_name + ".json", 'w') as outfile:
