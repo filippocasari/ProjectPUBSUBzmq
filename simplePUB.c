@@ -107,9 +107,8 @@ publisher_thread(const char *path) {
         }
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
         pub = zsock_new(ZMQ_PUB);
-        zsock_connect(pub, endpoint_customized);
+        zsock_connect(pub, "%s", endpoint_customized);
         //pub = zsock_new_pub(endpoint_customized);
-
 
     } else {
         //default endpoint
@@ -167,9 +166,11 @@ publisher_thread(const char *path) {
         } else {
 
             //printf("String of zeros: %c\n", string_residual_payload);
-            if (zsock_send(pub, "sss", topic, "TIMESTAMP", string) == -1)
+            if (zsock_send(pub, "sss", topic, "TIMESTAMP", string) == -1){
                 puts("sending interrupted...");
                 break;
+            }
+
         }
         //char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent
 
