@@ -147,10 +147,8 @@ publisher_thread(const char **path) {
         if (payload_size > (long) strlen(string)) {
             puts("PAYLOAD IS NOT NULL");
             char string_residual_payload[(abs(payload_size - (int)strlen(string)))];
-            for (int i = 0; i < (abs(payload_size - (int)strlen(string)) -1); i++) {
-                string_residual_payload[i] = '0';
-            }
-            string_residual_payload[payload_size - strlen(string)-1] = '\0';
+            memset(string_residual_payload, '0', (abs(payload_size - (int)strlen(string))));
+            string_residual_payload[payload_size - strlen(string)] = '\0';
             //printf("String of zeros: %s\n", string_residual_payload);
 
             if (zsock_send(pub, "ssss", topic, "TIMESTAMP", string, string_residual_payload) == -1) {

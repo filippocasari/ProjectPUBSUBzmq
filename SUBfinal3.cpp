@@ -121,10 +121,10 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
             cout << "new consumer thread created with ID: " << this_thread::get_id() << endl;
             cout << "pid of consumer: " << getpid() << endl;
             int64_t time = zclock_time();
+            int64_t end_to_end_delay;
             while (queue->Pop(item)) {
                 puts("created new item...");
-                long end_to_end_delay;
-                long start = std::stol(item.ts_start);
+                int64_t start = std::stoll(item.ts_start);
                 cout << "end : " << item.ts_end << " start: " << start;
                 end_to_end_delay = item.ts_end - start;
                 puts("\nmanaging message...");
