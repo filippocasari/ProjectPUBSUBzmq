@@ -94,7 +94,8 @@ publisher_thread(const char **path) {
         }
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
         pub = zsock_new(ZMQ_PUB);
-        zsock_bind(pub,  "%s", endpoint_customized);
+        int rc=zsock_bind(pub,  "%s", endpoint_customized);
+        printf("binding success? %d\n", rc);
         //pub = zsock_new_pub(endpoint_customized);
 
     } else {
