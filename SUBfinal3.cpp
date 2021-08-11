@@ -120,9 +120,8 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
             Item2 item = Item2();
             cout << "new consumer thread created with ID: " << this_thread::get_id() << endl;
             cout << "pid of consumer: " << getpid() << endl;
-            int64_t time = zclock_time();
             int64_t end_to_end_delay;
-            while (queue->Pop(item)) {
+            while (queue->Pop(item) && !zsys_interrupted) {
                 puts("created new item...");
                 int64_t start = std::stoll(item.ts_start);
                 cout << "end : " << item.ts_end << " start: " << start;
@@ -134,7 +133,7 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
                 } else {
 
                     config_file.open(path_csv + name_of_csv_file, ios::app);
-                    puts("file open...");
+                    puts("opening file...");
                     if (!is_open) {
                         config_file << "number,value,timestamp,message rate,payload size\n";
                         is_open = true;
@@ -145,15 +144,11 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
                                    to_string(msg_rate) + "," +
                                    to_string(payload) +
                                    "\n";
-                    config_file.close();
+
                     count++;
                 }
-                if (zsys_interrupted) {
-                    printf("QUEUE IS EMPTY?: %d", queue->isEmpty());
-                    queue->RequestShutdown();
-                    break;
-                }
             }
+            config_file.close();
             return 0;
 
         });
@@ -165,6 +160,8 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
     return 0;
 }
 
+
+
 static void
 subscriber_thread( void *args) {
     //zsock_signal(pipe, 0);
@@ -173,7 +170,6 @@ subscriber_thread( void *args) {
     BlockingQueue<Item2> queue(QUEUE_CAPACITY); //initialize queue
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
     thread thread_start_consumers([&queue]() {
-
         int succ = create_new_consumers(&queue);
         printf("consumers terminate? %d", succ);
 
@@ -181,22 +177,27 @@ subscriber_thread( void *args) {
 
     //--------------------------------------------------------------------------------------------------------
     //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
-
+    printf("topic is %s", topic);
     zsock_t *sub = zsock_new_sub((char *) args, topic);
 
-    puts("sub connected");
+
+
 
     int count = 0;
     //long time_of_waiting = 0;
     int c = 0;
     bool terminated = false;
+    zmsg_t *msg=zmsg_new();
+    int64_t end;
+    string metric = "end_to_end_delay";
+
     while (c < NUM_MEX_MAX && !zsys_interrupted) {
 
         c++;
         //char *topic;
-        zmsg_t *msg;
-        int64_t end;
-        zsock_recv(sub, "sm", &topic, &msg);
+
+        if(zsock_recv(sub, "sm", &topic, &msg)==-1)
+            break;
         if (strcmp(type_test, "LAN") == 0)
             end = zclock_time();
         else if (strcmp(type_test, "LOCAL") == 0)
@@ -204,7 +205,6 @@ subscriber_thread( void *args) {
         else
             end = 0;
         zsys_info("Recv on %s", topic);
-        string metric = "end_to_end_delay";
         thread producer([&msg, &queue, &end]() {
             printf("start new thread producer\nadding value...\n");
             payload_managing(msg, &queue, end);
@@ -213,13 +213,13 @@ subscriber_thread( void *args) {
         producer.join();
     }
 
-    sleep(10);
+    sleep(5);
     zsock_destroy(&sub);
 }
 
 
 int main(int argc, char *argv[]) {
-    catch_sigterm();
+
     char *cmdstring; // string of args
     if (argc == 1) // exit if argc is less then 2
     {

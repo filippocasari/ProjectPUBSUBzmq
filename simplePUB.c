@@ -80,7 +80,7 @@ publisher_thread(const char **path) {
         }
         // create a new endpoint composed of the items inside the json file
         char endpoint[20];
-
+        endpoint[0]='\0';
         char *endpoint_customized = strcat(endpoint, type_connection);
         endpoint_customized = strcat(endpoint_customized, "://");
 
@@ -93,10 +93,8 @@ publisher_thread(const char **path) {
             endpoint_customized = strcat(endpoint_customized, endpoint_inproc);
         }
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
-        pub = zsock_new(ZMQ_PUB);
-        int rc=zsock_bind(pub,  "%s", endpoint_customized);
-        printf("binding success? %d\n", rc);
-        //pub = zsock_new_pub(endpoint_customized);
+
+        pub = zsock_new_pub(endpoint_customized);
 
     } else {
         //default endpoint
@@ -156,11 +154,12 @@ publisher_thread(const char **path) {
                 puts("error to send");
                 puts("packet loss");
             }
+
             //  Interrupted
         } else {
 
             //printf("String of zeros: %c\n", string_residual_payload);
-            if (zsock_send(pub, "sss", topic, "TIMESTAMP", string) == -1){
+            if (zsock_send(pub, "sss", &topic, "TIMESTAMP", string) == -1){
                 puts("sending interrupted...");
                 break;
             }
