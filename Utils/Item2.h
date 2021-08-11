@@ -13,9 +13,9 @@ class Item2 {
         public:
         std::string name_metric;
         std::string ts_start;
-        long ts_end{};
+        int64_t ts_end{};
         Item2() = default;
-        Item2(std::string mex, long ts, std::string name) {
+        Item2(std::string mex, int64_t ts, std::string name) {
             ts_start = std::move(mex);
             ts_end = ts;
             name_metric = std::move(name);

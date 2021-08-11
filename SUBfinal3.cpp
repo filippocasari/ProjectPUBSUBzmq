@@ -24,7 +24,9 @@ const char *string_json_path;
 char *path_csv = nullptr;
 bool is_open = false;
 const char *type_test;
-
+int count_num_mex_recv=0;
+char endpoint[30] = "\0";
+const char *topic;
 void sig_term_handler(int signum, siginfo_t *info, void *ptr) {
     write(STDERR_FILENO, SIGTERM_MSG, sizeof(SIGTERM_MSG));
 }
@@ -41,7 +43,7 @@ void catch_sigterm() {
 }
 
 
-void payload_managing(zmsg_t *msg, BlockingQueue<Item2> *queue, long
+void payload_managing(zmsg_t *msg, BlockingQueue<Item2> *queue, int64_t
 end) {
 //char *end_pointer_string;
 //long start;
@@ -51,29 +53,29 @@ end) {
          zmsg_size(msg)
          <<
          std::endl;
-
-    while (
-            zmsg_size(msg)
-            > 0) {
+    frame = zmsg_popstr(msg);
+    count_num_mex_recv++;
+    if (strcmp(frame,"TIMESTAMP") == 0)
+    {
         frame = zmsg_popstr(msg);
-        if (
-                strcmp(frame,
-                       "TIMESTAMP") == 0) {
-            frame = zmsg_popstr(msg);
-            zsys_info("> %s", frame);
-            string start = frame;
-            item = Item2(start, end, "end_to_end_delay");
-            frame = zmsg_popstr(msg);
-            queue->Push(item);
-            //zsys_info("PAYLOAD > %s", frame);
-            break;
-        } else {
-            puts("error...this message does not contain any timestamp");
-            break;
-        }
-    }
+        zsys_info("> %s", frame);
+        string start = frame;
+        item = Item2(start, end, "end_to_end_delay");
 
-    zmsg_destroy(&msg);
+        queue->Push(item);
+
+
+    } else {
+        puts("error...this message does not contain any timestamp");
+    }
+    while (zmsg_size(msg)> 0) {
+        puts("estrapolating other payload...");
+        frame = zmsg_popstr(msg);
+        zmsg_popstr(msg);
+        //zsys_info("PAYLOAD > %s", frame);
+    }
+    cout<<"message Received: No. "<<count_num_mex_recv<<endl;
+    //zmsg_destroy(&msg);
 
 }
 
@@ -97,11 +99,11 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
             name_of_experiment = json_object_get_string(val);
         if (strcmp(key, "num_consumer_threads") == 0)
             num_consumers = (int) strtol(json_object_get_string(val), nullptr, 10);
-        if(strcmp(key, "msg_rate_sec")==0){
-            msg_rate= (int) strtol(json_object_get_string(val), nullptr, 10);
+        if (strcmp(key, "msg_rate_sec") == 0) {
+            msg_rate = (int) strtol(json_object_get_string(val), nullptr, 10);
         }
-        if(strcmp(key, "payload_size_bytes")==0){
-            payload= (int) strtol(json_object_get_string(val), nullptr, 10);
+        if (strcmp(key, "payload_size_bytes") == 0) {
+            payload = (int) strtol(json_object_get_string(val), nullptr, 10);
         }
     }
     vector<thread> consumers; // create a vector of consumers
@@ -116,9 +118,9 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
         consumers.emplace_back([&queue, console, &config_file, name_of_csv_file, &count, &msg_rate, &payload]() {
 
             Item2 item = Item2();
-            cout<<"new consumer thread created with ID: "<<this_thread::get_id()<<endl;
-            cout<<"pid of consumer: "<<getpid()<<endl;
-            int64_t time=zclock_time();
+            cout << "new consumer thread created with ID: " << this_thread::get_id() << endl;
+            cout << "pid of consumer: " << getpid() << endl;
+            int64_t time = zclock_time();
             while (queue->Pop(item)) {
                 puts("created new item...");
                 long end_to_end_delay;
@@ -132,19 +134,21 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
                 } else {
 
                     config_file.open(path_csv + name_of_csv_file, ios::app);
+                    puts("file open...");
                     if (!is_open) {
                         config_file << "number,value,timestamp,message rate,payload size\n";
                         is_open = true;
                     }
 
                     config_file << to_string(count) + "," +
-                                   to_string(end_to_end_delay) + "," + to_string(item.ts_end) +","+ to_string(msg_rate)+","+
-                                                                                                                        to_string(payload)+
+                                   to_string(end_to_end_delay) + "," + to_string(item.ts_end) + "," +
+                                   to_string(msg_rate) + "," +
+                                   to_string(payload) +
                                    "\n";
                     config_file.close();
                     count++;
                 }
-                if(zsys_interrupted){
+                if (zsys_interrupted) {
                     printf("QUEUE IS EMPTY?: %d", queue->isEmpty());
                     queue->RequestShutdown();
                     break;
@@ -154,59 +158,62 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
 
         });
     }
-    for (int i=0; i<num_consumers; i++)
-    {
+    for (int i = 0; i < num_consumers; i++) {
         consumers[i].join();
     }
 
     return 0;
 }
+
 static void
-subscriber_thread(zsock_t *pipe, void *args) {
-    zsock_signal(pipe, 0);
+subscriber_thread( void *args) {
+    //zsock_signal(pipe, 0);
     //catch_sigterm();
     // -----------------------------------------------------------------------------------------------------
     BlockingQueue<Item2> queue(QUEUE_CAPACITY); //initialize queue
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
     thread thread_start_consumers([&queue]() {
 
-        int succ=create_new_consumers(&queue);
+        int succ = create_new_consumers(&queue);
         printf("consumers terminate? %d", succ);
 
     });// create new thread to manage payload
 
     //--------------------------------------------------------------------------------------------------------
-    auto *sub = static_cast<zsock_t *>(args); // create new sub socket
+    //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
+
+    zsock_t *sub = zsock_new_sub((char *) args, topic);
+
     puts("sub connected");
 
     int count = 0;
     //long time_of_waiting = 0;
     int c = 0;
     bool terminated = false;
-    while ( c < NUM_MEX_MAX && !zsys_interrupted) {
+    while (c < NUM_MEX_MAX && !zsys_interrupted) {
 
         c++;
-        char *topic;
+        //char *topic;
         zmsg_t *msg;
-        long end;
+        int64_t end;
         zsock_recv(sub, "sm", &topic, &msg);
-        if(strcmp(type_test, "LAN")==0)
-            end = (long) zclock_time();
-        else if (strcmp(type_test, "LOCAL")==0)
+        if (strcmp(type_test, "LAN") == 0)
+            end = zclock_time();
+        else if (strcmp(type_test, "LOCAL") == 0)
             end = zclock_usecs();
         else
             end = 0;
         zsys_info("Recv on %s", topic);
         string metric = "end_to_end_delay";
-        thread producer([msg, &queue, &end]() {
+        thread producer([&msg, &queue, &end]() {
             printf("start new thread producer\nadding value...\n");
             payload_managing(msg, &queue, end);
         });
-        free(topic);
         count++;
         producer.join();
     }
-    thread_start_consumers.join();
+
+    sleep(10);
     zsock_destroy(&sub);
 }
 
@@ -224,28 +231,27 @@ int main(int argc, char *argv[]) {
 
         strsize += (int) strlen(argv[1]);
 
-        if (argc==2)
-        {
-            cout<<"Path for csv not chosen..."<<endl;
+        if (argc == 2) {
+            cout << "Path for csv not chosen..." << endl;
             return 2;
         }
-        size_t strsize_2= (int) strlen(argv[2]);
+        size_t strsize_2 = (int) strlen(argv[2]);
         path_csv = argv[2];
-        DIR* dir = opendir(path_csv);
+        DIR *dir = opendir(path_csv);
         if (dir) {
-            cout<<"path csv already exists"<<endl;
+            cout << "path csv already exists" << endl;
             closedir(dir);
         } else if (ENOENT == errno) {
             int a = mkdir(path_csv, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-            if (a !=0){
+            if (a != 0) {
                 return 3;
             }
-        }else{
+        } else {
             return 4;
         }
-        cout<<"PATH chosen: "<<path_csv<<endl;
-         // initialize the string
-        cmdstring=argv[1];
+        cout << "PATH chosen: " << path_csv << endl;
+        // initialize the string
+        cmdstring = argv[1];
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
     }
     //path of json file
@@ -255,7 +261,7 @@ int main(int argc, char *argv[]) {
     json_object *PARAM;
     const char *endpoint_inproc;
     char *endpoint_customized;
-    const char *topic;
+
     int num_of_subs = NUM_SUBS;
     PARAM = json_object_from_file(string_json_path);
 
@@ -304,7 +310,7 @@ int main(int argc, char *argv[]) {
             if (strcmp(key, "endpoint_inproc") == 0)
                 endpoint_inproc = value;
         }
-        char endpoint[30] = "\0";
+
         endpoint_customized = strcat(endpoint, type_connection);
         endpoint_customized = strcat(endpoint_customized, "://");
         if (strcmp(type_connection, "tcp") == 0) {
@@ -319,28 +325,26 @@ int main(int argc, char *argv[]) {
         puts("FILE JSON NOT FOUND...EXIT");
         return 2;
     }
-    zactor_t *sub_threads[num_of_subs];
-    zsock_t *subscribers[num_of_subs];
+    //zactor_t *sub_threads[num_of_subs];
     printf("Numbers of SUBS : %d\n", num_of_subs);
-    for (int i = 0; i < num_of_subs; i++) {
+    /*for (int i = 0; i < num_of_subs; i++) {
         zclock_log("file json is being used");
-        subscribers[i] = zsock_new_sub(endpoint_customized, topic);
+
         string name;
         name = topic + to_string(i);
         cout << "Starting new sub thread :" + name << endl;
-        sub_threads[i] = zactor_new(subscriber_thread, subscribers[i]);
+        sub_threads[i] = zactor_new(subscriber_thread, endpoint_customized);
         cout << "new actor created..." << endl;
 
     }
-    /*
+
      * destroying zactors of subs
      */
-    for (int i = 0; i < num_of_subs; i++) {
+    subscriber_thread(endpoint_customized);
+    /*for (int i = 0; i < num_of_subs; i++) {
         printf("destroying zactor and zsocket: No.%d\n", i);
-
         zactor_destroy(&sub_threads[i]);
-        zsock_destroy(&subscribers[i]);
-    }
+    }*/
 
     return 0;
 }
