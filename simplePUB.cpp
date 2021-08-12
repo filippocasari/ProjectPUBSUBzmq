@@ -15,6 +15,7 @@ const char *json_file_config;
 #define NUM_MEX_DEFAULT 10
 #define SIGTERM_MSG "SIGTERM received.\n"
 
+
 //thread of publisher
 int
 publisher_thread(const char **path) {
@@ -147,12 +148,13 @@ publisher_thread(const char **path) {
             memset(string_residual_payload, '0', (abs(payload_size - (int)strlen(string))));
             string_residual_payload[payload_size - strlen(string)] = '\0';
             //printf("String of zeros: %s\n", string_residual_payload);
-            std::thread sender([&pub, &topic, &string,&string_residual_payload](){
-                if (zsock_send(pub, "ssss", topic, "TIMESTAMP", string, string_residual_payload) == -1) {
-                    puts("error to send,packet loss");
-                }
-            });
-            sender.join();
+            zchunk_t *chunk= zchunk_new(string_residual_payload,abs(payload_size - (int)strlen(string)) );
+            if (zsock_send(pub, "sssc", topic, "TIMESTAMP", string, chunk) == -1) {
+                puts("error to send,packet loss");
+            }
+            zchunk_destroy(&chunk);
+
+
             //  Interrupted
         } else {
 
