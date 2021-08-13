@@ -67,7 +67,7 @@ int payload_managing(zmsg_t **msg, BlockingQueue<Item2> *queue, const int64_t
             queue->Push(item);
             can_i_push.unlock();
             cout<<"item No. "<<*c<<" pushed"<<endl;
-
+            free(frame);
 
         }
         if (zmsg_size(*msg) == 0) {
@@ -139,17 +139,14 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
             int64_t end_to_end_delay;
             int c = 0;
             ofstream config_file;
-            while (queue->Pop(item) && !zsys_interrupted) {
+            while (queue->Pop(item) && c<NUM_MEX_MAX) {
                 cout << "thread No. " << this_thread::get_id() << " is working" << endl;
                 puts("created new item...");
-                int64_t start = std::stoll(item.ts_start);
+                char *end_pointer;
+                int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
                 cout << "end : " << item.ts_end << " start: " << start;
                 end_to_end_delay = item.ts_end - start;
                 puts("\nmanaging message...");
-                if (c == NUM_MEX_MAX - 1) {
-                    queue->RequestShutdown();
-                    puts("request to shut down queue...");
-                }
                 c++;
                 if (console) {
                     std::cout << "Metric name: " << item.name_metric << std::endl << "value: "
@@ -157,26 +154,22 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
                 } else {
                     cout << "queue empty? " << queue->isEmpty() << endl;
                     puts("opening file...");
-                    access_to_file.lock();
+
                     if (!config_file.is_open())
                         config_file.open(path_csv + name_of_csv_file, ios::app);
 
                     config_file
-                            << /*to_string(count) + "," +*/to_string(end_to_end_delay) + "," + to_string(item.ts_end) +
+                            << to_string(count) + "," +to_string(end_to_end_delay) + "," + to_string(item.ts_end) +
                                                            "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
 
                     config_file.close();
-                    access_to_file.unlock();
-
+                    count++;
                     puts("file written...");
-                    //count++;
                 }
             }
-
             puts("file close...");
 
         });
-
 
     }
     for (int i = 0; i < num_consumers; i++) {
@@ -211,28 +204,39 @@ subscriber_thread(void *args, const char *topic) {
 
     int64_t end;
     string metric = "end_to_end_delay";
-
-    while (c < NUM_MEX_MAX) {
+    zpoller_t *poller = zpoller_new(sub, NULL);
+    zmsg_t *msg = zmsg_new();
+    while (zsock_recv(sub, "sm", &topic, &msg)!=-1) {
         c++;
         //char *topic;
-        zmsg_t *msg = zmsg_new();
-        int rc=zsock_recv(sub, "sm", &topic, &msg);
+
+        //zpoller_wait(poller, 0);
+        /*int rc=
         if (rc==-1)
             puts("ERROR TO RECEIVE");
+        */
+
+        if(msg== nullptr){
+            puts("exit, msg null");
+            break;
+        }
         if (strcmp(type_test, "LAN") == 0)
             end = zclock_time();
         else if (strcmp(type_test, "LOCAL") == 0)
             end = zclock_usecs();
         else
             end = 0;
+
         zsys_info("Recv on %s", topic);
         puts("start new thread producer\nadding value...\n");
         int a = payload_managing(&msg, &queue, &end, &c);
         cout << "managing payload exit code: " << a << endl;
         printf("message Received: No. %d\n", c);
+        zmsg_destroy(&msg);
+
     }
 
-    sleep(5);
+    sleep(3);
     zsock_destroy(&sub);
     //
     //terminate();
