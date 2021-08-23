@@ -15,7 +15,7 @@ link_libraries("-lzmq")
 link_libraries("-lm")
 link_libraries("-ljson-c")
 add_compile_options(-Wall)
-add_executable(CLIENT_BEACON discovery_client.cpp)
+add_executable(CLIENT_BEACON discovery_client.cpp discovery_server.cpp)
 add_executable(PUB simplePUB.cpp)
 add_executable(Item Utils/Item.cpp)
 

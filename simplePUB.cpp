@@ -38,7 +38,7 @@ publisher_thread(const char **path) {
         const char *ip;
         const char *output_file;
 
-        int int_value;
+        //int int_value;
         const char *value;
         // starting a new for each for the couple key, value
 
@@ -120,8 +120,8 @@ publisher_thread(const char **path) {
         // break;
         printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
         //printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
-        zclock_sleep((int) milli_secs_of_sleeping); //  Wait for x seconds
-         // 12 byte for representation of timestamp in micro secs
+        zclock_sleep((int) milli_secs_of_sleeping); //  Wait for x milliseconds
+
 
         if (strcmp(type_test, "LAN")==0){
             timestamp= zclock_time();
@@ -135,7 +135,7 @@ publisher_thread(const char **path) {
         }
 
 
-        int nDigits = floor(1 + log10(abs((int) timestamp)));
+        //int nDigits = floor(1 + log10(abs((int) timestamp)));
         sprintf(string, "%lld", timestamp); // fresh copy into the string
         printf("TIMESTAMP: %lld\n", timestamp);
         zmsg_t *msg = zmsg_new(); // creating new zmq message
@@ -189,7 +189,6 @@ int main(int argc, char **argv) {
 
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
         int rc =publisher_thread(&cmdstring);
-        sleep(10);
         printf("exit code of publisher : %d", rc);
         //zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
         //zstr_sendx (pub_actor, "BREAK", NULL);

@@ -18,7 +18,7 @@ num_consumer_threads = 4
 number_of_messages = 10000
 num_test = 0
 dir_name = "./fileJson/"
-type_test="LAN"
+type_test="LOCAL"
 if not os.path.exists(dir_name):
     os.mkdir(dir_name)
 for i in range_payload:

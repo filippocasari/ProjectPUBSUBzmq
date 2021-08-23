@@ -127,18 +127,18 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
     string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
     int count = 0;
     printf("Num of consumer threads: %d\n", num_consumers);
-    config_file.open(path_csv + name_of_csv_file, ios::app);
+    string name_path_csv=path_csv + name_of_csv_file;
+    config_file.open(name_path_csv, ios::app);
     config_file << "number,value,timestamp,message rate,payload size\n";
     config_file.close();
     for (int i = 0; i < num_consumers; i++) { //same as producers
         zsys_sprintf("launch consumer No. %d", i);
-        consumers.emplace_back([&queue, &console, &name_of_csv_file, &count, &msg_rate, &payload]() {
+        consumers.emplace_back([&queue, &console, &name_of_csv_file, &count, &msg_rate, &payload, &name_path_csv, &config_file]() {
             Item2 item = Item2();
             cout << "new consumer thread created with ID: " << this_thread::get_id() << endl;
             //cout << "pid of consumer: " << getpid() << endl;
             int64_t end_to_end_delay;
             int c = 0;
-            ofstream config_file;
             while (queue->Pop(item) && c<NUM_MEX_MAX) {
                 cout << "thread No. " << this_thread::get_id() << " is working" << endl;
                 puts("created new item...");
@@ -156,13 +156,14 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
                     puts("opening file...");
 
                     if (!config_file.is_open())
-                        config_file.open(path_csv + name_of_csv_file, ios::app);
+                        config_file.open(name_path_csv, ios::app);
 
                     config_file
                             << to_string(count) + "," +to_string(end_to_end_delay) + "," + to_string(item.ts_end) +
                                                            "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
 
-                    config_file.close();
+                    //config_file.close();
+
                     count++;
                     puts("file written...");
                 }
