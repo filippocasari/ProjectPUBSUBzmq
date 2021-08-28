@@ -1,87 +1,94 @@
+import sys
+
+import numpy as np
 import pandas as pd
-import json
+from matplotlib import pyplot as plt
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+E_3 = 1000 # variable to specify the amount of payload
+msg_rates = [250, 500, 1000, 10000] # message rate, messages/second
+range_payload = [10 * E_3, 25 * E_3, 50 * E_3] # amount of payload, # bytes
+# msg_rates = [250.0, 10.0, 2250.0, 2500.0, 100.0]
+# range_payload = [10, 2250, 2500, 100, 200, 25000, 1000]
+num_experiments = 2 # number of directory of tests
+dir_base = sys.argv[1] # get the directory base
+which_experiment = sys.argv[2] # local or lan
+where = sys.argv[3] # get where the execution of tests was
+# IF LAN is SET, We consider milliseconds, nanoseconds otherwise
+lan = True
+
+dataframe_ = pd.DataFrame() # create new pandas frame which will contain data from csv files
+print("PATH CSV CHOSEN", dir_base)
+if lan:
+    millisecs_div = 1.0
+else:
+    millsecs_div = 1000.0
+
+# try to make it simpler: concat every csv(s)
+for i in range(num_experiments):  # for each experiments
+    dir_temp = dir_base + str(i)  # "ResultsPath"+"number"
+    print("dir temp is : ", dir_temp)
+    count = 0
+    for payload in range_payload:  # for each payload, concat results
+        for rate in msg_rates:  # same for each rate
+            path = dir_temp + '/' + 'test_' + str(count) + '.csv'  # concat string to read the test
+            print("PATH FINAL ANALYZED: ", path)
+            data_frame_temp = pd.read_csv(path, error_bad_lines=False)  # open csv file
+            count += 1  # increase counter
+            # real concat pandas arrays
+            dataframe_ = pd.DataFrame(data=pd.concat([dataframe_, data_frame_temp]), columns=data_frame_temp.columns)
+            #print(dataframe_)
+
+print(dataframe_) # print our dataframe
+fig, ax = plt.subplots(1, 1, figsize=(13, 8)) # create new plot to show the delays
+j = 0 # counter to get the next scrap
+x_scrap = [-75, 0, 75] # array of craps, must be "x" dimension for "x" message rate
+
+for payload in range_payload: # for each payload plot and calculate  delay
+    msg_rate_250 = dataframe_.loc[(dataframe_['message rate'] == 250) & (dataframe_['payload size'] == payload)]
+    msg_rate_250_mean = msg_rate_250['value'].mean() / millisecs_div
+    msg_rate_250_std = msg_rate_250['value'].std() / millisecs_div
+    print("mean for msg rate = 250 is : ", msg_rate_250_mean, " with std: ", msg_rate_250_std)
+
+    msg_rate_500 = dataframe_.loc[(dataframe_['message rate'] == 500) & (dataframe_['payload size'] == payload)]
+    msg_rate_500_mean = msg_rate_500['value'].mean() / millisecs_div
+    msg_rate_500_std = msg_rate_500['value'].std() / millisecs_div
+    print("mean for msg rate = 500 is : ", msg_rate_500_mean, " with std: ", msg_rate_500_std)
+    msg_rate_1000 = dataframe_.loc[(dataframe_['message rate'] == 1000) & (dataframe_['payload size'] == payload)]
+    msg_rate_1000_mean = msg_rate_1000['value'].mean() / millisecs_div
+    msg_rate_1000_std = msg_rate_1000['value'].std() / millisecs_div
+    print("mean for msg rate = 1000 is : ", msg_rate_1000_mean, " with std: ", msg_rate_1000_std)
+
+    msg_rate_10000 = dataframe_.loc[(dataframe_['message rate'] == 10000) & (dataframe_['payload size'] == payload)]
+    msg_rate_10000_mean = msg_rate_10000['value'].mean() / millisecs_div
+    msg_rate_10000_std = msg_rate_10000['value'].std() / millisecs_div
+    print("mean for msg rate = 10000 is : ", msg_rate_10000_mean, " with std: ", msg_rate_10000_std)
 
 
-def barplot_err(x, y, xerr=None, yerr=None, data=None, **kwargs):
-    _data = []
-    for _i in data.index:
+    # Create lists for the plot
 
-        _data_i = pd.concat([data.loc[_i:_i]] * 3, ignore_index=True, sort=False)
-        _row = data.loc[_i]
-        if xerr is not None:
-            _data_i[x] = [_row[x] - _row[xerr], _row[x], _row[x] + _row[xerr]]
-        if yerr is not None:
-            _data_i[y] = [_row[y] - _row[yerr], _row[y], _row[y] + _row[yerr]]
-        _data.append(_data_i)
+    # creating an array for delays (mean) and one for error (standard deviation)
 
-    _data = pd.concat(_data, ignore_index=True, sort=False)
+    delays = [msg_rate_250_mean, msg_rate_500_mean, msg_rate_1000_mean, msg_rate_10000_mean]
+    error = [msg_rate_250_std, msg_rate_500_std, msg_rate_1000_std, msg_rate_10000_std]
 
-    _ax = sns.barplot(x=x, y=y, data=_data, ci='sd', **kwargs)
+    msg_rates_temp = np.array(msg_rates) + x_scrap[j]
+    w = 50  # width of a bar
+    ax.bar(msg_rates_temp, delays, yerr=error, align='center', alpha=0.5, ecolor='black', capsize=6, width=w,
+           label='payload: ' + str(payload) + ' bytes')
+    j += 1  # next scrap
+    ax.set_ylabel('Average of delays [milliseconds]')
+    ax.set_xticks(msg_rates)
+    ax.set_xticklabels(msg_rates)
+    ax.set_xlabel('message rate [msg/sec]')
+    ax.set_title(
+        'Average of end to end delays\n with standard deviation\ntest execution: ' + which_experiment + ' on ' + where)
+    ax.yaxis.grid(True)
 
-    return _ax
-
-
-def change_in_millsec(i):
-    i = i / 1000
-    return i
-
-
-df = pd.read_csv("ResultsCsv/test_1.csv")
-with open('fileJson/test_1.json') as f:
-    data_json = json.load(f)
-string_for_legend = "TEST: " + str(data_json["experiment_name"]) + "\nnumber of messages: " + str(
-    data_json["number_of_messages"]) + \
-                    "\nmessage rate: " + str(data_json["msg_rate_sec"]) + "\npayload size: " + str(
-    data_json["payload_size_bytes"]) + "\n"
-print(string_for_legend)
-
-print(df.info())
-print(df.describe())
-# sns.relplot(x="number", y="value", data=df, kind="line", ci="sd")
-# plt.legend([string_for_legend], loc="upper left")
-# plt.show()
-df['value'] = df['value'].apply(change_in_millsec)
-variance = df.var()['value']
-sns.relplot(x="timestamp", y="value", data=df, kind="line", ci="sd", hue=variance)
-plt.legend([string_for_legend], loc="upper left")
+    plt.tight_layout()
+    ax.autoscale(tight=True)
+    plt.ylim((-0.5, 3))
+    plt.xlim((0, 1200))
+    # TODO save plot
+plt.legend()
+# show everything
 plt.show()
-msg_rate = [5, 10, 25, 50, 100]
-range_payload = [10, 25, 50, 100, 200, 500, 1000]
-
-count = 0
-fail_load_csv = False
-
-for payload in range_payload:
-    array_msg_rate_mean = []
-    array_variances = []
-    for i in msg_rate:
-
-        try:
-            df_temp = pd.read_csv("ResultsCsv_1/test_" + str(count) + ".csv")
-            fail_load_csv = False
-            print("Lenght of csv: ", len(df_temp.index))
-            print("packets lost :", 1000-len(df_temp.index))
-        except Exception as inst:
-            fail_load_csv = True
-            break
-        with open('fileJson/test_' + str(count) + ".json") as f:
-            json_data = json.load(f)
-        print("With payload: ", json_data["payload_size_bytes"], " settled")
-        mean = df_temp.mean()['value'] / 1000
-        var = df_temp.var()['value'] / 1000
-        array_msg_rate_mean.append(mean)
-        array_variances.append(var)
-        print("with message rate ", i, " ,mean ", df_temp.mean()['value'])
-        count += 1
-
-    data = pd.DataFrame({'msg rate': msg_rate, 'mean': array_msg_rate_mean, 'variance': array_variances})
-    sns.barplot(y="mean", x="msg rate", data=data)
-    plt.title('with bytes payload: ' + str(payload))
-    plt.legend()
-    plt.show()
-        # barplot_err(y="mean", x="msg rate", yerr="variance",
-        #          capsize=.2, data=data)
-
