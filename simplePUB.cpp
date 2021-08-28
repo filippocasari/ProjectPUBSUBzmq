@@ -104,7 +104,7 @@ publisher_thread(const char **path) {
         pub = zsock_new_pub(ENDPOINT);
     }
 
-    int count = 0;
+    uint64_t count = 0;
     puts("pub connected");
     //size_of_payload = (int) strtol(payload_size, NULL, 10);
     //max_mex = strtol(num_mex, NULL, 10);
@@ -149,7 +149,7 @@ publisher_thread(const char **path) {
             string_residual_payload[payload_size - strlen(string)] = '\0';
             //printf("String of zeros: %s\n", string_residual_payload);
             zchunk_t *chunk= zchunk_new(string_residual_payload,abs(payload_size - (int)strlen(string)) );
-            if (zsock_send(pub, "sssc", topic, "TIMESTAMP", string, chunk) == -1) {
+            if (zsock_send(pub, "s8ssc", topic,count, "TIMESTAMP", string, chunk) == -1) {
                 puts("error to send,packet loss");
             }
             zchunk_destroy(&chunk);

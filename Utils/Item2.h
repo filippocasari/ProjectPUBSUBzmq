@@ -13,17 +13,20 @@ class Item2 {
         public:
         std::string name_metric;
         std::string ts_start;
+        int64_t num{};
         int64_t ts_end{};
         Item2() = default;
-        Item2(std::string mex, int64_t ts, std::string name) {
-            ts_start = std::move(mex);
+        Item2(std::string *mex, int64_t ts, std::string *name, const int64_t *count) {
+            ts_start = (*mex);
             ts_end = ts;
-            name_metric = std::move(name);
+            name_metric = (*name);
+            num=*count;
         }
         Item2(Item2 const &it){
             this->name_metric=it.name_metric;
             this->ts_end=it.ts_end;
             this->ts_start=it.ts_start;
+            this->num=it.num;
         }
 
 };

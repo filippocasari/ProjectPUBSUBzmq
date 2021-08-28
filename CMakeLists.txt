@@ -17,6 +17,6 @@ link_libraries("-ljson-c")
 add_compile_options(-Wall)
 add_executable(CLIENT_BEACON discovery_client.cpp discovery_server.cpp)
 add_executable(PUB simplePUB.cpp)
-add_executable(Item Utils/Item.cpp)
-
+add_executable(Item Utils/Item.cpp Utils/LockingQueue.cpp Utils/LockingQueue.hpp)
+add_executable(SUB SUBfinal.cpp)
 add_executable(SUB3 SUBfinal3.cpp)

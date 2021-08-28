@@ -2,8 +2,11 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-msg_rates = [5.0, 10.0, 25.0, 50.0, 100.0]
-range_payload = [10, 25, 50, 100, 200, 500, 1000]
+E_3 = 1000
+msg_rates = [250, 500, 1000, 10000]
+range_payload = [10 * E_3, 25 * E_3, 50 * E_3]
+#msg_rates = [5.0, 10.0, 25.0, 50.0, 100.0]
+#range_payload = [10, 25, 50, 100, 200, 500, 1000]
 num_experiments = 10
 dir_base = "./ResultsCsv_"
 
@@ -13,7 +16,8 @@ for i in range(num_experiments):
     count = 0
     for payload in range_payload:
         for rate in msg_rates:
-            data_frame_temp = pd.read_csv(dir_temp + "/" + "test_" + str(count) + ".csv")
+            path =dir_temp + '/' + 'test_' + str(count) + '.csv'
+            data_frame_temp = pd.read_csv(path)
             count += 1
             dataframe_ = pd.DataFrame(data=pd.concat([dataframe_, data_frame_temp]), columns=data_frame_temp.columns)
 

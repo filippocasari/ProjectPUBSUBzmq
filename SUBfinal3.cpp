@@ -46,7 +46,7 @@ void catch_sigterm() {
 
 
 int payload_managing(zmsg_t **msg, BlockingQueue<Item2> *queue, const int64_t
-*end, const int *c) {
+*end, const uint64_t *c) {
 //char *end_pointer_string;
 //long start;
     try {
@@ -62,12 +62,12 @@ int payload_managing(zmsg_t **msg, BlockingQueue<Item2> *queue, const int64_t
             frame = zmsg_popstr(*msg);
             zsys_info("> %s", frame);
             string start = frame;
-            item = Item2(start, *end, "end_to_end_delay");
-            can_i_push.lock();
-            queue->Push(item);
-            can_i_push.unlock();
+            //item = Item2(start, *end, "end_to_end_delay");
+            //can_i_push.lock();
+            //queue->Push(item);
+            //can_i_push.unlock();
             cout<<"item No. "<<*c<<" pushed"<<endl;
-            free(frame);
+
 
         }
         if (zmsg_size(*msg) == 0) {
@@ -78,7 +78,6 @@ int payload_managing(zmsg_t **msg, BlockingQueue<Item2> *queue, const int64_t
             //puts("estrapolating other payload...");
             frame = zmsg_popstr(*msg);
             printf("size of payload (byte): %zu\n", strlen(frame) * sizeof(char));
-            zmsg_popstr(*msg);
             //zsys_info("PAYLOAD > %s", frame);
         }
 
@@ -175,7 +174,6 @@ int create_new_consumers(BlockingQueue<Item2> *queue) {
     }
     for (int i = 0; i < num_consumers; i++) {
         consumers[i].join();
-
     }
     config_file.close();
     return 0;
@@ -189,8 +187,8 @@ subscriber_thread(void *args, const char *topic) {
     BlockingQueue<Item2> queue(QUEUE_CAPACITY); //initialize queue
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
     thread thread_start_consumers([&queue]() {
-        int succ = create_new_consumers(&queue);
-        printf("consumers terminate? %d", succ);
+        //int succ = create_new_consumers(&queue);
+        //printf("consumers terminate? %d", succ);
 
     });// create new thread to manage payload
     thread_start_consumers.detach();
@@ -200,15 +198,15 @@ subscriber_thread(void *args, const char *topic) {
     zsock_t *sub = zsock_new_sub((char *) args, topic);
 
     //long time_of_waiting = 0;
-    int c = 0;
+    uint64_t c;
     //bool terminated = false;
 
     int64_t end;
     string metric = "end_to_end_delay";
-    zpoller_t *poller = zpoller_new(sub, NULL);
+    //zpoller_t *poller = zpoller_new(sub, NULL);
     zmsg_t *msg = zmsg_new();
-    while (zsock_recv(sub, "sm", &topic, &msg)!=-1) {
-        c++;
+    while (zsock_recv(sub, "s8m", &topic,&c, &msg)!=-1) {
+
         //char *topic;
 
         //zpoller_wait(poller, 0);
@@ -232,7 +230,7 @@ subscriber_thread(void *args, const char *topic) {
         puts("start new thread producer\nadding value...\n");
         int a = payload_managing(&msg, &queue, &end, &c);
         cout << "managing payload exit code: " << a << endl;
-        printf("message Received: No. %d\n", c);
+        printf("message Received: No. %llu\n", c);
         zmsg_destroy(&msg);
 
     }
@@ -366,6 +364,7 @@ int main(int argc, char *argv[]) {
     }
      * destroying zactors of subs
      */
+
     subscriber_thread(endpoint_customized, topic);
     /*for (int i = 0; i < num_of_subs; i++) {
         printf("destroying zactor and zsocket: No.%d\n", i);
