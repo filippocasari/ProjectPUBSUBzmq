@@ -23,11 +23,11 @@ for ((i = 0; i<=2; i++)); do
     {
       if [[ "$OSTYPE" == "linux-gnu"* ]]
       then
-        sudo nice --19 ./SUB3 "$test_path$c.json" "$directory_path$i/"
+        sudo nice --19 ./SUB "$test_path$c.json" "$directory_path$i/"
         sudo chmod +rwx "./"$directory_path$i/
       elif [[ "$OSTYPE" == "darwin"* ]];
       then
-        ./SUB3 "$test_path$c.json" "$directory_path$i/"
+        ./SUB "$test_path$c.json" "$directory_path$i/"
       fi
     }&
     sleep 5
@@ -61,11 +61,11 @@ for ((i = 0; i<=2; i++)); do
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       sleep 20
-      sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB3
-      killall SUB3
+      sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB
+      killall SUB
     else
       sleep 20
-      kill SUB3
+      killall SUB
     fi
 
     echo "##########################################################"

@@ -9,19 +9,18 @@
 //default endpoint
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *endpoint_inprocess = "inproc://example";
-const char *json_file_config;
+//const char *json_file_config;
 
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
-#define SIGTERM_MSG "SIGTERM received.\n"
-
+zsock_t *pub; // new sock pub
 
 //thread of publisher
 int
 publisher_thread(const char **path) {
     //path of json file for configuration
     //json obj for deserialization
-    zsock_t *pub; // new sock pub
+
     json_object *PARAM = json_object_from_file(*path);
     int payload_size = 10; //payload, 10 default bytes
     int num_mex = NUM_MEX_DEFAULT; // maximum messages for the publisher, 10 default
@@ -104,7 +103,7 @@ publisher_thread(const char **path) {
         pub = zsock_new_pub(ENDPOINT);
     }
 
-    uint64_t count = 0;
+    int64_t count = 0;
     puts("pub connected");
     //size_of_payload = (int) strtol(payload_size, NULL, 10);
     //max_mex = strtol(num_mex, NULL, 10);
@@ -168,12 +167,11 @@ publisher_thread(const char **path) {
 
         //char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent
 
-        zclock_log("Message No. %d", count);
+        zclock_log("Message No. %llu", count);
 
         count++;
     }
-    sleep(10);
-    zsock_destroy(&pub);
+    sleep(5);
     return 0;
 }
 
@@ -195,6 +193,6 @@ int main(int argc, char **argv) {
         //puts("destroying zactor PUB");
         //zactor_destroy(&pub_actor);
     }
-
+    zsock_destroy(&pub);
     return 0;
 }

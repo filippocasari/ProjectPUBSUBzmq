@@ -9,8 +9,13 @@ range_payload = [10 * E_3, 25 * E_3, 50 * E_3]
 #range_payload = [10, 25, 50, 100, 200, 500, 1000]
 num_experiments = 10
 dir_base = "./ResultsCsv_"
-
+lan = True
 dataframe_ = pd.DataFrame()
+if lan:
+    millisecs_div=1.0
+else:
+    millsecs_div =1000.0
+    
 for i in range(num_experiments):
     dir_temp = dir_base + str(i)
     count = 0
@@ -28,27 +33,27 @@ x_scrap = [-1, 0.0, 1, 2]
 range_payloads = [10, 50, 200, 1000]
 for payload in range_payloads:
     msg_rate_5 = dataframe_.loc[(dataframe_['message rate'] == 5) & (dataframe_['payload size'] == payload)]
-    msg_rate_5_mean = msg_rate_5['value'].mean() / 1000.0
-    msg_rate_5_std = msg_rate_5['value'].std() / 1000.0
+    msg_rate_5_mean = msg_rate_5['value'].mean() / millisecs_div
+    msg_rate_5_std = msg_rate_5['value'].std() / millisecs_div
     print("mean for msg rate = 5 is : ", msg_rate_5_mean, " with std: ", msg_rate_5_std)
 
     msg_rate_10 = dataframe_.loc[(dataframe_['message rate'] == 10) & (dataframe_['payload size'] == payload)]
-    msg_rate_10_mean = msg_rate_10['value'].mean()/ 1000.0
-    msg_rate_10_std = msg_rate_10['value'].std()/ 1000.0
+    msg_rate_10_mean = msg_rate_10['value'].mean()/ millisecs_div
+    msg_rate_10_std = msg_rate_10['value'].std()/ millisecs_div
     print("mean for msg rate = 10 is : ", msg_rate_10_mean, " with std: ", msg_rate_10_std)
     msg_rate_25 = dataframe_.loc[(dataframe_['message rate'] == 25) & (dataframe_['payload size'] == payload)]
-    msg_rate_25_mean = msg_rate_25['value'].mean()/ 1000.0
-    msg_rate_25_std = msg_rate_25['value'].std()/ 1000.0
+    msg_rate_25_mean = msg_rate_25['value'].mean()/ millisecs_div
+    msg_rate_25_std = msg_rate_25['value'].std()/ millisecs_div
     print("mean for msg rate = 25 is : ", msg_rate_25_mean, " with std: ", msg_rate_25_std)
 
     msg_rate_50 = dataframe_.loc[(dataframe_['message rate'] == 50) & (dataframe_['payload size'] == payload)]
-    msg_rate_50_mean = msg_rate_50['value'].mean()/ 1000.0
-    msg_rate_50_std = msg_rate_50['value'].std()/ 1000.0
+    msg_rate_50_mean = msg_rate_50['value'].mean()/ millisecs_div
+    msg_rate_50_std = msg_rate_50['value'].std()/ millisecs_div
     print("mean for msg rate = 50 is : ", msg_rate_50_mean, " with std: ", msg_rate_50_std)
 
     msg_rate_100 = dataframe_.loc[(dataframe_['message rate'] == 100) & (dataframe_['payload size'] == payload)]
-    msg_rate_100_mean = msg_rate_100['value'].mean()/ 1000.0
-    msg_rate_100_std = msg_rate_100['value'].std()/ 1000.0
+    msg_rate_100_mean = msg_rate_100['value'].mean()/ millisecs_div
+    msg_rate_100_std = msg_rate_100['value'].std()/ millisecs_div
     print("mean for msg rate = 100 is : ", msg_rate_100_mean, " with std: ", msg_rate_100_std)
     # print(msg_rate_5)
 

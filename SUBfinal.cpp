@@ -24,17 +24,13 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 //const char *endpoint_inprocess = "inproc://example";
 const char *string_json_path;
 char *path_csv = nullptr;
-mutex access_to_file;
-condition_variable cv;
+
 
 const char *type_test;
-mutex pushing;
-condition_variable pushing_cv;
-bool main_ready = true;
 char endpoint[25] = "\0";
-bool worker_ready = true;
 
-int payload_managing(zmsg_t **msg, LockingQueue<Item2> *queue, const int64_t
+
+int payload_managing(zmsg_t **msg, LockingQueue<Item2> *lockingQueue, const int64_t
 *end, const int64_t *c) {
     //char *end_pointer_string;
     //long start;
@@ -52,7 +48,7 @@ int payload_managing(zmsg_t **msg, LockingQueue<Item2> *queue, const int64_t
             item->num=*c;
             item->ts_end=*end;
             item->name_metric="end_to_end_delay";
-            queue->push(*item);
+            lockingQueue->push(*item);
             cout << "item No. " << *c << " pushed" << endl;
         }
         if (zmsg_size(*msg) == 0) {
@@ -74,7 +70,7 @@ int payload_managing(zmsg_t **msg, LockingQueue<Item2> *queue, const int64_t
 }
 
 
-int create_new_consumers(LockingQueue<Item2> *queue) {
+int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
     bool console = false;
     int num_consumers = NUM_CONSUMERS;
     std::string name_of_experiment;
@@ -110,28 +106,29 @@ int create_new_consumers(LockingQueue<Item2> *queue) {
     string name_path_csv = path_csv + name_of_csv_file;
     config_file.open(name_path_csv, ios::app);
     config_file << "number,value,timestamp,message rate,payload size\n";
-    config_file.close();
+    sleep(1);
     //int c = 1;
     for (int i = 0; i < num_consumers; i++) { //same as producers
         cout<<"launch consumer No. " <<i<<endl;
         consumers.emplace_back(
-                [&queue, &console, &name_of_csv_file, &msg_rate, &payload, &name_path_csv, &config_file, &num_consumers]() {
+                [&lockingQueue, &console, &name_of_csv_file, &msg_rate, &payload, &name_path_csv, &config_file, &num_consumers]() {
 
                     cout << "new consumer thread created with ID: " << this_thread::get_id() << endl;
                     //cout << "pid of consumer: " << getpid() << endl;
                     int64_t end_to_end_delay;
                     int c = 1;
-                    while (((c / num_consumers) < (NUM_MEX_MAX / num_consumers) - 1)) {
+                    while (true) {
+
                         Item2 item = Item2();
                         c++;
-                        if (c >= NUM_MEX_MAX)
+                        if (c >= NUM_MEX_MAX/4)
                             break;
 
+                        lockingQueue->waitAndPop(item);
                         cout << "--------------THREAD No. " << this_thread::get_id() << " IS WORKING--------" << endl;
-
-                        queue->waitAndPop(item);
                         char *end_pointer;
                         int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
+                        //lock_guard<mutex> lock(access_to_file);
                         cout << "end : " << item.ts_end << " start: " << start << endl << "managing payload" << endl;
                         end_to_end_delay = item.ts_end - start;
 
@@ -139,8 +136,8 @@ int create_new_consumers(LockingQueue<Item2> *queue) {
                             cout << "Metric name: " << item.name_metric << endl << "value: "
                                       << end_to_end_delay <<endl;
                         } else {
-                            //cout << "queue empty? " << queue->empty() << endl;
-                            lock_guard<mutex> lock(access_to_file);
+                            //cout << "lockingQueue empty? " << lockingQueue->empty() << endl;
+
                             if (!config_file.is_open()) {
                                 cout<<"opening file csv..."<<endl;
                                 config_file.open(name_path_csv, ios::app);
@@ -163,7 +160,7 @@ int create_new_consumers(LockingQueue<Item2> *queue) {
                         }
 
                     }
-                    cout<<"file close..."<<endl;
+                    cout<<"thread is closing..."<<endl;
                 });
         sleep(1);
 
@@ -178,13 +175,12 @@ int create_new_consumers(LockingQueue<Item2> *queue) {
 
 void
 subscriber_thread(void *args, const char *topic) {
-    //zsock_signal(pipe, 0);
-    //catch_sigterm();
+    
     // -----------------------------------------------------------------------------------------------------
-    LockingQueue<Item2> queue; //initialize queue
+    LockingQueue<Item2> lockingQueue; //initialize lockingQueue
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
-    thread thread_start_consumers([&queue]() {
-        int succ = create_new_consumers(&queue);
+    thread thread_start_consumers([&lockingQueue]() {
+        int succ = create_new_consumers(&lockingQueue);
         cout<<"consumers terminate? "<< succ<<endl;
 
     });// create new thread to manage payload
@@ -203,7 +199,9 @@ subscriber_thread(void *args, const char *topic) {
     //zpoller_t *poller = zpoller_new(sub, NULL);
     zmsg_t *msg = zmsg_new();
     int k = 1;
-    while (zsock_recv(sub, "s8m", &topic, &c, &msg) != -1) {
+    int succ=0;
+    while (succ!=-1) {
+        succ=zsock_recv(sub, "s8m", &topic, &c, &msg);
         k++;
         //char *topic;
 
@@ -225,15 +223,13 @@ subscriber_thread(void *args, const char *topic) {
             end = 0;
 
         cout<<"Recv on "<< topic<<endl;
-        cout<<"start new thread producer"<<endl<<"adding value..."<<endl;
-
-        int a = payload_managing(&msg, &queue, &end, &c);
-        cout << "managing payload exit code: " << a << endl;
         cout<<"message Received: No. "<< c<<endl;
-        zmsg_destroy(&msg);
+        int a = payload_managing(&msg, &lockingQueue, &end, &c);
+        cout << "managing payload exit code: " << a << endl;
+        //zmsg_destroy(&msg);
 
     }
-    if (k - (int) NUM_MEX_MAX==0)
+    if (k - (int) NUM_MEX_MAX>=0)
         cout << "test SUCCESS" << endl;
     else
         cout << "PACKET LOSS" << endl;
