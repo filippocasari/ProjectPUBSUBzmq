@@ -11,7 +11,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd && echo "TEST
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS"
 fi
-for ((i = 0; i<=2; i++)); do
+for ((i = 0; i<=10; i++)); do
 
   for ((c = 0; c <=11; c++)); do
     date +"%FORMAT"
@@ -48,6 +48,7 @@ for ((i = 0; i<=2; i++)); do
 
     if [ $succ -eq 0 ]
     then
+      echo
       echo "test succeeded..."
       sleep 5
       echo "##########################################################"
@@ -57,14 +58,13 @@ for ((i = 0; i<=2; i++)); do
       echo " test failed"
       echo "exit code: "$succ
     fi
-
+    sleep 20
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
-      sleep 20
       sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB
+      sleep 5
       killall SUB
     else
-      sleep 20
       killall SUB
     fi
 
@@ -73,10 +73,6 @@ for ((i = 0; i<=2; i++)); do
     echo "##########################################################"
    # start-stop-daemon --stop --oknodo --retry 15 -n PUB
 
-    #sleep 5
-    #echo "send SIGKILL TO SUB and PUB"
-    #killall SUB3
-    #killall PUB
     sleep 10 #sleep 10 secs until next test
 
   done

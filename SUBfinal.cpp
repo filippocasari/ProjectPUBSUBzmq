@@ -73,7 +73,7 @@ int payload_managing(zmsg_t **msg, LockingQueue<Item2> *lockingQueue, const int6
 int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
     bool console = false;
     int num_consumers = NUM_CONSUMERS;
-    std::string name_of_experiment;
+    string name_of_experiment;
     json_object *PARAM;
     int msg_rate;
     int payload;
@@ -117,16 +117,17 @@ int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
                     //cout << "pid of consumer: " << getpid() << endl;
                     int64_t end_to_end_delay;
                     int c = 1;
-                    while (true) {
+                    while (!zsys_interrupted) {
 
                         Item2 item = Item2();
                         c++;
-                        if (c >= NUM_MEX_MAX/4)
+                        if (c >= (int) (NUM_MEX_MAX/num_consumers))
                             break;
 
                         lockingQueue->waitAndPop(item);
                         cout << "--------------THREAD No. " << this_thread::get_id() << " IS WORKING--------" << endl;
                         char *end_pointer;
+
                         int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
                         //lock_guard<mutex> lock(access_to_file);
                         cout << "end : " << item.ts_end << " start: " << start << endl << "managing payload" << endl;
@@ -153,7 +154,6 @@ int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
                                                "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
                                 //config_file.close();
 
-
                                 cout << "--------------THREAD No. " << this_thread::get_id()
                                      << " FINISHED ITS JOB----------" << endl;
                             }
@@ -166,9 +166,8 @@ int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
 
     }
 
-    for (int i = 0; i < num_consumers; i++) {
-        consumers[i].join();
-    }
+    for (auto& th : consumers)
+        th.join();
     config_file.close();
     return 0;
 }
@@ -184,7 +183,6 @@ subscriber_thread(void *args, const char *topic) {
         cout<<"consumers terminate? "<< succ<<endl;
 
     });// create new thread to manage payload
-    thread_start_consumers.detach();
     //--------------------------------------------------------------------------------------------------------
     //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
     cout<<"topic is "<<topic<<endl;
@@ -236,6 +234,7 @@ subscriber_thread(void *args, const char *topic) {
     cout<<"Messages Received : "<<k<<endl;
     sleep(3);
     zsock_destroy(&sub);
+    thread_start_consumers.join();
     //
     //terminate();
 }
@@ -263,16 +262,19 @@ int main(int argc, char *argv[]) {
         DIR *dir = opendir(path_csv);
         if (dir) {
             cout << "path csv already exists" << endl;
+            closedir(dir);
 
         } else if (ENOENT == errno) {
             int a = mkdir(path_csv, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             if (a != 0) {
+                cout<<"Error to create a directory"<<endl;
                 return 3;
             }
         } else {
+            cout<<"Error unknown, i could not be possible to open or create a directory for csv tests"<<endl;
             return 4;
         }
-        closedir(dir);
+
         cout << "PATH chosen: " << path_csv << endl;
         // initialize the string
         cmdstring = argv[1];
