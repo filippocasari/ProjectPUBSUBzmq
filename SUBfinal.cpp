@@ -7,7 +7,6 @@
 #include <algorithm>
 #include "Utils/Item2.h"
 #include <mutex>
-#include <condition_variable>
 
 #define PATH_CSV "./ResultsCsv_1/"
 #define NUM_PRODUCERS 1
@@ -24,10 +23,9 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 //const char *endpoint_inprocess = "inproc://example";
 const char *string_json_path;
 char *path_csv = nullptr;
-
-
+static volatile sig_atomic_t flag = 0;
+static void sig_stop(int signum) { flag = 1; }
 const char *type_test;
-char endpoint[25] = "\0";
 
 
 int payload_managing(zmsg_t **msg, LockingQueue<Item2> *lockingQueue, const int64_t
@@ -112,12 +110,12 @@ int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
         cout<<"launch consumer No. " <<i<<endl;
         consumers.emplace_back(
                 [&lockingQueue, &console, &name_of_csv_file, &msg_rate, &payload, &name_path_csv, &config_file, &num_consumers]() {
-
+                    signal(SIGKILL, sig_stop);
                     cout << "new consumer thread created with ID: " << this_thread::get_id() << endl;
                     //cout << "pid of consumer: " << getpid() << endl;
                     int64_t end_to_end_delay;
                     int c = 1;
-                    while (!zsys_interrupted) {
+                    while (!zsys_interrupted and !flag) {
 
                         Item2 item = Item2();
                         c++;
@@ -173,7 +171,7 @@ int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
 }
 
 void
-subscriber_thread(void *args, const char *topic) {
+subscriber_thread(string *endpoint_custom, const char *topic) {
     
     // -----------------------------------------------------------------------------------------------------
     LockingQueue<Item2> lockingQueue; //initialize lockingQueue
@@ -186,7 +184,7 @@ subscriber_thread(void *args, const char *topic) {
     //--------------------------------------------------------------------------------------------------------
     //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
     cout<<"topic is "<<topic<<endl;
-    zsock_t *sub = zsock_new_sub((char *) args, topic);
+    zsock_t *sub = zsock_new_sub(endpoint_custom->c_str(), topic);
 
     //long time_of_waiting = 0;
     int64_t c;
@@ -233,8 +231,10 @@ subscriber_thread(void *args, const char *topic) {
         cout << "PACKET LOSS" << endl;
     cout<<"Messages Received : "<<k<<endl;
     sleep(3);
+
     zsock_destroy(&sub);
     thread_start_consumers.join();
+    delete(&lockingQueue);
     //
     //terminate();
 }
@@ -286,14 +286,14 @@ int main(int argc, char *argv[]) {
     // start deserialization
     json_object *PARAM;
     const char *endpoint_inproc;
-    char *endpoint_customized;
+    string endpoint_customized;
 
     int num_of_subs = NUM_SUBS;
     PARAM = json_object_from_file(string_json_path);
     const char *topic;
     if (PARAM != nullptr) {
         puts("PARAMETERS PUBLISHER: ");
-        const char *type_connection;
+        char *type_connection;
         const char *port;
         const char *ip;
         const char *output_file;
@@ -315,7 +315,7 @@ int main(int argc, char *argv[]) {
 
             printf("\t%s: %s\n", key, value);
             if (strcmp(key, "connection_type") == 0) {
-                type_connection = value;
+                type_connection = (char *) value;
                 printf("connection type found: %s\n", type_connection);
             }
             if (strcmp(key, "type_test") == 0)
@@ -337,23 +337,21 @@ int main(int argc, char *argv[]) {
             if (strcmp(key, "endpoint_inproc") == 0)
                 endpoint_inproc = value;
         }
+        endpoint_customized = string()+type_connection+"://";
 
-        endpoint_customized = strcat(endpoint, type_connection);
-        endpoint_customized = strcat(endpoint_customized, "://");
-        if (strcmp(type_connection, "tcp") == 0) {
-            endpoint_customized = strcat(endpoint_customized, ip);
-            endpoint_customized = strcat(endpoint_customized, ":");
-            endpoint_customized = strcat(endpoint_customized, port);
-        } else if (strcmp(type_connection, "inproc") == 0) {
-            endpoint_customized = strcat(endpoint_customized, endpoint_inproc);
-        }
-        printf("string for endpoint (from json file): %s\t", endpoint_customized);
+        if (strcmp(type_connection, "tcp") == 0)
+            endpoint_customized = endpoint_customized+ip+":"+port;
+        else if (strcmp(type_connection, "inproc") == 0)
+            endpoint_customized = endpoint_customized+endpoint_inproc;
+        else
+            cout<<"invalid endpoint"<<endl;
+        cout<<"string for endpoint (from json file):\t"<< endpoint_customized<<endl;
     } else {
-        puts("FILE JSON NOT FOUND...EXIT");
+        cout<<"FILE JSON NOT FOUND...EXIT"<<endl;
         return 2;
     }
     //zactor_t *sub_threads[num_of_subs];
-    printf("Numbers of SUBS : %d\n", num_of_subs);
+    cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
     /*for (int i = 0; i < num_of_subs; i++) {
         zclock_log("file json is being used");
 
@@ -367,7 +365,7 @@ int main(int argc, char *argv[]) {
      * destroying zactors of subs
      */
 
-    subscriber_thread(endpoint_customized, topic);
+    subscriber_thread(&endpoint_customized, topic);
     /*for (int i = 0; i < num_of_subs; i++) {
         printf("destroying zactor and zsocket: No.%d\n", i);
         zactor_destroy(&sub_threads[i]);
