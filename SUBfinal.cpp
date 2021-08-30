@@ -142,7 +142,7 @@ int create_new_consumers() {
 
                         Item2 item = Item2();
                         c++;
-                        if (c >= (int) (NUM_MEX_MAX/num_consumers))
+                        if (c >= (int) (NUM_MEX_MAX/num_consumers)-1)
                             break;
 
                         item=lockingQueue.pop();
@@ -192,7 +192,7 @@ int create_new_consumers() {
         this_thread::sleep_for(chrono::seconds(1) );
 
     }
-    config_file.close();
+
     for (auto& th : consumers)
         th.join();
     config_file.close();
