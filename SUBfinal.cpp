@@ -31,7 +31,7 @@ const char *type_test;
 mutex cout_mutex;
 mutex access_to_file;
 BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
-
+ofstream config_file;
 void write_something(string *what_i_said){
     cout_mutex.lock();
     cout<<*what_i_said<<endl;
@@ -50,7 +50,7 @@ int payload_managing(zmsg_t **msg, const int64_t
         frame = zmsg_popstr(*msg);
         if (strcmp(frame, "TIMESTAMP") == 0) {
             frame = zmsg_popstr(*msg);
-            say ="frame: "+ to_string(*frame);
+            say ="frame: "+ string(frame);
             write_something(&say);
             string start = frame;
             item->ts_start=start;
@@ -112,13 +112,13 @@ int create_new_consumers() {
     }
     vector<thread> consumers; // create a vector of consumers
     consumers.reserve(num_consumers);
-    ofstream config_file;
     string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
-
     printf("Num of consumer threads: %d\n", num_consumers);
     string name_path_csv = path_csv + name_of_csv_file;
+    access_to_file.lock();
     config_file.open(name_path_csv, ios::app);
     config_file << "number,value,timestamp,message rate,payload size\n";
+    access_to_file.unlock();
     sleep(1);
 
     //int c = 1;
@@ -127,8 +127,9 @@ int create_new_consumers() {
         consumers.emplace_back(
                 [ &console, &msg_rate, &payload, &name_path_csv, &num_consumers]() {
                     signal(SIGKILL, sig_stop);
-                    ofstream config_file;
+                    access_to_file.lock();
                     config_file.open(name_path_csv, ios::app);
+                    access_to_file.unlock();
                     auto name = this_thread::get_id();
                     stringstream id;
                     id <<name;
@@ -160,29 +161,29 @@ int create_new_consumers() {
                             write_something(&say);
                         } else {
                             //cout << "lockingQueue empty? " << lockingQueue->empty() << endl;
-
+                            access_to_file.lock();
                             if (!config_file.is_open()) {
                                 say ="opening file csv...";
                                 write_something(&say);
                                 config_file.open(name_path_csv, ios::app);
 
-                            } else {
+                            } else{
                                 say="file csv is just opened";
                                 write_something(&say);
-                                //string put_to_file = to_string(count) + "," +to_string(end_to_end_delay) + "," + to_string(item.ts_end) +
-                                //       "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
-                                //const char *put_to_file_array_char = put_to_file.c_str();
-
-                                config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
-                                               to_string(item.ts_end) +
-                                               "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
-                                //config_file.close();
-                                say = "--------------THREAD No. " +id.str()+" FINISHED ITS JOB----------" ;
-                                write_something(&say);
-                                config_file.close();
                             }
-                        }
+                            //string put_to_file = to_string(count) + "," +to_string(end_to_end_delay) + "," + to_string(item.ts_end) +
+                            //       "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
+                            //const char *put_to_file_array_char = put_to_file.c_str();
 
+                            config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
+                                           to_string(item.ts_end) +
+                                           "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
+                            //config_file.close();
+                            config_file.close();
+                            access_to_file.unlock();
+                            say = "--------------THREAD No. " +id.str()+" FINISHED ITS JOB----------" ;
+                            write_something(&say);
+                        }
                     }
                     say = "thread is closing...";
                     write_something(&say);
