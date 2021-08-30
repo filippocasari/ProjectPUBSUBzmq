@@ -50,8 +50,6 @@ publisher_thread(const char *path) {
         const char *port;
         const char *ip;
         const char *output_file;
-
-        int int_value;
         const char *value;
         // starting a new for each for the couple key, value
 

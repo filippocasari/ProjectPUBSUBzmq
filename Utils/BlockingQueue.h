@@ -28,6 +28,10 @@ class BlockingQueue
                 this->d_queue.pop_front();
                 return rc;
             }
+            int size(){
+                std::unique_lock<std::mutex> lock(this->d_mutex);
+                return d_queue.size();
+            }
         };
 
 

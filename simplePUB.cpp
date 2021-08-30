@@ -13,11 +13,12 @@ const char *endpoint_inprocess = "inproc://example";
 
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
-zsock_t *pub; // new sock pub
 
+using namespace std;
 //thread of publisher
 int
 publisher_thread(const char **path) {
+    zsock_t *pub; // new sock pub
     //path of json file for configuration
     //json obj for deserialization
 
@@ -111,16 +112,18 @@ publisher_thread(const char **path) {
     printf("PAYLOAD SIZE: %d\n", payload_size);
     printf("message rate: %d\n", msg_rate_sec);
     int64_t timestamp;
-    char string[14];
+    std::string time_string;
     long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
-    while (count < num_mex && !zsys_interrupted) {
+   for(;;){
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)
         // break;
+        if (count==num_mex){
+            break;
+        }
         printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
         //printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
         zclock_sleep((int) milli_secs_of_sleeping); //  Wait for x milliseconds
-
 
         if (strcmp(type_test, "LAN")==0){
             timestamp= zclock_time();
@@ -135,30 +138,28 @@ publisher_thread(const char **path) {
 
 
         //int nDigits = floor(1 + log10(abs((int) timestamp)));
-        sprintf(string, "%lld", timestamp); // fresh copy into the string
+        time_string =to_string(timestamp);
         printf("TIMESTAMP: %lld\n", timestamp);
         zmsg_t *msg = zmsg_new(); // creating new zmq message
-        int rc = zmsg_pushstr(msg, string);
+        int rc = zmsg_pushstr(msg, time_string.c_str());
         assert(rc == 0);
-        printf("SIZE OF RESIDUAL STRING (OF ZEROS) : %ld\n", payload_size - strlen(string));
-        char string_residual_payload[(abs(payload_size - (int)strlen(string)))];
-        if (payload_size > (long) strlen(string)) {
+        printf("SIZE OF RESIDUAL STRING (OF ZEROS) : %ld\n", payload_size - (long)(time_string.length()));
+        std::string string_residual_payload;
+        if (payload_size > (long) time_string.length()) {
             puts("PAYLOAD IS NOT NULL");
-            memset(string_residual_payload, '0', (abs(payload_size - (int)strlen(string))));
-            string_residual_payload[payload_size - strlen(string)] = '\0';
+            string_residual_payload = string(payload_size-(long) time_string.length(), '0');
             //printf("String of zeros: %s\n", string_residual_payload);
-            zchunk_t *chunk= zchunk_new(string_residual_payload,abs(payload_size - (int)strlen(string)) );
-            if (zsock_send(pub, "s8ssc", topic,count, "TIMESTAMP", string, chunk) == -1) {
+            zchunk_t *chunk= zchunk_new(string_residual_payload.c_str(),abs(payload_size - (long)(time_string.length())) );
+            if (zsock_send(pub, "s8ssc", topic,count, "TIMESTAMP", time_string.c_str(), chunk) == -1) {
                 puts("error to send,packet loss");
             }
             zchunk_destroy(&chunk);
-
-
+            zmsg_destroy(&msg);
             //  Interrupted
         } else {
 
             //printf("String of zeros: %c\n", string_residual_payload);
-            if (zsock_send(pub, "sss", &topic, "TIMESTAMP", string) == -1){
+            if (zsock_bsend(pub, "sss", &topic, "TIMESTAMP", time_string.c_str()) == -1){
                 puts("sending interrupted...");
                 return 1;
             }
@@ -171,7 +172,7 @@ publisher_thread(const char **path) {
 
         count++;
     }
-    sleep(5);
+    zsock_destroy(&pub);
     return 0;
 }
 
@@ -192,7 +193,8 @@ int main(int argc, char **argv) {
         //zstr_sendx (pub_actor, "BREAK", NULL);
         //puts("destroying zactor PUB");
         //zactor_destroy(&pub_actor);
+
     }
-    zsock_destroy(&pub);
+
     return 0;
 }

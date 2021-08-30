@@ -25,14 +25,14 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 //const char *endpoint_inprocess = "inproc://example";
 const char *string_json_path;
 char *path_csv = nullptr;
-static volatile sig_atomic_t flag = 0;
-static void sig_stop(int signum) { flag = 1; }
+
 const char *type_test;
 mutex cout_mutex;
 mutex access_to_file;
 BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
 ofstream config_file;
-void write_something(string *what_i_said){
+bool verbose = true;
+void write_safely(string *what_i_said){
     cout_mutex.lock();
     cout<<*what_i_said<<endl;
     cout_mutex.unlock();
@@ -46,34 +46,43 @@ int payload_managing(zmsg_t **msg, const int64_t
         char *frame;
         auto *item =new Item2();
         string say = "size of msg: " +to_string(zmsg_size(*msg));
-        write_something(&say);
+        write_safely(&say);
         frame = zmsg_popstr(*msg);
         if (strcmp(frame, "TIMESTAMP") == 0) {
             frame = zmsg_popstr(*msg);
-            say ="frame: "+ string(frame);
-            write_something(&say);
+            if(verbose){
+                say ="frame: "+ string(frame);
+                write_safely(&say);
+            }
             string start = frame;
             item->ts_start=start;
             item->num=*c;
             item->ts_end=*end;
             item->name_metric="end_to_end_delay";
             lockingQueue.push(*item);
-            say = "item No. " + to_string(*c) +" pushed";
-            write_something(&say);
+            if(verbose){
+                say="Size of the queue: "+to_string(lockingQueue.size())+"\nitem No. " + to_string(*c) +" pushed";
+                write_safely(&say);
+            }
         }
         if (zmsg_size(*msg) == 0) {
-            say = "NO MORE MESSAGES";
-            write_something(&say);
+            if(verbose){
+                say = "NO MORE MESSAGES";
+                write_safely(&say);
+            }
+
             return -2;
         }
         while (zmsg_size(*msg) > 0) {
             //puts("estrapolating other payload...");
             frame = zmsg_popstr(*msg);
-            say = "size of payload (byte): "+ to_string((strlen(frame) * sizeof(char)));
-            write_something(&say);
+            if(verbose){
+                say = "size of payload (byte): "+ to_string((strlen(frame) * sizeof(char)));
+                write_safely(&say);
+            }
             //zsys_info("PAYLOAD > %s", frame);
         }
-
+        zmsg_destroy(msg);
         return 0;
     }
     catch (int e) {
@@ -118,27 +127,25 @@ int create_new_consumers() {
     access_to_file.lock();
     config_file.open(name_path_csv, ios::app);
     config_file << "number,value,timestamp,message rate,payload size\n";
+    config_file.close();
     access_to_file.unlock();
     sleep(1);
 
     //int c = 1;
     for (int i = 0; i < num_consumers; i++) { //same as producers
-        cout<<"launch consumer No. " <<i<<endl;
+        if(verbose){
+            cout<<"launch consumer No. " <<i<<endl;
+        }
         consumers.emplace_back(
                 [ &console, &msg_rate, &payload, &name_path_csv, &num_consumers]() {
-                    signal(SIGKILL, sig_stop);
-                    access_to_file.lock();
-                    config_file.open(name_path_csv, ios::app);
-                    access_to_file.unlock();
                     auto name = this_thread::get_id();
                     stringstream id;
                     id <<name;
                     string say = "new consumer thread created with ID: "+id.str();
-                    write_something(&say);
-                    //cout << "pid of consumer: " << getpid() << endl;
+                    write_safely(&say);
                     int64_t end_to_end_delay;
                     int c = 1;
-                    while (!zsys_interrupted and !flag) {
+                    while (!zsys_interrupted) {
 
                         Item2 item = Item2();
                         c++;
@@ -147,46 +154,40 @@ int create_new_consumers() {
 
                         item=lockingQueue.pop();
                         say ="--------------THREAD No. "+id.str()+" IS WORKING--------";
-                        write_something(&say);
+                        write_safely(&say);
                         char *end_pointer;
                         int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
                         //lock_guard<mutex> lock(access_to_file);
-                        say =  "end : " + to_string(item.ts_end) + " start: " + to_string(start) + "\nmanaging payload";
-                        write_something(&say);
+                        if(verbose){
+                            say =  "end : " + to_string(item.ts_end) + " start: " + to_string(start) + "\nmanaging payload";
+                            write_safely(&say);
+                        }
+
                         end_to_end_delay = item.ts_end - start;
 
                         if (console) {
                             say = "Metric name: " + item.name_metric +"\nvalue: "
                                     + to_string(end_to_end_delay);
-                            write_something(&say);
+                            write_safely(&say);
                         } else {
                             //cout << "lockingQueue empty? " << lockingQueue->empty() << endl;
-                            access_to_file.lock();
-                            if (!config_file.is_open()) {
+                            if(verbose){
                                 say ="opening file csv...";
-                                write_something(&say);
-                                config_file.open(name_path_csv, ios::app);
-
-                            } else{
-                                say="file csv is just opened";
-                                write_something(&say);
+                                write_safely(&say);
                             }
-                            //string put_to_file = to_string(count) + "," +to_string(end_to_end_delay) + "," + to_string(item.ts_end) +
-                            //       "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
-                            //const char *put_to_file_array_char = put_to_file.c_str();
-
+                            access_to_file.lock();
+                            config_file.open(name_path_csv, ios::app);
                             config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
-                                           to_string(item.ts_end) +
-                                           "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
-                            //config_file.close();
+                            to_string(item.ts_end) +
+                            "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
                             config_file.close();
                             access_to_file.unlock();
                             say = "--------------THREAD No. " +id.str()+" FINISHED ITS JOB----------" ;
-                            write_something(&say);
+                            write_safely(&say);
                         }
                     }
                     say = "thread is closing...";
-                    write_something(&say);
+                    write_safely(&say);
                 });
 
         this_thread::sleep_for(chrono::seconds(1) );
@@ -200,7 +201,7 @@ int create_new_consumers() {
 }
 
 void
-subscriber_thread(string *endpoint_custom, const char *topic) {
+subscriber_thread(string *endpoint_custom, char *topic) {
     
     // -----------------------------------------------------------------------------------------------------
 
@@ -216,7 +217,7 @@ subscriber_thread(string *endpoint_custom, const char *topic) {
     zsock_t *sub = zsock_new_sub(endpoint_custom->c_str(), topic);
 
     //long time_of_waiting = 0;
-    int64_t c;
+    int64_t c =0;
     //bool terminated = false;
 
     int64_t end;
@@ -319,14 +320,18 @@ int main(int argc, char *argv[]) {
 
     int num_of_subs = NUM_SUBS;
     PARAM = json_object_from_file(string_json_path);
-    const char *topic;
+    char *topic;
     if (PARAM != nullptr) {
         puts("PARAMETERS PUBLISHER: ");
         char *type_connection;
         const char *port;
         const char *ip;
         const char *output_file;
-
+        const char *v =  (char *) argv[3];
+        if(strcmp(v, "-v") == 0)
+            verbose=true;
+        else
+            verbose=false;
         //int payload_size;
         //int num_mex;
         int int_value;
@@ -362,7 +367,7 @@ int main(int argc, char *argv[]) {
                 printf("output file found: %s\n", output_file);
             }
             if (strcmp(key, "topic") == 0)
-                topic = value;
+                topic = (char *)value;
             if (strcmp(key, "endpoint_inproc") == 0)
                 endpoint_inproc = value;
         }
@@ -379,26 +384,10 @@ int main(int argc, char *argv[]) {
         cout<<"FILE JSON NOT FOUND...EXIT"<<endl;
         return 2;
     }
-    //zactor_t *sub_threads[num_of_subs];
     cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
-    /*for (int i = 0; i < num_of_subs; i++) {
-        zclock_log("file json is being used");
 
-        string name;
-        name = topic + to_string(i);
-        cout << "Starting new sub thread :" + name << endl;
-        sub_threads[i] = zactor_new(subscriber_thread, endpoint_customized);
-        cout << "new actor created..." << endl;
-
-    }
-     * destroying zactors of subs
-     */
 
     subscriber_thread(&endpoint_customized, topic);
-    /*for (int i = 0; i < num_of_subs; i++) {
-        printf("destroying zactor and zsocket: No.%d\n", i);
-        zactor_destroy(&sub_threads[i]);
-    }*/
     return 0;
 }
 
