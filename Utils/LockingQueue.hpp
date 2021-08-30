@@ -50,7 +50,6 @@ class LockingQueue
                 {
                     signal.wait(lock);
                 }
-
                 _value = queue.front();
                 queue.pop();
             }

@@ -7,6 +7,8 @@
 #include <algorithm>
 #include "Utils/Item2.h"
 #include <mutex>
+#include <sstream>
+#include "Utils/BlockingQueue.h"
 
 #define PATH_CSV "./ResultsCsv_1/"
 #define NUM_PRODUCERS 1
@@ -26,37 +28,49 @@ char *path_csv = nullptr;
 static volatile sig_atomic_t flag = 0;
 static void sig_stop(int signum) { flag = 1; }
 const char *type_test;
+mutex cout_mutex;
+mutex access_to_file;
+BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
 
+void write_something(string *what_i_said){
+    cout_mutex.lock();
+    cout<<*what_i_said<<endl;
+    cout_mutex.unlock();
+}
 
-int payload_managing(zmsg_t **msg, LockingQueue<Item2> *lockingQueue, const int64_t
+int payload_managing(zmsg_t **msg, const int64_t
 *end, const int64_t *c) {
     //char *end_pointer_string;
     //long start;
     try {
-
         char *frame;
         auto *item =new Item2();
-        cout << "size of msg: " <<zmsg_size(*msg)<<std::endl;
+        string say = "size of msg: " +to_string(zmsg_size(*msg));
+        write_something(&say);
         frame = zmsg_popstr(*msg);
         if (strcmp(frame, "TIMESTAMP") == 0) {
             frame = zmsg_popstr(*msg);
-            cout<<"frame: "<< frame<<endl;
+            say ="frame: "+ to_string(*frame);
+            write_something(&say);
             string start = frame;
             item->ts_start=start;
             item->num=*c;
             item->ts_end=*end;
             item->name_metric="end_to_end_delay";
-            lockingQueue->push(*item);
-            cout << "item No. " << *c << " pushed" << endl;
+            lockingQueue.push(*item);
+            say = "item No. " + to_string(*c) +" pushed";
+            write_something(&say);
         }
         if (zmsg_size(*msg) == 0) {
-            cout << "NO MORE MESSAGES" << endl;
+            say = "NO MORE MESSAGES";
+            write_something(&say);
             return -2;
         }
         while (zmsg_size(*msg) > 0) {
             //puts("estrapolating other payload...");
             frame = zmsg_popstr(*msg);
-            cout<<"size of payload (byte): "<< (strlen(frame) * sizeof(char))<<endl;
+            say = "size of payload (byte): "+ to_string((strlen(frame) * sizeof(char)));
+            write_something(&say);
             //zsys_info("PAYLOAD > %s", frame);
         }
 
@@ -68,7 +82,8 @@ int payload_managing(zmsg_t **msg, LockingQueue<Item2> *lockingQueue, const int6
 }
 
 
-int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
+
+int create_new_consumers() {
     bool console = false;
     int num_consumers = NUM_CONSUMERS;
     string name_of_experiment;
@@ -105,13 +120,20 @@ int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
     config_file.open(name_path_csv, ios::app);
     config_file << "number,value,timestamp,message rate,payload size\n";
     sleep(1);
+
     //int c = 1;
     for (int i = 0; i < num_consumers; i++) { //same as producers
         cout<<"launch consumer No. " <<i<<endl;
         consumers.emplace_back(
-                [&lockingQueue, &console, &name_of_csv_file, &msg_rate, &payload, &name_path_csv, &config_file, &num_consumers]() {
+                [ &console, &msg_rate, &payload, &name_path_csv, &num_consumers]() {
                     signal(SIGKILL, sig_stop);
-                    cout << "new consumer thread created with ID: " << this_thread::get_id() << endl;
+                    ofstream config_file;
+                    config_file.open(name_path_csv, ios::app);
+                    auto name = this_thread::get_id();
+                    stringstream id;
+                    id <<name;
+                    string say = "new consumer thread created with ID: "+id.str();
+                    write_something(&say);
                     //cout << "pid of consumer: " << getpid() << endl;
                     int64_t end_to_end_delay;
                     int c = 1;
@@ -122,27 +144,31 @@ int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
                         if (c >= (int) (NUM_MEX_MAX/num_consumers))
                             break;
 
-                        lockingQueue->waitAndPop(item);
-                        cout << "--------------THREAD No. " << this_thread::get_id() << " IS WORKING--------" << endl;
+                        item=lockingQueue.pop();
+                        say ="--------------THREAD No. "+id.str()+" IS WORKING--------";
+                        write_something(&say);
                         char *end_pointer;
-
                         int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
                         //lock_guard<mutex> lock(access_to_file);
-                        cout << "end : " << item.ts_end << " start: " << start << endl << "managing payload" << endl;
+                        say =  "end : " + to_string(item.ts_end) + " start: " + to_string(start) + "\nmanaging payload";
+                        write_something(&say);
                         end_to_end_delay = item.ts_end - start;
 
                         if (console) {
-                            cout << "Metric name: " << item.name_metric << endl << "value: "
-                                      << end_to_end_delay <<endl;
+                            say = "Metric name: " + item.name_metric +"\nvalue: "
+                                    + to_string(end_to_end_delay);
+                            write_something(&say);
                         } else {
                             //cout << "lockingQueue empty? " << lockingQueue->empty() << endl;
 
                             if (!config_file.is_open()) {
-                                cout<<"opening file csv..."<<endl;
+                                say ="opening file csv...";
+                                write_something(&say);
                                 config_file.open(name_path_csv, ios::app);
 
                             } else {
-                                cout<<"file csv is just opened"<<endl;
+                                say="file csv is just opened";
+                                write_something(&say);
                                 //string put_to_file = to_string(count) + "," +to_string(end_to_end_delay) + "," + to_string(item.ts_end) +
                                 //       "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
                                 //const char *put_to_file_array_char = put_to_file.c_str();
@@ -151,19 +177,21 @@ int create_new_consumers(LockingQueue<Item2> *lockingQueue) {
                                                to_string(item.ts_end) +
                                                "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
                                 //config_file.close();
-
-                                cout << "--------------THREAD No. " << this_thread::get_id()
-                                     << " FINISHED ITS JOB----------" << endl;
+                                say = "--------------THREAD No. " +id.str()+" FINISHED ITS JOB----------" ;
+                                write_something(&say);
+                                config_file.close();
                             }
                         }
 
                     }
-                    cout<<"thread is closing..."<<endl;
+                    say = "thread is closing...";
+                    write_something(&say);
                 });
-        sleep(1);
+
+        this_thread::sleep_for(chrono::seconds(1) );
 
     }
-
+    config_file.close();
     for (auto& th : consumers)
         th.join();
     config_file.close();
@@ -174,10 +202,10 @@ void
 subscriber_thread(string *endpoint_custom, const char *topic) {
     
     // -----------------------------------------------------------------------------------------------------
-    LockingQueue<Item2> lockingQueue; //initialize lockingQueue
+
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
-    thread thread_start_consumers([&lockingQueue]() {
-        int succ = create_new_consumers(&lockingQueue);
+    thread thread_start_consumers([]() {
+        int succ = create_new_consumers();
         cout<<"consumers terminate? "<< succ<<endl;
 
     });// create new thread to manage payload
@@ -220,7 +248,7 @@ subscriber_thread(string *endpoint_custom, const char *topic) {
 
         cout<<"Recv on "<< topic<<endl;
         cout<<"message Received: No. "<< c<<endl;
-        int a = payload_managing(&msg, &lockingQueue, &end, &c);
+        int a = payload_managing(&msg, &end, &c);
         cout << "managing payload exit code: " << a << endl;
         //zmsg_destroy(&msg);
 
@@ -233,9 +261,9 @@ subscriber_thread(string *endpoint_custom, const char *topic) {
     sleep(3);
 
     zsock_destroy(&sub);
-    thread_start_consumers.join();
-    delete(&lockingQueue);
-    //
+    if (thread_start_consumers.joinable())
+        thread_start_consumers.join();
+
     //terminate();
 }
 
