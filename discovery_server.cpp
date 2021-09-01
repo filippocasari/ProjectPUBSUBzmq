@@ -2,14 +2,21 @@
 #include <iostream>
 
 int main(int argc, const char *argv[]){
-
-    if((std::string) argv[1] =="-v")
-        int verbose = 1;
-    else
+    std::cout<<"aguments size: "<<argc<<std::endl;
+    if(argc<2){
+        puts("No input");
         return -1;
-    zactor_t *speaker = zactor_new (zbeacon, nullptr);
+    }
+    int verbose;
+    if((std::string) argv[1] !="-v")
+        verbose=0;
+    else
+        verbose =1;
 
-    zstr_sendx(speaker, "VERBOSE", NULL);
+    zactor_t *speaker = zactor_new (zbeacon, nullptr);
+    if(verbose)
+        zstr_sendx(speaker, "VERBOSE", NULL);
+
     zsock_send (speaker, "si", "CONFIGURE", 9999);
     char *hostname = zstr_recv (speaker);
     if (!*hostname) {
