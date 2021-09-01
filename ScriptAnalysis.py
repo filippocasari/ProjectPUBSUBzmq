@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+import scipy as scipy
 from matplotlib import pyplot as plt
 
 E_3 = 1000 # variable to specify the amount of payload
@@ -18,10 +19,11 @@ lan = True
 
 dataframe_ = pd.DataFrame() # create new pandas frame which will contain data from csv files
 print("PATH CSV CHOSEN", dir_base)
-if lan:
-    millisecs_div = 1.0
-else:
+millisecs_div = 1.0
+if not lan:
     millsecs_div = 1000.0
+
+
 
 # try to make it simpler: concat every csv(s)
 for i in range(num_experiments):  # for each experiments
@@ -44,6 +46,7 @@ j = 0 # counter to get the next scrap
 x_scrap = [-75, 0, 75] # array of craps, must be "x" dimension for "x" message rate
 
 for payload in range_payload: # for each payload plot and calculate  delay
+    print("PAYLOAD : ", payload)
     msg_rate_250 = dataframe_.loc[(dataframe_['message rate'] == 250) & (dataframe_['payload size'] == payload)]
     msg_rate_250_mean = msg_rate_250['value'].mean() / millisecs_div
     msg_rate_250_std = msg_rate_250['value'].std() / millisecs_div
@@ -72,7 +75,7 @@ for payload in range_payload: # for each payload plot and calculate  delay
     error = [msg_rate_250_std, msg_rate_500_std, msg_rate_1000_std, msg_rate_10000_std]
 
     msg_rates_temp = np.array(msg_rates) + x_scrap[j]
-    w = 50  # width of a bar
+    w = 75 # width of a bar
     ax.bar(msg_rates_temp, delays, yerr=error, align='center', alpha=0.5, ecolor='black', capsize=6, width=w,
            label='payload: ' + str(payload) + ' bytes')
     j += 1  # next scrap
@@ -86,9 +89,10 @@ for payload in range_payload: # for each payload plot and calculate  delay
 
     plt.tight_layout()
     ax.autoscale(tight=True)
-    plt.ylim((-0.5, 3))
-    plt.xlim((0, 1200))
+    plt.ylim((-0.5, 2))
+    plt.xlim((0, 1150))
     # TODO save plot
 plt.legend()
 # show everything
 plt.show()
+
