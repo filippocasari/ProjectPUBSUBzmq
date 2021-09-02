@@ -16,11 +16,11 @@ class Item2 {
         int64_t num{};
         int64_t ts_end{};
         Item2() = default;
-        Item2(std::string *mex, int64_t ts, std::string *name, const int64_t *count) {
-            ts_start = (*mex);
+        Item2(std::string mex, int64_t ts, std::string name, const int64_t count) {
+            ts_start = (std::move(mex));
             ts_end = ts;
-            name_metric = (*name);
-            num=*count;
+            name_metric = (std::move(name));
+            num=count;
         }
         Item2(Item2 const &it){
             this->name_metric=it.name_metric;

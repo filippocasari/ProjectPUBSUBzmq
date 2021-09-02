@@ -114,6 +114,7 @@ publisher_thread(const char **path) {
     int64_t timestamp;
     std::string time_string;
     long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
+    zclock_sleep(4000);
    for(;;){
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)

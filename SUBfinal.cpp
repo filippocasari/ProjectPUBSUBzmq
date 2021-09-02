@@ -1,4 +1,4 @@
-#include "Utils/LockingQueue.hpp"
+
 #include <czmq.h>
 #include <json-c/json.h>
 #include <fstream>
@@ -8,6 +8,7 @@
 #include "Utils/Item2.h"
 #include <mutex>
 #include <sstream>
+#include <vector>
 #include "Utils/BlockingQueue.h"
 
 #define PATH_CSV "./ResultsCsv_1/"
@@ -44,7 +45,7 @@ int payload_managing(zmsg_t **msg, const int64_t
     //long start;
     try {
         char *frame;
-        auto *item =new Item2();
+
         string say = "size of msg: " +to_string(zmsg_size(*msg));
         write_safely(&say);
         frame = zmsg_popstr(*msg);
@@ -55,14 +56,11 @@ int payload_managing(zmsg_t **msg, const int64_t
                 write_safely(&say);
             }
             string start = frame;
-            item->ts_start=start;
-            item->num=*c;
-            item->ts_end=*end;
-            item->name_metric="end_to_end_delay";
-            lockingQueue.push(*item);
+            Item2 item(frame,*end, "end_to_end_delay",*c   ) ;
+            lockingQueue.push(item);
             if(verbose){
-                say="Size of the queue: "+to_string(lockingQueue.size())+"\nitem No. " + to_string(*c) +" pushed";
-                write_safely(&say);
+                //say="Size of the queue: "+to_string(lockingQueue.size())+"\nitem No. " + to_string(*c) +" pushed";
+                //write_safely(&say);
             }
         }
         if (zmsg_size(*msg) == 0) {
@@ -119,8 +117,8 @@ int create_new_consumers() {
             payload = (int) strtol(json_object_get_string(val), nullptr, 10);
         }
     }
-    vector<thread> consumers; // create a vector of consumers
-    consumers.reserve(num_consumers);
+    std::vector<thread> consumers; // create a vector of consumers
+    consumers.reserve(1);
     string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
     printf("Num of consumer threads: %d\n", num_consumers);
     string name_path_csv = path_csv + name_of_csv_file;
@@ -144,15 +142,15 @@ int create_new_consumers() {
                     string say = "new consumer thread created with ID: "+id.str();
                     write_safely(&say);
                     int64_t end_to_end_delay;
-                    int c = 1;
-                    while (!zsys_interrupted) {
-
-                        Item2 item = Item2();
-                        c++;
-                        if (c >= (int) (NUM_MEX_MAX/num_consumers)-1)
-                            break;
+                    int c = 0;
+                    Item2 item;
+                    while (!zctx_interrupted) {
 
                         item=lockingQueue.pop();
+                        c++;
+
+                        //item = lockingQueue.pop()
+
                         say ="--------------THREAD No. "+id.str()+" IS WORKING--------";
                         write_safely(&say);
                         char *end_pointer;

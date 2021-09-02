@@ -58,7 +58,7 @@ for ((i = 0; i<=10; i++)); do
       echo " test failed"
       echo "exit code: "$succ
     fi
-    sleep 20
+    sleep 10
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB
