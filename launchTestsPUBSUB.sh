@@ -23,11 +23,11 @@ for ((i = 0; i<=10; i++)); do
     {
       if [[ "$OSTYPE" == "linux-gnu"* ]]
       then
-        sudo nice --19 ./SUB "$test_path$c.json" "$directory_path$i/"
+        sudo nice --19 ./SUB "$test_path$c.json" "$directory_path$i/" "-v"
         sudo chmod +rwx "./"$directory_path$i/
       elif [[ "$OSTYPE" == "darwin"* ]];
       then
-        ./SUB "$test_path$c.json" "$directory_path$i/"
+        ./SUB "$test_path$c.json" "$directory_path$i/" "-v"
       fi
     }&
     sleep 5
