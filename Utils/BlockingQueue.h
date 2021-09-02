@@ -5,7 +5,9 @@
 #ifndef PROJECTPUBSUBZMQ_BLOCKINGQUEUE_H
 #define PROJECTPUBSUBZMQ_BLOCKINGQUEUE_H
 
-
+#include <condition_variable>
+#include <deque>
+#include <mutex>
 template <typename T>
 class BlockingQueue
         {
