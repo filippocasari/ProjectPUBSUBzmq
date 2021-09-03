@@ -12,10 +12,11 @@ msg_rates = [250, 500, 1000, 10000]  # message rate, messages/second
 range_payload = [10 * E_3, 25 * E_3, 50 * E_3]  # amount of payload, # bytes
 # msg_rates = [250.0, 10.0, 2250.0, 2500.0, 100.0]
 # range_payload = [10, 2250, 2500, 100, 200, 25000, 1000]
-num_experiments = 2  # number of directory of tests
-dir_base = sys.argv[1]  # get the directory base
-which_experiment = sys.argv[2]  # local or lan
-where = sys.argv[3]  # get where the execution of tests was
+num_experiments = 15  # number of directory of tests
+dir_base = sys.argv[2]  # get the directory base
+dad_path = sys.argv[1]
+which_experiment = sys.argv[3]  # local or lan
+where = sys.argv[4]  # get where the execution of tests was
 # IF LAN is SET, We consider milliseconds, nanoseconds otherwise
 lan = True
 path_images = "/Images/image_"
@@ -111,24 +112,28 @@ def plotting_delays(xlim, ylim, w, x_scrap, ylim_2):
 
 
 # try to make it simpler: concat every csv(s)
-for i in range(num_experiments):  # for each experiments
-    dir_temp = dir_base + str(i)  # "ResultsPath"+"number"
-    print("dir temp is : ", dir_temp)
-    count = 0
-    for payload in range_payload:  # for each payload, concat results
-        for rate in msg_rates:  # same for each rate
-            path = dir_temp + '/' + 'test_' + str(count) + '.csv'  # concat string to read the test
-            print("PATH FINAL ANALYZED: ", path)
-            data_frame_temp = pd.read_csv(path, error_bad_lines=False)  # open csv file
-            count += 1  # increase counter
-            # real concat pandas arrays
-            dataframe_ = pd.DataFrame(data=pd.concat([dataframe_, data_frame_temp]), columns=data_frame_temp.columns)
-            # print(dataframe_)
+for j in range(5):
+    for i in range(num_experiments):  # for each experiments
+        dir_temp = dad_path+str(j)+ dir_base + str(i)  # "ResultsPath"+"number"
+        print("dir temp is : ", dir_temp)
+        count = 0
+        for payload in range_payload:  # for each payload, concat results
+            for rate in msg_rates:  # same for each rate
+                path = dir_temp + '/' + 'test_' + str(count) + '.csv'  # concat string to read the test
+                print("PATH FINAL ANALYZED: ", path)
+                try:
+                    data_frame_temp = pd.read_csv(path, error_bad_lines=False)  # open csv file
+                except:
+                    continue
+                count += 1  # increase counter
+                # real concat pandas arrays
+                dataframe_ = pd.DataFrame(data=pd.concat([dataframe_, data_frame_temp]), columns=data_frame_temp.columns)
+                # print(dataframe_)
 
 print(dataframe_)  # print our dataframe
 x_scrap = [-75, 0, 75]  # array of craps, must be "x" dimension for "x" message rate
 w = 75  # width of a bar
-plotting_delays((0, 1200), (-1, 2), w, x_scrap, (0, 1))
+plotting_delays((0, 1200), (-1, 2), w, x_scrap, (0, 0.2))
 x_scrap = [-200, 0, 200]
 w = 110
 plotting_delays((-200, 11000), (-200, 1000), w, x_scrap, (0, 30))
