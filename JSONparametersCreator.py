@@ -17,10 +17,15 @@ num_of_subs = 1
 num_consumer_threads = 4
 number_of_messages = 10000
 num_test = 0
-dir_name = "./fileJson/"
+try:
+    dir_name = sys.argv[1]
+except:
+    print("error, no input string")
+    exit(1)
 type_test="LAN"
-if not os.path.exists(dir_name):
-    os.mkdir(dir_name)
+cwd=str(os.getcwd())
+if not os.path.exists(cwd+dir_name):
+    os.makedirs(cwd+dir_name)
 for i in range_payload:
     for j in msg_rate:
         string_name = "test_" + str(num_test)

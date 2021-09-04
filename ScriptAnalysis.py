@@ -32,7 +32,7 @@ def plotting_delays(xlim, ylim, w, x_scrap, ylim_2):
     j = 0  # counter to get the next scrap
 
     for payload in range_payload:  # for each payload plot and calculate  delay
-        print("PAYLOAD : ", payload)
+        print("PAYLOAD (bytes): ", payload)
         msg_rate_250 = dataframe_.loc[(dataframe_['message rate'] == 250) & (dataframe_['payload size'] == payload)]
         msg_rate_250_mean = msg_rate_250['value'].mean() / millisecs_div
         msg_rate_250_std = msg_rate_250['value'].std() / millisecs_div

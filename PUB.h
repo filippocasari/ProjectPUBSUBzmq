@@ -1,3 +1,11 @@
+//
+// Created by Filippo Casari on 03/09/21.
+//
+
+#ifndef PROJECTPUBSUBZMQ_PUB_H
+#define PROJECTPUBSUBZMQ_PUB_H
+
+
 
 //  Espresso Pattern
 //  This shows how to capture data using a pub-sub proxy
@@ -6,13 +14,12 @@
 #include <cmath>
 #include <thread>
 //default endpoint
-const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *endpoint_inprocess = "inproc://example";
 //const char *json_file_config;
 
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
-
+bool verbose = true;
 using namespace std;
 //thread of publisher
 int
@@ -31,7 +38,9 @@ publisher_thread(const char **path) {
 
     const char *type_test;
     if (PARAM != nullptr) { // file json found
-        puts("PARAMETERS PUBLISHER: ");
+        if(verbose)
+            puts("PARAMETERS PUBLISHER: ");
+
         const char *type_connection;
         const char *port;
         const char *ip;
@@ -45,39 +54,36 @@ publisher_thread(const char **path) {
             value = json_object_get_string(val);
             //check if the value is an int
             //int_value = (int) json_object_get_int64(val);
-            if (strcmp(key, "msg_rate_sec") == 0) {
+            if (strcmp(key, "msg_rate_sec") == 0)
                 msg_rate_sec = (int) json_object_get_int64(val);
-            }
+
             if (strcmp(key, "type_test") == 0)
                 type_test = value;
             if (strcmp(key, "number_of_messages") == 0)
                 num_mex = (int) json_object_get_int64(val);
             if (strcmp(key, "payload_size_bytes") == 0)
                 payload_size = (int) json_object_get_int64(val);
-            if (strcmp(key, "connection_type") == 0) {
+            if (strcmp(key, "connection_type") == 0)
                 type_connection = value;
+            if (strcmp(key, "ip") == 0)
+                ip = value;
+            if (strcmp(key, "port") == 0)
+                port = value;
+            if (strcmp(key, "metric output file") == 0)
+                output_file = value;
+            if (strcmp(key, "topic") == 0)
+                topic = value;
+
+            if (strcmp(key, "endpoint_inproc") == 0)
+                endpoint_inproc = value;
+
+            // printing...
+            if(verbose){
+                printf("ip found: %s\n", ip);
+                printf("output file found: %s\n", output_file);
+                printf("port found: %s\n", port);
                 printf("connection type found: %s\n", type_connection);
             }
-            if (strcmp(key, "ip") == 0) {
-                ip = value;
-                printf("ip found: %s\n", ip);
-            }
-            if (strcmp(key, "port") == 0) {
-                port = value;
-                printf("port found: %s\n", port);
-            }
-            if (strcmp(key, "metric output file") == 0) {
-                output_file = value;
-                printf("output file found: %s\n", output_file);
-            }
-            if (strcmp(key, "topic") == 0) {
-                topic = value;
-            }
-            if (strcmp(key, "endpoint_inproc") == 0) {
-                endpoint_inproc = value;
-            }
-
-            //printf("key: %s, value: %s\n", key,value);
 
         }
         // create a new endpoint composed of the items inside the json file
@@ -94,34 +100,41 @@ publisher_thread(const char **path) {
         } else if (strcmp(type_connection, "inproc") == 0) {
             endpoint_customized = strcat(endpoint_customized, endpoint_inproc);
         }
-        printf("string for endpoint (from json file): %s\t", endpoint_customized);
+        if(verbose)
+            printf("string for endpoint (from json file): %s\t", endpoint_customized);
 
         pub = zsock_new_pub(endpoint_customized);
 
     } else {
+        puts("error");
+        return -1;
         //default endpoint
-        pub = zsock_new_pub(ENDPOINT);
+        //pub = zsock_new_pub(ENDPOINT);
     }
 
     int64_t count = 0;
+
     puts("pub connected");
     //size_of_payload = (int) strtol(payload_size, NULL, 10);
     //max_mex = strtol(num_mex, NULL, 10);
+    if(verbose){
+        printf("PAYLOAD SIZE: %d\n", payload_size);
+        printf("message rate: %d\n", msg_rate_sec);
+    }
 
-    printf("PAYLOAD SIZE: %d\n", payload_size);
-    printf("message rate: %d\n", msg_rate_sec);
     int64_t timestamp;
     std::string time_string;
     long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
     zclock_sleep(4000);
-   for(;;){
+    for(;;){
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)
         // break;
         if (count==num_mex){
             break;
         }
-        printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
+        if(verbose)
+            printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
         //printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
         zclock_sleep((int) milli_secs_of_sleeping); //  Wait for x milliseconds
 
@@ -132,7 +145,7 @@ publisher_thread(const char **path) {
         else if(strcmp(type_test, "LOCAL")==0){
             timestamp = zclock_usecs();
         }
-            // catching timestamp
+        // catching timestamp
         else{
             timestamp=0000000000000;
         }
@@ -140,14 +153,16 @@ publisher_thread(const char **path) {
 
         //int nDigits = floor(1 + log10(abs((int) timestamp)));
         time_string =to_string(timestamp);
-        printf("TIMESTAMP: %lld\n", timestamp);
+        if(verbose)
+            printf("TIMESTAMP: %lld\n", timestamp);
         zmsg_t *msg = zmsg_new(); // creating new zmq message
         int rc = zmsg_pushstr(msg, time_string.c_str());
         assert(rc == 0);
-        printf("SIZE OF RESIDUAL STRING (OF ZEROS) : %ld\n", payload_size - (long)(time_string.length()));
+        if(verbose)
+            printf("SIZE OF RESIDUAL STRING (OF ZEROS) : %ld\n", payload_size - (long)(time_string.length()));
         std::string string_residual_payload;
         if (payload_size > (long) time_string.length()) {
-            puts("PAYLOAD IS NOT NULL");
+
             string_residual_payload = string(payload_size-(long) time_string.length(), '0');
             //printf("String of zeros: %s\n", string_residual_payload);
             zchunk_t *chunk= zchunk_new(string_residual_payload.c_str(),abs(payload_size - (long)(time_string.length())) );
@@ -168,8 +183,8 @@ publisher_thread(const char **path) {
         }
 
         //char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent
-
-        zclock_log("Message No. %llu", count);
+        if(verbose)
+            zclock_log("Message No. %llu", count);
 
         count++;
     }
@@ -177,7 +192,7 @@ publisher_thread(const char **path) {
     return 0;
 }
 
-int main(int argc, char **argv) {
+int main_PUB(int argc, char **argv) {
 
     if (argc < 1) {
         printf("NO INPUT JSON FILE...EXIT\n");
@@ -185,8 +200,12 @@ int main(int argc, char **argv) {
     } else {
 
         const char *cmdstring;
+        const char *v =  (char *) argv[3];
         cmdstring = strdup(argv[1]);
-
+        if(strcmp(v, "-v") == 0)
+            verbose=true;
+        else
+            verbose=false;
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
         int rc =publisher_thread(&cmdstring);
         printf("exit code of publisher : %d", rc);
@@ -199,3 +218,4 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+#endif //PROJECTPUBSUBZMQ_PUB_H
