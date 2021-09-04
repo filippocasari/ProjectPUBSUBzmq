@@ -23,9 +23,16 @@ except:
     print("error, no input string")
     exit(1)
 type_test="LAN"
-cwd=str(os.getcwd())
-if not os.path.exists(cwd+dir_name):
-    os.makedirs(cwd+dir_name)
+cwd=os.getcwd()
+if not os.path.exists(str(cwd+dir_name)):
+    os.chdir(cwd)
+    string_path = dir_name.split("/")
+    print(string_path)
+    i=0
+    while(os.path.exists(str(cwd+dir_name))):
+        i+=1
+        os.mkdir(string_path[i])
+
 for i in range_payload:
     for j in msg_rate:
         string_name = "test_" + str(num_test)
