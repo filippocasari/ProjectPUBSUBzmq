@@ -73,9 +73,9 @@ if not os.path.exists(str(cwd + dir_name)):  # if path does not exist yet
             print("this path already exists")
     if is_on_LAN:
 
-        path_of_PUB = cwd + string_temp + "/" + "PUB"
+        path_of_PUB = cwd + string_temp  + "PUB"
         print("PATH PUB: ", path_of_PUB)
-        path_of_SUB = cwd + string_temp + "/" + "SUB"
+        path_of_SUB = cwd + string_temp + "SUB"
         print("PATH SUB: ", path_of_SUB)
         os.mkdir(path_of_PUB)
         os.mkdir(path_of_SUB)
