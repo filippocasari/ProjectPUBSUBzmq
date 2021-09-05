@@ -7,7 +7,11 @@
 using namespace std;
 
 int main(int argc, char **argv) {
+    std::thread threadSUB([argc, argv]{
+        main_SUB(argc, argv);
+    });
+    zclock_sleep(3000);
     main_PUB(argc, argv);
-    main_SUB(argc, argv);
+    threadSUB.join();
     return 0;
 }

@@ -46,6 +46,7 @@ if (sys.argv[2].upper() == "LAN"):
     is_on_LAN = True  # if tests are on LAN, path and configurations are different
 else:
     is_on_LAN = False
+    connection_type="inproc"
 print("IS on LAN: ", str(is_on_LAN))
 try:
     dir_name = sys.argv[1]  # get first argv

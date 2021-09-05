@@ -13,6 +13,8 @@
 #include <json-c/json.h>
 #include <cmath>
 #include <thread>
+#include <iostream>
+
 //default endpoint
 const char *endpoint_inprocess = "inproc://example";
 //const char *json_file_config;
@@ -23,12 +25,12 @@ bool verbose = true;
 using namespace std;
 //thread of publisher
 int
-publisher_thread(const char **path) {
+publisher_thread(const char *path) {
     zsock_t *pub; // new sock pub
     //path of json file for configuration
     //json obj for deserialization
 
-    json_object *PARAM = json_object_from_file(*path);
+    json_object *PARAM = json_object_from_file(path);
     int payload_size = 10; //payload, 10 default bytes
     int num_mex = NUM_MEX_DEFAULT; // maximum messages for the publisher, 10 default
     const char *topic; // name of the topic
@@ -77,14 +79,13 @@ publisher_thread(const char **path) {
             if (strcmp(key, "endpoint_inproc") == 0)
                 endpoint_inproc = value;
 
-            // printing...
-            if(verbose){
-                printf("ip found: %s\n", ip);
-                printf("output file found: %s\n", output_file);
-                printf("port found: %s\n", port);
-                printf("connection type found: %s\n", type_connection);
-            }
-
+        }
+        // printing...
+        if(verbose){
+            printf("ip found: %s\n", ip);
+            printf("output file found: %s\n", output_file);
+            printf("port found: %s\n", port);
+            printf("connection type found: %s\n", type_connection);
         }
         // create a new endpoint composed of the items inside the json file
         char endpoint[20];
@@ -198,7 +199,9 @@ int main_PUB(int argc, char **argv) {
         printf("NO INPUT JSON FILE...EXIT\n");
         return -1;
     } else {
-
+        for(int i=1; i<argc; i++){
+            cout<<"ARGV["<<i<<"]: "<<argv[i]<<endl;
+        }
         const char *cmdstring;
         const char *v =  (char *) argv[3];
         cmdstring = strdup(argv[1]);
@@ -207,7 +210,7 @@ int main_PUB(int argc, char **argv) {
         else
             verbose=false;
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
-        int rc =publisher_thread(&cmdstring);
+        int rc =publisher_thread(cmdstring);
         printf("exit code of publisher : %d", rc);
         //zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
         //zstr_sendx (pub_actor, "BREAK", NULL);

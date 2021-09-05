@@ -36,7 +36,6 @@ mutex cout_mutex;
 mutex access_to_file;
 BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
 ofstream config_file;
-bool verbose = true;
 void write_safely(string *what_i_said){
     cout_mutex.lock();
     cout<<*what_i_said<<endl;
@@ -273,7 +272,9 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 
 
 int main_SUB(int argc, char **argv) {
-
+    for(int i=1; i<argc; i++){
+        cout<<"ARGV["<<i<<"]: "<<argv[i]<<endl;
+    }
     char *cmdstring; // string of args
     if (argc == 1) // exit if argc is less then 2
         {
