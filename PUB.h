@@ -26,6 +26,7 @@ using namespace std;
 //thread of publisher
 int
 publisher_thread(const char *path) {
+    char *endpoint_customized;
     zsock_t *pub; // new sock pub
     //path of json file for configuration
     //json obj for deserialization
@@ -39,6 +40,7 @@ publisher_thread(const char *path) {
     // deserializing file
 
     const char *type_test;
+
     if (PARAM != nullptr) { // file json found
         if(verbose)
             puts("PARAMETERS PUBLISHER: ");
@@ -78,6 +80,8 @@ publisher_thread(const char *path) {
 
             if (strcmp(key, "endpoint_inproc") == 0)
                 endpoint_inproc = value;
+            if(strcmp(key, "number_of_messages")==0)
+                num_mex=(int) strtol(json_object_get_string(val), nullptr, 10);
 
         }
         // printing...
@@ -90,7 +94,7 @@ publisher_thread(const char *path) {
         // create a new endpoint composed of the items inside the json file
         char endpoint[20];
         endpoint[0]='\0';
-        char *endpoint_customized = strcat(endpoint, type_connection);
+        endpoint_customized = strcat(endpoint, type_connection);
         endpoint_customized = strcat(endpoint_customized, "://");
 
         //only for tcp, not for in process connection
@@ -127,13 +131,8 @@ publisher_thread(const char *path) {
     std::string time_string;
     long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
     zclock_sleep(4000);
-    for(;;){
-        //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
-        //if (mex_interrupt)
-        // break;
-        if (count==num_mex){
-            break;
-        }
+    for(;(int) count<num_mex; count++){
+
         if(verbose)
             printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
         //printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
@@ -148,11 +147,8 @@ publisher_thread(const char *path) {
         }
         // catching timestamp
         else{
-            timestamp=0000000000000;
+            timestamp=0;
         }
-
-
-        //int nDigits = floor(1 + log10(abs((int) timestamp)));
         time_string =to_string(timestamp);
         if(verbose)
             printf("TIMESTAMP: %lld\n", timestamp);
@@ -182,13 +178,11 @@ publisher_thread(const char *path) {
             }
 
         }
-
-        //char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent
         if(verbose)
             zclock_log("Message No. %llu", count);
-
-        count++;
     }
+    zsock_send(pub, "s", "TERMINATE");
+    zsock_disconnect(pub, "%s", endpoint_customized);
     zsock_destroy(&pub);
     return 0;
 }
@@ -211,14 +205,13 @@ int main_PUB(int argc, char **argv) {
             verbose=false;
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
         int rc =publisher_thread(cmdstring);
-        printf("exit code of publisher : %d", rc);
+        cout<<"exit code of publisher : "<< rc<<endl;
         //zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
         //zstr_sendx (pub_actor, "BREAK", NULL);
         //puts("destroying zactor PUB");
         //zactor_destroy(&pub_actor);
 
     }
-
     return 0;
 }
 #endif //PROJECTPUBSUBZMQ_PUB_H
