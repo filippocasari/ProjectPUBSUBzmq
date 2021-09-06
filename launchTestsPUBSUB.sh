@@ -1,9 +1,13 @@
 #!/bin/bash
-
+args=("$@")
 cmake CMakeLists.txt || echo "Error to load CMakeLists"
 #cd ./cmake-build-debug || exit
 #test_date=$(date +"%H:%M")
-test_path="./fileJson/test_"
+test_path=${args[2]}
+argument=${args[1]}
+echo "ARG 2: $test_path"
+echo "ARG 1: $argument"
+
 
 
 directory_path="./ResultsCsv_" # can ben set by the user by argv
@@ -11,7 +15,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd && echo "TEST
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS"
 fi
-argument=${args[1]}
+
 for ((i = 0; i<=10; i++)); do
 
   for ((c = 0; c <=11; c++)); do
