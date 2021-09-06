@@ -27,6 +27,7 @@ for ((i = 0; i<=10; i++)); do
     elif [[ "$argument" -eq "-p" ]]
     then
       ./PUB "$test_path$c.json"
+      sleep 10
     else
       {
         if [[ "$OSTYPE" == "linux-gnu"* ]]
@@ -67,6 +68,10 @@ for ((i = 0; i<=10; i++)); do
         echo "exit code: "$succ
       fi
       sleep 10
+
+    fi
+    if [[ "$argument" == "-s" ]]
+    then
       if [[ "$OSTYPE" == "linux-gnu"* ]]
       then
         sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB
@@ -80,8 +85,10 @@ for ((i = 0; i<=10; i++)); do
     echo "End test $c at $var #########"
     echo "##########################################################"
    # start-stop-daemon --stop --oknodo --retry 15 -n PUB
-
-    sleep 10 #sleep 10 secs until next test
+    if [[ "$argument" == "-p" ]]
+    then
+      sleep 10 #sleep 10 secs until next test
+    fi
 
   done
 done
