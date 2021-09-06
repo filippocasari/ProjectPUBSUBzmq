@@ -9,11 +9,11 @@ echo "ARG 2: $test_path"
 echo "ARG 1: $argument"
 
 
-
-directory_path="./ResultsCsv_" # can ben set by the user by argv
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd && echo "TEST ON LINUX" || exit
+daddy_path="./ResultsLAN_"
+directory_path="/ResultsCsv_" # can ben set by the user by argv
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then sudo ntpdate -u 0.it.pool.ntp.org && echo "TEST ON LINUX" || exit
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-  echo " TESTS ON MAC OS" && systemctl restart chronyd
+  echo " TESTS ON MAC OS" && sudo ntpdate -u 0.it.pool.ntp.org
 fi
 
 for ((i = 0; i<=10; i++)); do
@@ -27,7 +27,7 @@ for ((i = 0; i<=10; i++)); do
 
     if [[ "$argument" == "-s" ]]
     then
-        ./SUB "$test_path$c.json" "$directory_path$i/" "-v"
+        ./SUB "$test_path$c.json" "$daddy_path$i$directory_path$i/" "-v"
     elif [[ "$argument" -eq "-p" ]]
     then
       ./PUB "$test_path$c.json"
