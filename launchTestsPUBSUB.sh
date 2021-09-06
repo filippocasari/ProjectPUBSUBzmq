@@ -14,7 +14,6 @@ directory_path="./ResultsCsv_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd && echo "TEST ON LINUX" || exit
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS" && systemctl restart chronyd
-
 fi
 
 for ((i = 0; i<=10; i++)); do
