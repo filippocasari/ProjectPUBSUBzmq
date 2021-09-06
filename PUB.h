@@ -181,6 +181,7 @@ publisher_thread(const char *path) {
         if(verbose)
             zclock_log("Message No. %llu", count);
     }
+    zclock_sleep(2000);
     zsock_send(pub, "s", "TERMINATE");
     zsock_disconnect(pub, "%s", endpoint_customized);
     zsock_destroy(&pub);

@@ -114,7 +114,7 @@ publisher_thread(const char **path) {
     std::string time_string;
     long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
     zclock_sleep(4000);
-   for(;;){
+    for(;;){
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)
         // break;
@@ -173,6 +173,8 @@ publisher_thread(const char **path) {
 
         count++;
     }
+    zclock_sleep(2000);
+    zsock_send(pub, "s", "TERMINATE");
     zsock_destroy(&pub);
     return 0;
 }

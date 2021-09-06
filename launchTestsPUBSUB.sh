@@ -11,6 +11,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd && echo "TEST
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS"
 fi
+argument=${args[1]}
 for ((i = 0; i<=10; i++)); do
 
   for ((c = 0; c <=11; c++)); do
@@ -20,54 +21,61 @@ for ((i = 0; i<=10; i++)); do
     echo "Start test $c at $var #########"
     echo "##########################################################"
 
-    {
+    if [[ "$argument" == "-s" ]]
+    then
+        ./SUB "$test_path$c.json" "$directory_path$i/" "-v"
+    elif [[ "$argument" -eq "-p" ]]
+    then
+      ./PUB "$test_path$c.json"
+    else
+      {
+        if [[ "$OSTYPE" == "linux-gnu"* ]]
+        then
+          sudo ./SUB "$test_path$c.json" "$directory_path$i/" "-v"
+          sudo chmod +rwx "./"$directory_path$i/
+        elif [[ "$OSTYPE" == "darwin"* ]];
+        then
+          ./SUB "$test_path$c.json" "$directory_path$i/" "-v"
+        fi
+      }&
+
+      sleep 5
+
+      #./SUB3 /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
+      #./PUB /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
+
+      # shellcheck disable=SC2046
+
       if [[ "$OSTYPE" == "linux-gnu"* ]]
       then
-        sudo nice --19 ./SUB "$test_path$c.json" "$directory_path$i/" "-v"
-        sudo chmod +rwx "./"$directory_path$i/
-      elif [[ "$OSTYPE" == "darwin"* ]];
+          sudo ./PUB "$test_path$c.json"
+      elif [[ "$OSTYPE" == "darwin"* ]]
       then
-        ./SUB "$test_path$c.json" "$directory_path$i/" "-v"
+          ./PUB "$test_path$c.json"
       fi
-    }&
-    sleep 5
-    #./SUB3 /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
-    #./PUB /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
-
-    # shellcheck disable=SC2046
-
-    if [[ "$OSTYPE" == "linux-gnu"* ]]
-    then
-        sudo nice --19 ./PUB "$test_path$c.json"
-        succ=$?
-    elif [[ "$OSTYPE" == "darwin"* ]]
-    then
-        ./PUB "$test_path$c.json"
-        succ=$?
+      succ=$?
+      if [ $succ -eq 0 ]
+      then
+        echo
+        echo "test succeeded..."
+        sleep 5
+        echo "##########################################################"
+        echo "send SIGTERM and SIGKILL TO SUB"
+      else
+        # shellcheck disable=SC1072
+        echo " test failed"
+        echo "exit code: "$succ
+      fi
+      sleep 10
+      if [[ "$OSTYPE" == "linux-gnu"* ]]
+      then
+        sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB
+        sleep 5
+        killall SUB
+      else
+        killall SUB
+      fi
     fi
-
-    if [ $succ -eq 0 ]
-    then
-      echo
-      echo "test succeeded..."
-      sleep 5
-      echo "##########################################################"
-      echo "send SIGTERM and SIGKILL TO SUB"
-    else
-      # shellcheck disable=SC1072
-      echo " test failed"
-      echo "exit code: "$succ
-    fi
-    sleep 10
-    if [[ "$OSTYPE" == "linux-gnu"* ]]
-    then
-      sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB
-      sleep 5
-      killall SUB
-    else
-      killall SUB
-    fi
-
     echo "##########################################################"
     echo "End test $c at $var #########"
     echo "##########################################################"

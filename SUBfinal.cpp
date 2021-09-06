@@ -49,6 +49,11 @@ int payload_managing(zmsg_t **msg, const int64_t
         string say = "size of msg: " +to_string(zmsg_size(*msg));
         write_safely(&say);
         frame = zmsg_popstr(*msg);
+        if(strcmp(frame, "TERMINATE")==0){
+            cout<<"Message received :"<<frame<<endl;
+            cout<<"exit"<<endl;
+            return 1;
+        }
         if (strcmp(frame, "TIMESTAMP") == 0) {
             frame = zmsg_popstr(*msg);
             if(verbose){
