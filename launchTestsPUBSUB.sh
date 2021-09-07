@@ -3,8 +3,8 @@ args=("$@")
 cmake CMakeLists.txt || echo "Error to load CMakeLists"
 #cd ./cmake-build-debug || exit
 #test_date=$(date +"%H:%M")
-test_path=${args[2]}
-argument=${args[1]}
+test_path=$2
+argument=$1
 echo "ARG 2: $test_path"
 echo "ARG 1: $argument"
 
