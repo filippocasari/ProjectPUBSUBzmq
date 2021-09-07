@@ -27,16 +27,16 @@ for ((i = 0; i<=10; i++)); do
 
     if [[ "$argument" == "-s" ]]
     then
-        sudo ./SUB "$test_path$c.json" "$directory_path$i/" "-v"
+        sudo ./SUB2 "$test_path$c.json" "$directory_path$i/" "-v"
     elif [[ "$argument" -eq "-p" ]]
     then
-      sudo ./PUB "$test_path$c.json"
+      sudo ./PUB2 "$test_path$c.json" "-v"
       sleep 10
     else
       {
         if [[ "$OSTYPE" == "linux-gnu"* ]]
         then
-          sudo ./SUB "$test_path$c.json" "$directory_path$i/" "-v"
+          sudo ./SUB2 "$test_path$c.json" "$directory_path$i/" "-v"
           sudo chmod +rwx "./"$directory_path$i/
         elif [[ "$OSTYPE" == "darwin"* ]];
         then
@@ -53,10 +53,10 @@ for ((i = 0; i<=10; i++)); do
 
       if [[ "$OSTYPE" == "linux-gnu"* ]]
       then
-          sudo ./PUB "$test_path$c.json"
+          sudo ./PUB2 "$test_path$c.json"
       elif [[ "$OSTYPE" == "darwin"* ]]
       then
-          ./PUB "$test_path$c.json"
+          ./PUB2 "$test_path$c.json"
       fi
       succ=$?
       if [ $succ -eq 0 ]

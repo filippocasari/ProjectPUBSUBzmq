@@ -377,8 +377,6 @@ int main(int argc, char *argv[]) {
                 topic = (char *)value;
             if (strcmp(key, "endpoint_inproc") == 0)
                 endpoint_inproc = value;
-            if(strcmp(key, "number_of_messages")==0)
-                number_of_messages=(int) strtol(json_object_get_string(val), nullptr, 10);
         }
         endpoint_customized = string()+type_connection+"://";
 
