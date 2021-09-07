@@ -151,7 +151,7 @@ publisher_thread(const char **path) {
             string_residual_payload = string(payload_size-(long) time_string.length(), '0');
             //printf("String of zeros: %s\n", string_residual_payload);
             zchunk_t *chunk= zchunk_new(string_residual_payload.c_str(),abs(payload_size - (long)(time_string.length())) );
-            if (zsock_send(pub, "s8ssc", topic,count, "TIMESTAMP", time_string.c_str(), chunk) == -1) {
+            if (zsock_send(pub, "s8ssiic", topic,count, "TIMESTAMP", time_string.c_str(),num_mex, msg_rate_sec, chunk ) == -1) {
                 puts("error to send,packet loss");
             }
             zchunk_destroy(&chunk);

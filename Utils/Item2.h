@@ -15,12 +15,16 @@ class Item2 {
         std::string ts_start;
         int64_t num{};
         int64_t ts_end{};
+        int64_t msg_rate{};
+        int64_t payload_size{};
         Item2() = default;
-        Item2(std::string mex, int64_t ts, std::string name, const int64_t count) {
+        Item2(std::string mex, int64_t ts, std::string name, const int64_t count, const int64_t rate, const int64_t payload) {
             ts_start = (std::move(mex));
             ts_end = ts;
             name_metric = (std::move(name));
             num=count;
+            msg_rate= rate;
+            payload_size=payload;
         }
         Item2(Item2 const &it){
             this->name_metric=it.name_metric;

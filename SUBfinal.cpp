@@ -26,7 +26,8 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 //const char *endpoint_inprocess = "inproc://example";
 const char *string_json_path;
 char *path_csv = nullptr;
-
+int msg_rate_init;
+int payload_init;
 const char *type_test;
 mutex cout_mutex;
 mutex access_to_file;
@@ -42,7 +43,7 @@ void write_safely(string *what_i_said){
 }
 
 int payload_managing(zmsg_t **msg, const int64_t
-*end, const int64_t *c) {
+*end, const int64_t *c, const int *msg_rate, const int *payload_size) {
     //char *end_pointer_string;
     //long start;
     try {
@@ -58,7 +59,7 @@ int payload_managing(zmsg_t **msg, const int64_t
                 write_safely(&say);
             }
             string start = frame;
-            Item2 item(frame,*end, "end_to_end_delay",*c   ) ;
+            Item2 item(frame,*end, "end_to_end_delay",*c, *msg_rate, *payload_size) ;
             lockingQueue.push(item);
             if(verbose){
                 //say="Size of the queue: "+to_string(lockingQueue.size())+"\nitem No. " + to_string(*c) +" pushed";
@@ -112,9 +113,9 @@ int create_new_consumers() {
             name_of_experiment = json_object_get_string(val);
         if (strcmp(key, "num_consumer_threads") == 0)
             num_consumers = (int) strtol(json_object_get_string(val), nullptr, 10);
-        if (strcmp(key, "msg_rate_sec") == 0) {
-            msg_rate = (int) strtol(json_object_get_string(val), nullptr, 10);
-        }
+        //if (strcmp(key, "msg_rate_sec") == 0) {
+            //msg_rate = (int) strtol(json_object_get_string(val), nullptr, 10);
+        //}
         if (strcmp(key, "payload_size_bytes") == 0) {
             payload = (int) strtol(json_object_get_string(val), nullptr, 10);
         }
@@ -137,9 +138,11 @@ int create_new_consumers() {
             cout<<"launch consumer No. " <<i<<endl;
         }
         consumers.emplace_back(
-                [ &console, &msg_rate, &payload, &name_path_csv, &num_consumers]() {
+                [ &console, &payload, &name_path_csv, &num_consumers]() {
                     auto name = this_thread::get_id();
                     stringstream id;
+                    int msg_rate;
+                    int payload_size;
                     id <<name;
                     string say = "new consumer thread created with ID: "+id.str();
                     write_safely(&say);
@@ -176,15 +179,16 @@ int create_new_consumers() {
                                 say ="opening file csv...";
                                 write_safely(&say);
                             }
-                            if(num_consumers>1)
-                                access_to_file.lock();
+
+                            access_to_file.lock();
+
                             config_file.open(name_path_csv, ios::app);
                             config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
                             to_string(item.ts_end) +
-                            "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
+                            "," + to_string(item.msg_rate) + "," + to_string(item.payload_size) + "\n";
                             config_file.close();
-                            if(num_consumers>1)
-                                access_to_file.unlock();
+
+                            access_to_file.unlock();
                             say = "--------------THREAD No. " +id.str()+" FINISHED ITS JOB----------" ;
                             write_safely(&say);
                         }
@@ -229,6 +233,8 @@ subscriber_thread(string *endpoint_custom, char *topic) {
     zmsg_t *msg = zmsg_new();
     int k = 1;
     int succ=0;
+    int msg_rate=0;
+    int payload=0;
     while (true) {
         succ=zsock_recv(sub, "s8m", &topic, &c, &msg);
         std::unique_lock<std::mutex> ul(is_finished);
@@ -239,6 +245,7 @@ subscriber_thread(string *endpoint_custom, char *topic) {
             ul.unlock();
             break;
         }
+        ul.unlock();
         cout<<"message Received: No. "<< c<<endl;
 
 
@@ -264,7 +271,7 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 
         cout<<"Recv on "<< topic<<endl;
         cout<<"message Received: No. "<< c<<endl;
-        int a = payload_managing(&msg, &end, &c);
+        int a = payload_managing(&msg, &end, &c, (&msg_rate), &payload);
         cout << "managing payload exit code: " << a << endl;
         //zmsg_destroy(&msg);
 
@@ -370,6 +377,10 @@ int main(int argc, char *argv[]) {
                 type_connection = (char *) value;
                 printf("connection type found: %s\n", type_connection);
             }
+            if(strcmp(key, "msg_rate_sec")==0)
+                msg_rate_init = int_value;
+            if(strcmp(key, "payload_size_bytes")==0)
+                payload_init = int_value;
             if (strcmp(key, "type_test") == 0)
                 type_test = value;
             if (strcmp(key, "ip") == 0) {
