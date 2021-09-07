@@ -233,8 +233,9 @@ subscriber_thread(string *endpoint_custom, char *topic) {
     int payload;
     while (true) {
         succ=zsock_recv(sub, "s8m", &topic, &c, &msg);
-        std::unique_lock<std::mutex> ul(is_finished);
-        if(c==-1 or succ==-1){
+
+        if(c==(NUM_MEX_MAX-1) or succ==-1){
+            std::unique_lock<std::mutex> ul(is_finished);
             zclock_sleep(1000);
             cout<<"terminate"<<endl;
             finished=true;
