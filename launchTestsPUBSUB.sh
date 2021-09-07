@@ -8,7 +8,7 @@ argument=${args[1]}
 echo "ARG 2: $test_path"
 echo "ARG 1: $argument"
 
-nc -l 2389 > $out
+
 
 directory_path="./ResultsCsv_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then sudo ntpdate -u 0.it.pool.ntp.org || sudo ntpdate -u 1.it.pool.ntp.org
@@ -28,6 +28,7 @@ for ((i = 0; i<=10; i++)); do
 
     if [[ "$argument" == "-s" ]]
     then
+
       for (( j = 0 ; j < 7 ; j++));do
       {
         son_path="_${j}"
@@ -35,13 +36,17 @@ for ((i = 0; i<=10; i++)); do
         ./SUB2 "$test_path$c.json" "$son__path$i/" "-nv"
       }&
       done
-      if [[ out -eq "TERMINATE" ]];then sleep 10 && killall SUB2
+      message=''
+      nc -l 2389 > message
+      if [[ message -eq "TERMINATE" ]];then sleep 10 && killall SUB2; fi
 
 
     elif [[ "$argument" -eq "-p" ]]
     then
+
       ./PUB2 "$test_path$c.json" "-v"
-      sleep 10
+      sleep 5
+      echo -n 'TERMINATE' nc 192.168.0.102 2389
     else
       {
         if [[ "$OSTYPE" == "linux-gnu"* ]]
