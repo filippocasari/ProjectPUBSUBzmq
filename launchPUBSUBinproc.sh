@@ -27,31 +27,38 @@ for ((i = 0; i<=2; i++)); do
 
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
+      {
         sudo nice --19 ./INPROCESS_TEST "$test_path$c.json" "$directory_path$i/" ${args[3]}
+      }&
+
     elif [[ "$OSTYPE" == "darwin"* ]]
     then
+      {
         ./INPROCESS_TEST "$test_path$c.json" "$directory_path$i/" ${args[3]}
+        succ=$?
+            if [ $succ -eq 0 ]
+            then
+              echo
+              echo "test succeeded..."
+              sleep 5
+              echo "##########################################################"
+              echo "send SIGTERM and SIGKILL TO INPROC TEST"
+            else
+              # shellcheck disable=SC1072
+              echo " test failed"
+              echo "exit code: "$succ
+            fi
+      }&
+
     fi
-    succ=$?
-    if [ $succ -eq 0 ]
-    then
-      echo
-      echo "test succeeded..."
-      sleep 5
-      echo "##########################################################"
-      echo "send SIGTERM and SIGKILL TO INPROC TEST"
-    else
-      # shellcheck disable=SC1072
-      echo " test failed"
-      echo "exit code: "$succ
-    fi
-    sleep 10
+
+    sleep 55
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       sudo start-stop-daemon --stop --oknodo --retry 15 -n ./INPROCESS_TEST
       sleep 5
     fi
-    killall ./INPROCESS_TEST
+    killall INPROCESS_TEST
 
     echo "##########################################################"
     echo "End test $c at $var #########"

@@ -114,7 +114,7 @@ publisher_thread(const char **path) {
     std::string time_string;
     long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
     zclock_sleep(4000);
-    for(;;){
+    for(;count<num_mex; count++){
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)
         // break;
@@ -170,11 +170,9 @@ publisher_thread(const char **path) {
         //char string_residual_payload[(payload_size - strlen(string))]; // string of zeros to complete payload sent
 
         zclock_log("Message No. %llu", count);
-
-        count++;
     }
-    zclock_sleep(2000);
-    zsock_send(pub, "s", "TERMINATE");
+    zclock_sleep(5000);
+    zsock_send(pub, "s8",&topic, -1);
     zsock_destroy(&pub);
     return 0;
 }

@@ -182,8 +182,11 @@ publisher_thread(const char *path) {
             zclock_log("Message No. %llu", count);
     }
     zclock_sleep(2000);
-    zsock_send(pub, "s", "TERMINATE");
-    zsock_disconnect(pub, "%s", endpoint_customized);
+    zmsg_t *msg = zmsg_new();
+    zmsg_pushstr(msg, "TERMINATE");
+    zsock_send(pub, "s1m", &topic, -1, msg);
+    zclock_sleep(2000);
+    //zsock_disconnect(pub, "%s", endpoint_customized);
     zsock_destroy(&pub);
     return 0;
 }

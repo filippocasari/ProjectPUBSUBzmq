@@ -33,6 +33,8 @@ mutex access_to_file;
 BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
 ofstream config_file;
 bool verbose = true;
+mutex is_finished;
+bool finished=false;
 void write_safely(string *what_i_said){
     cout_mutex.lock();
     cout<<*what_i_said<<endl;
@@ -49,11 +51,6 @@ int payload_managing(zmsg_t **msg, const int64_t
         string say = "size of msg: " +to_string(zmsg_size(*msg));
         write_safely(&say);
         frame = zmsg_popstr(*msg);
-        if(strcmp(frame, "TERMINATE")==0){
-            cout<<"Message received :"<<frame<<endl;
-            cout<<"exit"<<endl;
-            return 1;
-        }
         if (strcmp(frame, "TIMESTAMP") == 0) {
             frame = zmsg_popstr(*msg);
             if(verbose){
@@ -147,12 +144,13 @@ int create_new_consumers() {
                     string say = "new consumer thread created with ID: "+id.str();
                     write_safely(&say);
                     int64_t end_to_end_delay;
-                    int c = 0;
                     Item2 item;
-                    while (!zctx_interrupted) {
+                    for(int c=0; c<NUM_MEX_MAX/num_consumers; c++) {
+
+                        if(finished)
+                            break;
 
                         item=lockingQueue.pop();
-                        c++;
 
                         //item = lockingQueue.pop()
 
@@ -178,13 +176,15 @@ int create_new_consumers() {
                                 say ="opening file csv...";
                                 write_safely(&say);
                             }
-                            access_to_file.lock();
+                            if(num_consumers>1)
+                                access_to_file.lock();
                             config_file.open(name_path_csv, ios::app);
                             config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
                             to_string(item.ts_end) +
                             "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
                             config_file.close();
-                            access_to_file.unlock();
+                            if(num_consumers>1)
+                                access_to_file.unlock();
                             say = "--------------THREAD No. " +id.str()+" FINISHED ITS JOB----------" ;
                             write_safely(&say);
                         }
@@ -229,8 +229,19 @@ subscriber_thread(string *endpoint_custom, char *topic) {
     zmsg_t *msg = zmsg_new();
     int k = 1;
     int succ=0;
-    while (succ!=-1) {
+    while (true) {
         succ=zsock_recv(sub, "s8m", &topic, &c, &msg);
+        std::unique_lock<std::mutex> ul(is_finished);
+        if(c==-1 or succ==-1){
+            zclock_sleep(1000);
+            cout<<"terminate"<<endl;
+            finished=true;
+            ul.unlock();
+            break;
+        }
+        cout<<"message Received: No. "<< c<<endl;
+
+
         k++;
         //char *topic;
 

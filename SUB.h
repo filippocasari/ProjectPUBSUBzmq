@@ -36,7 +36,11 @@ mutex cout_mutex;
 mutex access_to_file;
 BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
 ofstream config_file;
-
+mutex is_finished;
+int k=0;
+mutex increment_counter;
+condition_variable cv;
+bool finished;
 void write_safely(string *what_i_said){
     cout_mutex.lock();
     cout<<*what_i_said<<endl;
@@ -160,11 +164,14 @@ int create_new_consumers() {
                     int c = 0;
                     Item2 item;
                     int number_of_iterations=(int)number_of_messages/num_consumers;
-                    while (c<number_of_iterations && !zsys_interrupted) {
+                    while (c<number_of_iterations && !zsys_interrupted ) {
+                        if(finished)
+                            break;
+                        item=lockingQueue.pop();
+
 
                         say ="--------------THREAD No. "+id.str()+" IS WORKING--------";
                         write_safely(&say);
-                        item=lockingQueue.pop();
                         char *end_pointer;
                         int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
                         if(verbose){
@@ -235,20 +242,20 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 
     int64_t end;
     string metric = "end_to_end_delay";
-    //zpoller_t *poller = zpoller_new(sub, NULL);
     zmsg_t *msg = zmsg_new();
     int succ=0;
-    int k=0;
-    for(; k<NUM_MEX_MAX; k++) {
-        succ=zsock_recv(sub, "s8m", &topic, &c, &msg);
 
-        //char *topic;
-
-        //zpoller_wait(poller, 0);
-        /*int rc=
-        if (rc==-1)
-            puts("ERROR TO RECEIVE");
-        */
+    while(true) {
+        succ=zsock_recv(sub, "sim", &topic, &c, &msg);
+        if(c==-1){
+            zclock_sleep(1000);
+            cout<<"terminating"<<endl;
+            if(c==-1 or succ==-1){
+                zclock_sleep(1000);
+                cout<<"TERMINATE"<<endl;
+                finished=true;
+            }
+        }
 
         if (msg == nullptr) {
             cout<<"exit, msg null"<<endl;
@@ -263,14 +270,14 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 
         cout<<"Recv on "<< topic<<endl;
         cout<<"message Received: No. "<< c<<endl;
+        increment_counter.lock();
+        k++;
+        increment_counter.unlock();
         int a = payload_managing(&msg, &end, &c);
         cout << "managing payload exit code: " << a << endl;
-        cout<<"VALUE OF K : "<<k<<endl;
-        if(a==1 || succ==-1)
-            break;
+
 
         //zmsg_destroy(&msg);
-
     }
     if (k - (int) NUM_MEX_MAX>=0)
         cout << "test SUCCESS" << endl;
