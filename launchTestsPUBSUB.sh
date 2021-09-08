@@ -35,24 +35,16 @@ for ((i = 0; i<=10; i++)); do
         son_path="_${j}"
         son__path="$directory_path$son_path"
         ./SUB2 "$test_path$c.json" "$son__path$i/" "$verbose"
-      }&
+      }
       done
-      message=''
-      nc -l 2389 > message
-      if [[ message -eq "TERMINATE" ]];then sleep 10 && killall SUB2; fi
-      sleep 60
     elif [[ "$argument" -eq "-p" ]]
     then
-
       ./PUB2 "$test_path$c.json" "-v"
-      sleep 5
-      echo -n 'TERMINATE' nc 192.168.0.102 2389
     else
       {
         if [[ "$OSTYPE" == "linux-gnu"* ]]
         then
           ./SUB2 "$test_path$c.json" "$directory_path$i/" "$verbose"
-          sudo chmod +rwx "./"$directory_path$i/
         elif [[ "$OSTYPE" == "darwin"* ]];
         then
           ./SUB2 "$test_path$c.json" "$directory_path$i/" "$verbose"
@@ -60,19 +52,8 @@ for ((i = 0; i<=10; i++)); do
       }&
 
       sleep 5
+      ./PUB2 "$test_path$c.json"
 
-      #./SUB3 /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
-      #./PUB /home/filippocasari/CLionProjects/ProjectPUBSUBzmq/fileJson/test_1.json
-
-      # shellcheck disable=SC2046
-
-      if [[ "$OSTYPE" == "linux-gnu"* ]]
-      then
-          ./PUB2 "$test_path$c.json"
-      elif [[ "$OSTYPE" == "darwin"* ]]
-      then
-          ./PUB2 "$test_path$c.json"
-      fi
       succ=$?
       if [ $succ -eq 0 ]
       then
@@ -89,25 +70,17 @@ for ((i = 0; i<=10; i++)); do
       sleep 10
 
     fi
-    if [[ "$argument" == "-s" ]]
+
+    if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
-      if [[ "$OSTYPE" == "linux-gnu"* ]]
-      then
-        sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB2
-        sleep 5
-        killall SUB2
-      else
-        killall SUB2
-      fi
+      sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB2
+      sudo start-stop-daemon --stop --oknodo --retry 15 -n PUB2
     fi
+    killall SUB2
+    sleep 5
     echo "##########################################################"
     echo "End test $c at $var #########"
     echo "##########################################################"
-   # start-stop-daemon --stop --oknodo --retry 15 -n PUB
-    if [[ "$argument" == "-p" ]]
-    then
-      sleep 10 #sleep 10 secs until next test
-    fi
 
   done
 done
