@@ -12,10 +12,10 @@ test_path=$1
 
 directory_path=$2
 verbose=$3
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd && echo "TEST ON LINUX" || exit
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-  echo " TESTS ON MAC OS"
-fi
+#if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd && echo "TEST ON LINUX" || exit
+#elif [[ "$OSTYPE" == "darwin"* ]]; then
+ # echo " TESTS ON MAC OS"
+#fi
 for ((i = 0; i<=2; i++)); do
 
   for ((c = 0; c <=11; c++)); do
