@@ -19,7 +19,7 @@ class BlockingQueue
             void push(T const& value) {
                 {
                     std::unique_lock<std::mutex> lock(this->d_mutex);
-                    d_queue.push_back(value);
+                    d_queue.push_front(value);
                 }
                 this->d_condition.notify_one();
             }

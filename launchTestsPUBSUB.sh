@@ -1,12 +1,13 @@
 #!/bin/bash
-args=("$@")
 cmake CMakeLists.txt || echo "Error to load CMakeLists"
 #cd ./cmake-build-debug || exit
 #test_date=$(date +"%H:%M")
 test_path=$2
 argument=$1
+verbose=$3
 echo "ARG 2: $test_path"
 echo "ARG 1: $argument"
+echo "ARG 3: $verbose"
 
 
 
@@ -33,14 +34,13 @@ for ((i = 0; i<=10; i++)); do
       {
         son_path="_${j}"
         son__path="$directory_path$son_path"
-        ./SUB2 "$test_path$c.json" "$son__path$i/" "-nv"
+        ./SUB2 "$test_path$c.json" "$son__path$i/" "$verbose"
       }&
       done
       message=''
       nc -l 2389 > message
       if [[ message -eq "TERMINATE" ]];then sleep 10 && killall SUB2; fi
-
-
+      sleep 60
     elif [[ "$argument" -eq "-p" ]]
     then
 
@@ -51,11 +51,11 @@ for ((i = 0; i<=10; i++)); do
       {
         if [[ "$OSTYPE" == "linux-gnu"* ]]
         then
-          ./SUB2 "$test_path$c.json" "$directory_path$i/" "-v"
+          ./SUB2 "$test_path$c.json" "$directory_path$i/" "$verbose"
           sudo chmod +rwx "./"$directory_path$i/
         elif [[ "$OSTYPE" == "darwin"* ]];
         then
-          ./SUB2 "$test_path$c.json" "$directory_path$i/" "-v"
+          ./SUB2 "$test_path$c.json" "$directory_path$i/" "$verbose"
         fi
       }&
 

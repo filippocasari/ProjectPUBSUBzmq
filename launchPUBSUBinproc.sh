@@ -7,10 +7,11 @@ echo $# arguments passed
 echo ${args[0]} ${args[1]} ${args[2]}
 #cd ./cmake-build-debug || exit
 #test_date=$(date +"%H:%M")
-test_path=${args[1]}
+test_path=$1
 
 
-directory_path=${args[2]}
+directory_path=$2
+verbose=$3
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd && echo "TEST ON LINUX" || exit
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS"
@@ -28,13 +29,13 @@ for ((i = 0; i<=2; i++)); do
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       {
-        sudo nice --19 ./INPROCESS_TEST "$test_path$c.json" "$directory_path$i/" ${args[3]}
+        sudo nice --19 ./INPROCESS_TEST "$test_path$c.json" "$directory_path$i/" "$verbose"
       }&
 
     elif [[ "$OSTYPE" == "darwin"* ]]
     then
       {
-        ./INPROCESS_TEST "$test_path$c.json" "$directory_path$i/" ${args[3]}
+        ./INPROCESS_TEST "$test_path$c.json" "$directory_path$i/" "$verbose"
         succ=$?
             if [ $succ -eq 0 ]
             then
@@ -51,13 +52,13 @@ for ((i = 0; i<=2; i++)); do
       }&
 
     fi
-
-    sleep 55
+    sleep 60
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
-      sudo start-stop-daemon --stop --oknodo --retry 15 -n ./INPROCESS_TEST
+      sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROCESS_TEST
       sleep 5
     fi
+    kill
     killall INPROCESS_TEST
 
     echo "##########################################################"
