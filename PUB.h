@@ -131,7 +131,7 @@ publisher_thread(const char *path) {
     std::string time_string;
     long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
     zclock_sleep(4000);
-    for(;(int) count<num_mex; count++){
+    for(;count<num_mex; count++){
 
         if(verbose)
             printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
@@ -166,6 +166,7 @@ publisher_thread(const char *path) {
             if (zsock_send(pub, "s8ssc", topic,count, "TIMESTAMP", time_string.c_str(), chunk) == -1) {
                 puts("error to send,packet loss");
             }
+
             zchunk_destroy(&chunk);
             zmsg_destroy(&msg);
             //  Interrupted

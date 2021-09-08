@@ -163,9 +163,8 @@ int create_new_consumers() {
                     int c = 0;
                     Item2 item;
                     int number_of_iterations=(int)number_of_messages/num_consumers;
-                    while (c<number_of_iterations && !zsys_interrupted ) {
-                        if(finished.load(std::__1::memory_order_relaxed))
-                            break;
+                    while (c<number_of_iterations && !zsys_interrupted) {
+
                         item=lockingQueue.pop();
 
 
@@ -204,6 +203,11 @@ int create_new_consumers() {
                             write_safely(&say);
                         }
                         c++;
+                        if(finished.load(std::__1::memory_order_relaxed)){
+                            if(lockingQueue.size()==0)
+                                break;
+                        }
+
 
                     }
                     say = "thread is closing...";
@@ -243,17 +247,9 @@ subscriber_thread(string *endpoint_custom, char *topic) {
     string metric = "end_to_end_delay";
     zmsg_t *msg = zmsg_new();
     int succ;
-    atomic<int> k=0;
+
     while(true) {
         succ=zsock_recv(sub, "s8m", &topic, &c, &msg);
-
-        if(c==(NUM_MEX_MAX-1) or succ==-1){
-            cout<<"TERMINATING"<<endl;
-            zclock_sleep(1000);
-            finished=true;
-            break;
-        }
-
 
         if (msg == nullptr) {
             cout<<"exit, msg null"<<endl;
@@ -269,22 +265,21 @@ subscriber_thread(string *endpoint_custom, char *topic) {
         cout<<"Recv on "<< topic<<endl;
         cout<<"message Received: No. "<< c<<endl;
         //increment_counter.lock();
-        k++;
         //increment_counter.unlock();
         int a = payload_managing(&msg, &end, &c);
         cout << "managing payload exit code: " << a << endl;
-
+        if(c==(NUM_MEX_MAX-1) or succ==-1){
+            cout<<"TERMINATING"<<endl;
+            zclock_sleep(1000);
+            finished=true;
+            break;
+        }
 
         //zmsg_destroy(&msg);
     }
-    if (k - (int) NUM_MEX_MAX>=0)
-        cout << "test SUCCESS" << endl;
-    else
-        cout << "PACKET LOSS" << endl;
-    cout<<"Messages Received : "<<k<<endl;
+
     sleep(3);
 
-    zsock_disconnect(sub, "%s", (const char *)(endpoint_custom->c_str()));
     zsock_destroy(&sub);
 
     thread_start_consumers.join();
@@ -413,6 +408,7 @@ int main_SUB(int argc, char **argv) {
     cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
 
     subscriber_thread(&endpoint_customized, topic);
+    cout << "END OF SUBSCRIBER" << endl;
     return 0;
 }
 
