@@ -35,9 +35,6 @@ mutex cout_mutex;
 mutex access_to_file;
 BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
 ofstream config_file;
-mutex is_finished;
-mutex increment_counter;
-condition_variable cv;
 atomic<bool> finished;
 void write_safely(string *what_i_said){
     cout_mutex.lock();
