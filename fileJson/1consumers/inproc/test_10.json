@@ -1,0 +1,15 @@
+{
+  "msg_rate_sec": 1000,
+  "number_of_messages": 10000,
+  "topic": "CAR",
+  "connection_type": "inproc",
+  "endpoint_inproc": "CAR",
+  "payload_size_bytes": 50000,
+  "ip": "127.0.0.1",
+  "port": "6000",
+  "metrics_output_type": "csv",
+  "experiment_name": "test_10",
+  "num_of_subs": 1,
+  "type_test": "LAN",
+  "num_consumer_threads": 1
+}
