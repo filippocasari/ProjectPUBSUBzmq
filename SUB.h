@@ -229,6 +229,7 @@ subscriber_thread(string *endpoint_custom, char *topic) {
     // -----------------------------------------------------------------------------------------------------
 
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
+    finished=false;
     thread thread_start_consumers([]() {
         int succ = create_new_consumers();
         cout<<"consumers terminate? "<< succ<<endl;
