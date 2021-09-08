@@ -4,7 +4,6 @@
 
 #ifndef PROJECTPUBSUBZMQ_SUB_H
 #define PROJECTPUBSUBZMQ_SUB_H
-
 #include <czmq.h>
 #include <json-c/json.h>
 #include <fstream>
@@ -203,7 +202,7 @@ int create_new_consumers() {
                             write_safely(&say);
                         }
                         c++;
-                        if(finished.load(std::__1::memory_order_relaxed)){
+                        if(finished.load(std::memory_order_relaxed)){
                             if(lockingQueue.size()==0)
                                 break;
                         }
