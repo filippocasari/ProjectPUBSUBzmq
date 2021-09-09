@@ -31,12 +31,16 @@ for ((i = 0; i<=10; i++)); do
     then
 
       for (( j = 0 ; j < 7 ; j++));do
-      {
+
         son_path="_${j}"
         son__path="$directory_path$son_path"
-        ./SUB2 "$test_path$c.json" "$son__path$i/" "$verbose"
-      }
+        {
+          ./SUB2 "$test_path$c.json" "$son__path$i/" "$verbose"
+        }&
+
       done
+
+
     elif [[ "$argument" -eq "-p" ]]
     then
       ./PUB2 "$test_path$c.json" "-v"
