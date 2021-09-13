@@ -12,6 +12,7 @@ int main(){
         zsock_recv(sub, "s8",&topic, &n );
         //std::cout<<"N: "<<n<<std::endl;
     }
+    sleep(2);
     zsock_destroy(&sub);
     return 0;
 
