@@ -1,5 +1,5 @@
 {
-  "msg_rate_sec": 1000,
+  "msg_rate_sec": 250,
   "number_of_messages": 10000,
   "topic": "CAR",
   "connection_type": "inproc",

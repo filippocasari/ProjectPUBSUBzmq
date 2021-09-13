@@ -1,5 +1,4 @@
 #!/bin/bash
-#!/bin/bash
 
 cmake CMakeLists.txt || echo "Error to load CMakeLists"
 args=("$@")
@@ -29,7 +28,7 @@ for ((i = 0; i<=2; i++)); do
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       {
-        sudo nice --19 ./INPROCESS_TEST "$test_path$c.json" "$directory_path$i/" "$verbose"
+        sudo nice --19 ./INPROCESS_TEST_S "$test_path$c.json" "$directory_path$i/" "$verbose"
       }&
 
     elif [[ "$OSTYPE" == "darwin"* ]]
@@ -55,16 +54,15 @@ for ((i = 0; i<=2; i++)); do
     sleep 60
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
-      sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROCESS_TEST
+      sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROCESS_TEST_S
       sleep 5
     fi
-    killall INPROCESS_TEST
+    killall INPROCESS_TEST_S
 
     echo "##########################################################"
     echo "End test $c at $var #########"
     echo "##########################################################"
    # start-stop-daemon --stop --oknodo --retry 15 -n PUB
-
     sleep 10 #sleep 10 secs until next test
 
   done

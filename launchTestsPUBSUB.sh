@@ -2,13 +2,12 @@
 cmake CMakeLists.txt || echo "Error to load CMakeLists"
 #cd ./cmake-build-debug || exit
 #test_date=$(date +"%H:%M")
-test_path=$2
+json_path=$2
 argument=$1
 verbose=$3
-echo "ARG 2: $test_path"
+echo "ARG 2: $json_path"
 echo "ARG 1: $argument"
 echo "ARG 3: $verbose"
-
 
 
 directory_path="./ResultsCsv_" # can ben set by the user by argv
@@ -20,7 +19,7 @@ fi
 
 for ((i = 0; i<=10; i++)); do
 
-  for ((c = 0; c <12; c++)); do
+  for ((c = 0; c <15; c++)); do
     date +"%FORMAT"
     var=$(date)
     echo "##########################################################"
@@ -35,28 +34,27 @@ for ((i = 0; i<=10; i++)); do
         son_path="_${j}"
         son__path="$directory_path$son_path"
         {
-          ./SUB2 "$test_path$c.json" "$son__path$i/" "$verbose"
+          ./SUB2 "$json_path$c.json" "$son__path$i/" "$verbose"
         }&
 
       done
 
-
     elif [[ "$argument" -eq "-p" ]]
     then
-      ./PUB2 "$test_path$c.json" "-v"
+      ./PUB2 "$json_path$c.json" "-v"
     else
       {
         if [[ "$OSTYPE" == "linux-gnu"* ]]
         then
-          ./SUB2 "$test_path$c.json" "$directory_path$i/" "$verbose"
+          ./SUB2 "$json_path$c.json" "$directory_path$i/" "$verbose"
         elif [[ "$OSTYPE" == "darwin"* ]];
         then
-          ./SUB2 "$test_path$c.json" "$directory_path$i/" "$verbose"
+          ./SUB2 "$json_path$c.json" "$directory_path$i/" "$verbose"
         fi
       }&
 
       sleep 5
-      ./PUB2 "$test_path$c.json"
+      ./PUB2 "$json_path$c.json"
 
       succ=$?
       if [ $succ -eq 0 ]

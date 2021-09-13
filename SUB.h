@@ -15,7 +15,7 @@
 #include <sstream>
 #include <vector>
 #include "Utils/BlockingQueue.h"
-
+#include <string>
 
 #define NUM_CONSUMERS 4
 
@@ -28,8 +28,8 @@ using namespace std;
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 //const char *endpoint_inprocess = "inproc://example";
 const char *string_json_path;
-char *path_csv = nullptr;
-
+bool multithread=false;
+//bool multiple_sub =false;
 const char *type_test;
 mutex cout_mutex;
 mutex access_to_file;
@@ -99,7 +99,7 @@ int payload_managing(zmsg_t **msg, const int64_t
 
 
 
-int create_new_consumers() {
+int create_new_consumers(const char *path_csv) {
     bool console = false;
     int num_consumers = NUM_CONSUMERS;
     string name_of_experiment;
@@ -220,21 +220,35 @@ int create_new_consumers() {
 }
 
 void
-subscriber_thread(string *endpoint_custom, char *topic) {
+subscriber_thread(string *endpoint_custom, char *topic, const char *path_csv, zsock_t *subs) {
 
     // -----------------------------------------------------------------------------------------------------
 
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
     finished=false;
-    thread thread_start_consumers([]() {
-        int succ = create_new_consumers();
+    cout<<"STARTING NEW CONSUMERS"<<endl;
+    thread thread_start_consumers([&path_csv]() {
+        int succ = create_new_consumers(path_csv);
         cout<<"consumers terminate? "<< succ<<endl;
 
     });// create new thread to manage payload
     //--------------------------------------------------------------------------------------------------------
     //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
     cout<<"topic is "<<topic<<endl;
-    zsock_t *sub = zsock_new_sub(endpoint_custom->c_str(), topic);
+
+    zsock_t *sub;
+    if(!multithread or subs== nullptr)
+    {
+        sub = zsock_new(ZMQ_SUB);
+        zsock_connect(sub,"%s", endpoint_custom->c_str());
+        zsock_set_subscribe(sub, topic);
+    }else{
+        sub =subs;
+    }
+
+
+
+    //sub= zsock_new_sub(endpoint_custom->c_str(), topic);
 
     //long time_of_waiting = 0;
     int64_t c =0;
@@ -285,10 +299,11 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 }
 
 
-int main_SUB(int argc, char **argv) {
+int main_SUB_S(int argc, char **args) {
     for(int i=1; i<argc; i++){
-        cout<<"ARGV["<<i<<"]: "<<argv[i]<<endl;
+        cout<<"ARGV["<<i<<"]: "<<args[i]<<endl;
     }
+    const char *path_csv = args[2];
     char *cmdstring; // string of args
     if (argc == 1) // exit if argc is less then 2
         {
@@ -298,14 +313,16 @@ int main_SUB(int argc, char **argv) {
 
         //size_t strsize = 0; //size of the string to allocate memory
 
-        //strsize += (int) strlen(argv[1]);
+        //strsize += (int) strlen(args[1]);
 
         if (argc == 2) {
             cout << "Path for csv not chosen..." << endl;
             return 2;
         }
-        //size_t strsize_2 = (int) strlen(argv[2]);
-        path_csv = argv[2];
+        //size_t strsize_2 = (int) strlen(args[2]);
+
+        //if(strcmp(args[4], "true")==0)
+        //    multiple_sub=true;
         DIR *dir = opendir(path_csv);
         if (dir) {
             cout << "path csv already exists" << endl;
@@ -325,7 +342,7 @@ int main_SUB(int argc, char **argv) {
 
         cout << "PATH chosen: " << path_csv << endl;
         // initialize the string
-        cmdstring = argv[1];
+        cmdstring = args[1];
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
     }
     //path of json file
@@ -345,7 +362,7 @@ int main_SUB(int argc, char **argv) {
         const char *port;
         const char *ip;
         const char *output_file;
-        const char *v =  (char *) argv[3];
+        const char *v =  (char *) args[3];
         if(strcmp(v, "-v") == 0)
             verbose=true;
         else
@@ -404,10 +421,143 @@ int main_SUB(int argc, char **argv) {
     }
     cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
 
-    subscriber_thread(&endpoint_customized, topic);
+    subscriber_thread(&endpoint_customized, topic, path_csv, nullptr);
     cout << "END OF SUBSCRIBER" << endl;
     return 0;
 }
 
 
+
+
+void main_SUB_M( const string& argv, zsock_t *sub) {
+    //zsock_signal (pipe, 0);
+    multithread=true;
+    cout<<"ARGS RECEIVED: "<<argv.c_str()<<endl;
+    char *temp = (char *) argv.c_str();
+
+    string str = temp;
+    size_t pox = str.find(',');
+    int pox2 = (int ) str.find('&');
+    int argc= (int) strlen(reinterpret_cast<const char *>(argv.c_str()));
+    string substring = str.substr(pox2, str.length()-pox2);
+    string csv = str.substr(pox + 1, pox2-1-pox);
+    const char *path_csv = (const char *) csv.c_str();
+    const char *v =  (const char *) substring.c_str();
+    char *cmdstring= nullptr; // string of args
+    if (argc == 1) // exit if argc is less then 2
+        cout<<"NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT"<<endl;
+    else {
+
+        //size_t strsize = 0; //size of the string to allocate memory
+
+        //strsize += (int) strlen(args[1]);
+
+        if (argc == 2) {
+            cout << "Path for csv not chosen..." << endl;
+        }
+        cout<<"POX of ',' : "<<pox<<endl;
+        cout<<"Length of string :"<<(int) str.length()<<endl;
+
+
+        cout<<"PATH: "<<path_csv<<endl;
+
+        DIR *dir = opendir(path_csv);
+        if (dir) {
+            cout << "path csv already exists" << endl;
+            closedir(dir);
+
+        } else if (ENOENT == errno) {
+            int a = mkdir(path_csv, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            if (a != 0)
+            {
+                cout<<"Error to create a directory"<<endl;
+            }
+        } else {
+            cout<<"Error unknown, i could not be possible to open or create a directory for csv tests"<<endl;
+        }
+
+        cout << "PATH chosen: " << path_csv << endl;
+        // initialize the string
+        cmdstring = (char *) str.substr(0,  pox).c_str();
+        printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
+    }
+    //path of json file
+    string_json_path = cmdstring; // file passed from the bash script or manually from terminal
+
+    // start deserialization
+    json_object *PARAM;
+    const char *endpoint_inproc;
+    string endpoint_customized;
+
+    int num_of_subs = NUM_SUBS;
+    PARAM = json_object_from_file(string_json_path);
+    char *topic= nullptr;
+    puts("PARAMETERS PUBLISHER: ");
+    if (PARAM != nullptr) {
+
+        char *type_connection;
+        const char *port;
+        const char *ip;
+        const char *output_file;
+        if(strcmp(v, "-v") == 0)
+            verbose=true;
+        else
+            verbose=false;
+        //int payload_size;
+        //int num_mex;
+        int int_value;
+
+        const char *value;
+        json_object_object_foreach(PARAM, key, val) {
+
+            value = json_object_get_string(val);
+
+            if (json_object_is_type(val, json_type_int)) {
+                int_value = (int) json_object_get_int64(val);
+                if (strcmp(key, "num_of_subs") == 0)
+                    num_of_subs = int_value;
+            }
+
+            printf("\t%s: %s\n", key, value);
+            if (strcmp(key, "connection_type") == 0) {
+                type_connection = (char *) value;
+                printf("connection type found: %s\n", type_connection);
+            }
+            if (strcmp(key, "type_test") == 0)
+                type_test = value;
+            if (strcmp(key, "ip") == 0) {
+                ip = value;
+                printf("ip found: %s\n", ip);
+            }
+            if (strcmp(key, "port") == 0) {
+                port = value;
+                printf("port found: %s\n", port);
+            }
+            if (strcmp(key, "metrics_output_type") == 0) {
+                output_file = value;
+                printf("output file found: %s\n", output_file);
+            }
+            if (strcmp(key, "topic") == 0)
+                topic = (char *)value;
+            if (strcmp(key, "endpoint_inproc") == 0)
+                endpoint_inproc = value;
+        }
+        endpoint_customized = string()+type_connection+"://";
+
+        if (strcmp(type_connection, "tcp") == 0)
+            endpoint_customized = endpoint_customized+ip+":"+port;
+        else if (strcmp(type_connection, "inproc") == 0)
+            endpoint_customized = endpoint_customized+endpoint_inproc;
+        else
+            cout<<"invalid endpoint"<<endl;
+        cout<<"string for endpoint (from json file):\t"<< endpoint_customized<<endl;
+    } else {
+        cout<<"FILE JSON NOT FOUND...EXIT"<<endl;
+
+    }
+    cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
+
+    subscriber_thread(&endpoint_customized, topic, path_csv, sub);
+    cout << "END OF SUBSCRIBER" << endl;
+}
 #endif //PROJECTPUBSUBZMQ_SUB_H
