@@ -244,7 +244,6 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 
     while(true) {
         succ=zsock_recv(sub, "s8m", &topic, &c, &msg);
-
         if (msg == nullptr) {
             cout<<"exit, msg null"<<endl;
             break;

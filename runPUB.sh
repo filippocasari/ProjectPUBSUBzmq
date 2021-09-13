@@ -27,13 +27,13 @@ for ((i = 0; i<=10; i++)); do
     echo "##########################################################"
 
 
-    expect ./runSUBS.sh  "-s" "$json_path$c.json" "$verbose" "$directory_path"
+    bash ./runSUBS.sh  "-s" "$json_path$c.json" "$verbose" "$directory_path"
     if [[ "$argument" -eq "-p" ]]
     then
       ./PUB2 "$json_path$c.json" "-v"
     fi
     sleep 10
-    expect ./stopSUBS.sh
+    bash ./stopSUBS.sh
     sleep 5
   done
 done
