@@ -5,6 +5,12 @@
 #include <json-c/json.h>
 #include <cmath>
 #include <thread>
+#include <iostream>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
+
 //default endpoint
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *endpoint_inprocess = "inproc://example";
@@ -12,9 +18,30 @@ const char *endpoint_inprocess = "inproc://example";
 
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
-
+#define SUBSCRIBERS_EXPECTED 1
 using namespace std;
 //thread of publisher
+
+char* get_ip(){
+    int fd;
+    struct ifreq ifr;
+
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    /* I want to get an IPv4 IP address */
+    ifr.ifr_addr.sa_family = AF_INET;
+
+    /* I want IP address attached to "eth0" */
+    strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
+
+    ioctl(fd, SIOCGIFADDR, &ifr);
+
+    close(fd);
+
+    /* display result */
+    return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+}
+
 int
 publisher_thread(const char **path) {
     zsock_t *pub; // new sock pub
@@ -28,16 +55,15 @@ publisher_thread(const char **path) {
     const char *endpoint_inproc;
     int msg_rate_sec = 1; //message rate, mex/sec
     // deserializing file
+    const char *type_connection;
+    const char *port;
+    const char *ip;
+    const char *output_file;
+    //int int_value;
 
     const char *type_test;
     if (PARAM != nullptr) { // file json found
         puts("PARAMETERS PUBLISHER: ");
-        const char *type_connection;
-        const char *port;
-        const char *ip;
-        const char *output_file;
-
-        //int int_value;
         const char *value;
         // starting a new for each for the couple key, value
 
@@ -114,6 +140,33 @@ publisher_thread(const char **path) {
     std::string time_string;
     long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
     zclock_sleep(4000);
+    string endpoint_sync = type_connection;
+    endpoint_sync.append("://");
+
+    //only for tcp, not for in process connection
+    if (strcmp(type_connection, "tcp") == 0) {
+        endpoint_sync.append( get_ip());
+        endpoint_sync.append( ":");
+        endpoint_sync.append(to_string(atoi(port)+1));
+    } else if (strcmp(type_connection, "inproc") == 0) {
+        endpoint_sync.append(endpoint_inproc);
+    }
+    auto *syncservice = zsock_new_rep(endpoint_sync.c_str());
+    printf ("Waiting for subscribers\n");
+    int subscribers = 0;
+    char *stringa;
+    cout<<"Endpoint for sync service: "<<endpoint_sync<<endl;
+    while (subscribers < SUBSCRIBERS_EXPECTED) {
+        //  - wait for synchronization request
+
+        zsock_recv(syncservice, "s",&stringa );
+        free (stringa);
+        //  - send synchronization reply
+        zsock_send(syncservice, "%s", "END");
+        subscribers++;
+    }
+    zsock_destroy(&syncservice);
+
     for(;count<num_mex; count++){
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)

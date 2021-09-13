@@ -29,7 +29,7 @@ for ((i = 0; i<=10; i++)); do
     if [[ "$argument" == "-s" ]]
     then
       echo "#################START ONLY SUBSCRIBERS"
-      for (( j = 0 ; j < 2; j++));do
+      for (( j = 0 ; j < 1; j++));do
 
         son_path="_${j}"
         son__path="$directory_path$son_path"
@@ -41,7 +41,7 @@ for ((i = 0; i<=10; i++)); do
       ./SUB_TO_STOP
       messages_received=$?
       if [[ "$messages_received" -eq 0 ]]; then
-        echo "MEssage 9999 received...stopping subscribers"
+        echo "Message 9999 received...stopping subscribers"
         sleep 3
         kill SUB2
         killall SUB2

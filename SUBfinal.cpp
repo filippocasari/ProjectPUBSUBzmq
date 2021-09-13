@@ -10,6 +10,10 @@
 #include <sstream>
 #include <vector>
 #include "Utils/BlockingQueue.h"
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
 
 #define PATH_CSV "./ResultsCsv_1/"
 #define NUM_PRODUCERS 1
@@ -38,7 +42,25 @@ void write_safely(string *what_i_said){
     cout<<*what_i_said<<endl;
     cout_mutex.unlock();
 }
+char* get_ip(){
+    int fd;
+    struct ifreq ifr;
 
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    /* I want to get an IPv4 IP address */
+    ifr.ifr_addr.sa_family = AF_INET;
+
+    /* I want IP address attached to "eth0" */
+    strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
+
+    ioctl(fd, SIOCGIFADDR, &ifr);
+
+    close(fd);
+
+    /* display result */
+    return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+}
 int payload_managing(zmsg_t **msg, const int64_t
 *end, const int64_t *c) {
     //char *end_pointer_string;
@@ -282,6 +304,30 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 }
 
 
+int syncronization(const char* type_connection, const char* ip, const char* port, const char* endpoint_inproc) {
+    string endpoint_sync = type_connection;
+    endpoint_sync.append("://");
+
+    //only for tcp, not for in process connection
+    if (strcmp(type_connection, "tcp") == 0) {
+        endpoint_sync.append(get_ip());
+        endpoint_sync.append( ":");
+        endpoint_sync.append(to_string(atoi(port)+1));
+    } else if (strcmp(type_connection, "inproc") == 0) {
+        endpoint_sync.append(endpoint_inproc);
+    }
+    cout<<"Endpoint for Sync service: "<<endpoint_sync<<endl;
+    zsock_t *syncservice = zsock_new_req(endpoint_sync.c_str());
+
+    zsock_send(syncservice, "s", "INIT");
+    char *string;
+    zsock_recv(syncservice, "s",&string);
+    free(string);
+    return 0;
+
+
+}
+
 int main(int argc, char **argv) {
     for(int i=1; i<argc; i++){
         cout<<"ARGV["<<i<<"]: "<<argv[i]<<endl;
@@ -336,17 +382,18 @@ int main(int argc, char **argv) {
     int num_of_subs = NUM_SUBS;
     PARAM = json_object_from_file(string_json_path);
     char *topic;
+    char *type_connection;
+    const char *port;
+    const char *ip;
+    const char *output_file;
+    const char *v =  (char *) argv[3];
+    if(strcmp(v, "-v") == 0)
+        verbose=true;
+    else
+        verbose=false;
     if (PARAM != nullptr) {
         puts("PARAMETERS PUBLISHER: ");
-        char *type_connection;
-        const char *port;
-        const char *ip;
-        const char *output_file;
-        const char *v =  (char *) argv[3];
-        if(strcmp(v, "-v") == 0)
-            verbose=true;
-        else
-            verbose=false;
+
         //int payload_size;
         //int num_mex;
         int int_value;
@@ -400,7 +447,9 @@ int main(int argc, char **argv) {
         return 2;
     }
     cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
-
+    int success=syncronization(type_connection, ip, port, endpoint_inproc);
+    assert(success==0);
+    cout<<"Syncronization success"<<endl;
     subscriber_thread(&endpoint_customized, topic);
     cout << "END OF SUBSCRIBER" << endl;
     return 0;
