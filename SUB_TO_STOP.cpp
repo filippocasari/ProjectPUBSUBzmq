@@ -8,7 +8,7 @@ int main(){
     char *topic;
     int n;
     zsock_recv(sub, "s8",&topic, &n );
-    while(n!=-1){
+    while(n!= 1000000){
         zsock_recv(sub, "s8",&topic, &n );
         std::cout<<"N: "<<n<<std::endl;
     }

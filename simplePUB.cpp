@@ -172,7 +172,9 @@ publisher_thread(const char **path) {
         zclock_log("Message No. %llu", count);
     }
     zclock_sleep(5000);
-    zsock_send(pub, "s8",topic, -1);
+    int b = 1000000;
+    zsock_send(pub, "s8",topic, b);
+    sleep(2000);
     zsock_destroy(&pub);
     return 0;
 }
