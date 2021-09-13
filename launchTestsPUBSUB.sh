@@ -42,6 +42,7 @@ for ((i = 0; i<=10; i++)); do
       messages_received=$?
       if [[ "$messages_received" -eq 0 ]]; then
         echo "MEssage 9999 received...stopping subscribers"
+        sleep 3
         kill SUB2
         killall SUB2
       fi
@@ -50,7 +51,7 @@ for ((i = 0; i<=10; i++)); do
     then
       echo "#################START ONLY PUBLISHER"
       ./PUB2 "$json_path$c.json" "-v"
-      sleep 5
+      sleep 15
     else
       {
         if [[ "$OSTYPE" == "linux-gnu"* ]]

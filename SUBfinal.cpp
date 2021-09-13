@@ -273,9 +273,10 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 
     sleep(3);
 
-    zsock_destroy(&sub);
+
 
     thread_start_consumers.join();
+    zsock_destroy(&sub);
 
     //terminate();
 }
