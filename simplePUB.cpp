@@ -172,11 +172,11 @@ publisher_thread(const char **path) {
         zclock_log("Message No. %llu", count);
     }
     zclock_sleep(5000);
-    int b = 1000000;
+    uint64_t b = 1000000;
     int succ=zsock_send(pub, "s8",topic, b);
     assert(succ==0);
     sleep(2);
-    zsock_destroy(&pub);
+    //zsock_destroy(&pub);
     return 0;
 }
 
@@ -199,6 +199,6 @@ int main(int argc, char **argv) {
         //zactor_destroy(&pub_actor);
 
     }
-
+    //zsock_destroy(&pub);
     return 0;
 }
