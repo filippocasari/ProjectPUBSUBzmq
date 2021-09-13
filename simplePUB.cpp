@@ -160,7 +160,7 @@ publisher_thread(const char **path) {
         } else {
 
             //printf("String of zeros: %c\n", string_residual_payload);
-            if (zsock_bsend(pub, "sss", &topic, "TIMESTAMP", time_string.c_str()) == -1){
+            if (zsock_bsend(pub, "sss", topic, "TIMESTAMP", time_string.c_str()) == -1){
                 puts("sending interrupted...");
                 return 1;
             }
@@ -173,8 +173,9 @@ publisher_thread(const char **path) {
     }
     zclock_sleep(5000);
     int b = 1000000;
-    zsock_send(pub, "s8",topic, b);
-    sleep(2000);
+    int succ=zsock_send(pub, "s8",topic, b);
+    assert(succ==0);
+    sleep(2);
     zsock_destroy(&pub);
     return 0;
 }
