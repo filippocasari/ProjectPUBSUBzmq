@@ -28,7 +28,7 @@ for ((i = 0; i<=10; i++)); do
 
     if [[ "$argument" == "-s" ]]
     then
-
+      echo "#################START ONLY SUBSCRIBERS"
       for (( j = 0 ; j < 7 ; j++));do
 
         son_path="_${j}"
@@ -46,6 +46,7 @@ for ((i = 0; i<=10; i++)); do
 
     elif [[ "$argument" -eq "-p" ]]
     then
+      echo "#################START ONLY PUBLISHER"
       ./PUB2 "$json_path$c.json" "-v"
     else
       {
@@ -80,8 +81,11 @@ for ((i = 0; i<=10; i++)); do
 
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
+      if [[ "$argument" == "-s" ]];then
       sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB2
-      sudo start-stop-daemon --stop --oknodo --retry 15 -n PUB2
+      elif [[ "$argument" == "-p" ]];then
+        sudo start-stop-daemon --stop --oknodo --retry 15 -n PUB2
+      fi
     fi
     killall SUB2
     sleep 5
