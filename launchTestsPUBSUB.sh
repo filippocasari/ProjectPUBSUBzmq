@@ -38,6 +38,11 @@ for ((i = 0; i<=10; i++)); do
         }&
 
       done
+      ./SUB_TO_STOP
+      messages_received=$?
+      if [[ "$messages_received" -eq 0 ]]; then
+        killall SUB2
+      fi
 
     elif [[ "$argument" -eq "-p" ]]
     then
