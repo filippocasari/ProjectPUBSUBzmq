@@ -161,6 +161,7 @@ publisher_thread(const char **path) {
         free (stringa);
         //  - send synchronization reply
         zsock_send(syncservice, "s", "END");
+        cout<<"PUB "<<subscribers<<" connected"<<endl;
         subscribers++;
     }
     zsock_destroy(&syncservice);

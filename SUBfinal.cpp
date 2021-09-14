@@ -17,7 +17,7 @@
 
 #define PATH_CSV "./ResultsCsv_1/"
 #define NUM_PRODUCERS 1
-#define NUM_CONSUMERS 4
+#define NUM_CONSUMERS 1
 #define QUEUE_CAPACITY 4
 #define NUM_SUBS 1
 #define ENDPOINT endpoint_tcp

@@ -5,8 +5,8 @@ cmake CMakeLists.txt || echo "Error to load CMakeLists"
 json_path=$2
 argument=$1
 verbose=$3
-echo "ARG 2: $json_path"
 echo "ARG 1: $argument"
+echo "ARG 2: $json_path"
 echo "ARG 3: $verbose"
 
 
@@ -38,14 +38,8 @@ for ((i = 0; i<=10; i++)); do
         }&
 
       done
-      ./SUB_TO_STOP
-      messages_received=$?
-      if [[ "$messages_received" -eq 0 ]]; then
-        echo "Message 9999 received...stopping subscribers"
-        sleep 3
-        kill SUB2
-        killall SUB2
-      fi
+      sleep 50
+      killall SUB2
 
     elif [[ "$argument" -eq "-p" ]]
     then
