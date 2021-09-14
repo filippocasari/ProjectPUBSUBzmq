@@ -14,16 +14,39 @@
 #include <cmath>
 #include <thread>
 #include <iostream>
-
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
 //default endpoint
 const char *endpoint_inprocess = "inproc://example";
 //const char *json_file_config;
-
+#define SUBSCRIBERS_EXPECTED 2
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
 bool verbose = true;
 using namespace std;
 //thread of publisher
+char* get_ip(){
+    int fd;
+    struct ifreq ifr;
+
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    /* I want to get an IPv4 IP address */
+    ifr.ifr_addr.sa_family = AF_INET;
+
+    /* I want IP address attached to "eth0" */
+    strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
+
+    ioctl(fd, SIOCGIFADDR, &ifr);
+
+    close(fd);
+
+    /* display result */
+    return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+}
+
 int
 publisher_thread(const char *path) {
     char *endpoint_customized;
@@ -40,15 +63,15 @@ publisher_thread(const char *path) {
     // deserializing file
 
     const char *type_test;
-
+    const char *type_connection;
+    const char *port;
+    const char *ip;
+    const char *output_file;
     if (PARAM != nullptr) { // file json found
         if(verbose)
             puts("PARAMETERS PUBLISHER: ");
 
-        const char *type_connection;
-        const char *port;
-        const char *ip;
-        const char *output_file;
+
 
         //int int_value;
         const char *value;
@@ -131,6 +154,35 @@ publisher_thread(const char *path) {
     std::string time_string;
     long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
     zclock_sleep(4000);
+
+    string endpoint_sync = "tcp";
+    endpoint_sync.append("://");
+
+    //only for tcp, not for in process connection
+
+    endpoint_sync.append( get_ip());
+    endpoint_sync.append( ":");
+    endpoint_sync.append(to_string(atoi(port)+1));
+
+    auto *syncservice = zsock_new_rep(endpoint_sync.c_str());
+    printf ("Waiting for subscribers\n");
+    int subscribers = 0;
+
+    cout<<"Endpoint for sync service: "<<endpoint_sync<<endl;
+    while (subscribers < SUBSCRIBERS_EXPECTED) {
+        //  - wait for synchronization request
+        char *stringa;
+        zsock_recv(syncservice, "s",&stringa );
+        free (stringa);
+        //  - send synchronization reply
+        zsock_send(syncservice, "s", "END");
+        subscribers++;
+    }
+    zsock_destroy(&syncservice);
+
+
+
+
     for(;count<num_mex; count++){
 
         if(verbose)

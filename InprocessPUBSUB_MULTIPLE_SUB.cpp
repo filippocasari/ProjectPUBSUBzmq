@@ -16,8 +16,15 @@ int main(int argc, char **argv) {
     //SUBS.reserve(NUM_SUB);
     vector<thread> actors;
     actors.reserve(NUM_SUB);
-    zsock_t *sub = zsock_new_sub("inproc://CAR", "CAR");
-    for (int i = 0; i < NUM_SUB; i++) {
+    thread creating_publisher([&argc, &argv](){
+        int a=main_PUB(argc, argv);
+        if(a==0)
+            cout<<"SUCCESS FOR PUB"<<endl;
+        else
+            cout<<"SOMETHING WENT WRONG FOR PUB"<<endl;
+    });
+    //zsock_t *sub = zsock_new_sub("inproc://CAR", "CAR");
+    for (int i = 0; i < NUM_SUB+1; i++) {
         string i_str = "_" + to_string(i);
         //SUBS.emplace_back([&argc, &argv, &i_str]() {
         char **new_argv = argv;
@@ -33,8 +40,8 @@ int main(int argc, char **argv) {
         final_string+=argv[2]+comma2+argv[3];
         cout<<"FINAL STRING: "<<final_string<<endl;
 
-        actors.emplace_back([&final_string, &sub](){
-            main_SUB_M(final_string, sub);
+        actors.emplace_back([&final_string](){
+            main_SUB_M(final_string);
         });
 
         sleep(2);
@@ -45,13 +52,11 @@ int main(int argc, char **argv) {
         //cout << "CREATING NEW SUB" << endl;
     }
     zclock_sleep(6000);
-    main_PUB(argc, argv);
+    creating_publisher.join();
     for(auto& a: actors){
         a.join();
     }
-    //for (auto &th:SUBS) {
-    //    th.join();
-    //}
+
 
     return 0;
 }

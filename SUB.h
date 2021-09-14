@@ -16,7 +16,10 @@
 #include <vector>
 #include "Utils/BlockingQueue.h"
 #include <string>
-
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
 #define NUM_CONSUMERS 4
 
 #define NUM_SUBS 1
@@ -97,7 +100,28 @@ int payload_managing(zmsg_t **msg, const int64_t
     }
 }
 
+int syncronization( const char* ip, const char* port) {
+    string endpoint_sync = "tcp";
+    endpoint_sync.append("://");
 
+    //only for tcp, not for in process connection
+
+    endpoint_sync.append(get_ip());
+    endpoint_sync.append( ":");
+    endpoint_sync.append(to_string(atoi(port)+1));
+
+    cout<<"Endpoint for Sync service: "<<endpoint_sync<<endl;
+    zsock_t *syncservice = zsock_new_req(endpoint_sync.c_str());
+
+    zsock_send(syncservice, "s", "INIT");
+    char *string;
+    zsock_recv(syncservice, "s",&string);
+    free(string);
+    zsock_destroy(&syncservice);
+    return 0;
+
+
+}
 
 int create_new_consumers(const char *path_csv) {
     bool console = false;
@@ -299,30 +323,28 @@ subscriber_thread(string *endpoint_custom, char *topic, const char *path_csv, zs
 }
 
 
-int main_SUB_S(int argc, char **args) {
+int main_S(int argc, char **argv) {
     for(int i=1; i<argc; i++){
-        cout<<"ARGV["<<i<<"]: "<<args[i]<<endl;
+        cout<<"ARGV["<<i<<"]: "<<argv[i]<<endl;
     }
-    const char *path_csv = args[2];
     char *cmdstring; // string of args
+    char *path_csv;
     if (argc == 1) // exit if argc is less then 2
-        {
+    {
         cout<<"NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT"<<endl;
         return 1;
-        } else {
+    } else {
 
         //size_t strsize = 0; //size of the string to allocate memory
 
-        //strsize += (int) strlen(args[1]);
+        //strsize += (int) strlen(argv[1]);
 
         if (argc == 2) {
             cout << "Path for csv not chosen..." << endl;
             return 2;
         }
-        //size_t strsize_2 = (int) strlen(args[2]);
-
-        //if(strcmp(args[4], "true")==0)
-        //    multiple_sub=true;
+        //size_t strsize_2 = (int) strlen(argv[2]);
+        path_csv = argv[2];
         DIR *dir = opendir(path_csv);
         if (dir) {
             cout << "path csv already exists" << endl;
@@ -342,7 +364,7 @@ int main_SUB_S(int argc, char **args) {
 
         cout << "PATH chosen: " << path_csv << endl;
         // initialize the string
-        cmdstring = args[1];
+        cmdstring = argv[1];
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
     }
     //path of json file
@@ -356,17 +378,18 @@ int main_SUB_S(int argc, char **args) {
     int num_of_subs = NUM_SUBS;
     PARAM = json_object_from_file(string_json_path);
     char *topic;
+    char *type_connection;
+    const char *port;
+    const char *ip;
+    const char *output_file;
+    const char *v =  (char *) argv[3];
+    if(strcmp(v, "-v") == 0)
+        verbose=true;
+    else
+        verbose=false;
     if (PARAM != nullptr) {
         puts("PARAMETERS PUBLISHER: ");
-        char *type_connection;
-        const char *port;
-        const char *ip;
-        const char *output_file;
-        const char *v =  (char *) args[3];
-        if(strcmp(v, "-v") == 0)
-            verbose=true;
-        else
-            verbose=false;
+
         //int payload_size;
         //int num_mex;
         int int_value;
@@ -421,7 +444,11 @@ int main_SUB_S(int argc, char **args) {
     }
     cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
 
+
     subscriber_thread(&endpoint_customized, topic, path_csv, nullptr);
+    int success=syncronization( ip, port);
+    assert(success==0);
+    cout<<"Syncronization success"<<endl;
     cout << "END OF SUBSCRIBER" << endl;
     return 0;
 }
@@ -429,9 +456,8 @@ int main_SUB_S(int argc, char **args) {
 
 
 
-void main_SUB_M( const string& argv, zsock_t *sub) {
-    //zsock_signal (pipe, 0);
-    multithread=true;
+void main_SUB_M( const string& argv) {
+
     cout<<"ARGS RECEIVED: "<<argv.c_str()<<endl;
     char *temp = (char *) argv.c_str();
 
@@ -492,13 +518,14 @@ void main_SUB_M( const string& argv, zsock_t *sub) {
     int num_of_subs = NUM_SUBS;
     PARAM = json_object_from_file(string_json_path);
     char *topic= nullptr;
+    char *type_connection;
+    const char *port;
+    const char *ip;
+    const char *output_file;
     puts("PARAMETERS PUBLISHER: ");
     if (PARAM != nullptr) {
 
-        char *type_connection;
-        const char *port;
-        const char *ip;
-        const char *output_file;
+
         if(strcmp(v, "-v") == 0)
             verbose=true;
         else
@@ -556,8 +583,10 @@ void main_SUB_M( const string& argv, zsock_t *sub) {
 
     }
     cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
-
-    subscriber_thread(&endpoint_customized, topic, path_csv, sub);
+    int success=syncronization( ip, port);
+    assert(success==0);
+    cout<<"Syncronization success"<<endl;
+    subscriber_thread(&endpoint_customized, topic, path_csv, nullptr);
     cout << "END OF SUBSCRIBER" << endl;
 }
 #endif //PROJECTPUBSUBZMQ_SUB_H

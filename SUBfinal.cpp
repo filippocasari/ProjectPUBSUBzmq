@@ -304,18 +304,16 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 }
 
 
-int syncronization(const char* type_connection, const char* ip, const char* port, const char* endpoint_inproc) {
-    string endpoint_sync = type_connection;
+int syncronization( const char* ip, const char* port) {
+    string endpoint_sync = "tcp";
     endpoint_sync.append("://");
 
     //only for tcp, not for in process connection
-    if (strcmp(type_connection, "tcp") == 0) {
-        endpoint_sync.append(get_ip());
-        endpoint_sync.append( ":");
-        endpoint_sync.append(to_string(atoi(port)+1));
-    } else if (strcmp(type_connection, "inproc") == 0) {
-        endpoint_sync.append(endpoint_inproc);
-    }
+
+    endpoint_sync.append(get_ip());
+    endpoint_sync.append( ":");
+    endpoint_sync.append(to_string(atoi(port)+1));
+
     cout<<"Endpoint for Sync service: "<<endpoint_sync<<endl;
     zsock_t *syncservice = zsock_new_req(endpoint_sync.c_str());
 
@@ -323,6 +321,7 @@ int syncronization(const char* type_connection, const char* ip, const char* port
     char *string;
     zsock_recv(syncservice, "s",&string);
     free(string);
+    zsock_destroy(&syncservice);
     return 0;
 
 
@@ -447,7 +446,7 @@ int main(int argc, char **argv) {
         return 2;
     }
     cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
-    int success=syncronization(type_connection, ip, port, endpoint_inproc);
+    int success=syncronization( ip, port);
     assert(success==0);
     cout<<"Syncronization success"<<endl;
     subscriber_thread(&endpoint_customized, topic);

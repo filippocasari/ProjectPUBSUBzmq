@@ -140,29 +140,27 @@ publisher_thread(const char **path) {
     std::string time_string;
     long double milli_secs_of_sleeping = (1000.0 / msg_rate_sec);
     zclock_sleep(4000);
-    string endpoint_sync = type_connection;
+    string endpoint_sync = "tcp";
     endpoint_sync.append("://");
 
     //only for tcp, not for in process connection
-    if (strcmp(type_connection, "tcp") == 0) {
-        endpoint_sync.append( get_ip());
-        endpoint_sync.append( ":");
-        endpoint_sync.append(to_string(atoi(port)+1));
-    } else if (strcmp(type_connection, "inproc") == 0) {
-        endpoint_sync.append(endpoint_inproc);
-    }
+
+    endpoint_sync.append( get_ip());
+    endpoint_sync.append( ":");
+    endpoint_sync.append(to_string(atoi(port)+1));
+
     auto *syncservice = zsock_new_rep(endpoint_sync.c_str());
     printf ("Waiting for subscribers\n");
     int subscribers = 0;
-    char *stringa;
+
     cout<<"Endpoint for sync service: "<<endpoint_sync<<endl;
     while (subscribers < SUBSCRIBERS_EXPECTED) {
         //  - wait for synchronization request
-
+        char *stringa;
         zsock_recv(syncservice, "s",&stringa );
         free (stringa);
         //  - send synchronization reply
-        zsock_send(syncservice, "%s", "END");
+        zsock_send(syncservice, "s", "END");
         subscribers++;
     }
     zsock_destroy(&syncservice);
