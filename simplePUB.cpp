@@ -18,7 +18,7 @@ const char *endpoint_inprocess = "inproc://example";
 
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
-#define SUBSCRIBERS_EXPECTED 1
+#define SUBSCRIBERS_EXPECTED 7
 using namespace std;
 //thread of publisher
 

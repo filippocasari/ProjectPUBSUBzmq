@@ -310,7 +310,7 @@ int syncronization( const char* ip, const char* port) {
 
     //only for tcp, not for in process connection
 
-    endpoint_sync.append(get_ip());
+    endpoint_sync.append(ip);
     endpoint_sync.append( ":");
     endpoint_sync.append(to_string(atoi(port)+1));
 

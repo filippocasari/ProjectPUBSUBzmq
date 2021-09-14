@@ -29,7 +29,7 @@ for ((i = 0; i<=10; i++)); do
     if [[ "$argument" == "-s" ]]
     then
       echo "#################START ONLY SUBSCRIBERS"
-      for (( j = 0 ; j < 1; j++));do
+      for (( j = 0 ; j < 7; j++));do
 
         son_path="_${j}"
         son__path="$directory_path$son_path"
