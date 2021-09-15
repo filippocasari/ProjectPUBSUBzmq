@@ -19,7 +19,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 sudo ntpdate -u 0.ch.pool.ntp.org
 ntp_success=$?
-if[[ ntp_success -eq 0 ]]; then
+if [[ ntp_success -eq 0 ]]; then
   echo "Test NTP SUCCESS"
 else
   echo "Test NTP FAILED"
