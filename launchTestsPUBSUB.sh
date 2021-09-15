@@ -11,10 +11,10 @@ echo "ARG 3: $verbose"
 
 
 directory_path="./ResultsCsv_" # can ben set by the user by argv
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then sudo ntpdate -u 0.it.pool.ntp.org || sudo ntpdate -u 1.it.pool.ntp.org
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then sudo ntpdate -u 0.it.pool.ntp.org
 
-#elif [[ "$OSTYPE" == "darwin"* ]]; then
-#  echo " TESTS ON MAC OS" && sudo ntpdate -u 0.it.pool.ntp.org || sudo sntp -sS time.apple.com
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  echo " TESTS ON MAC OS" && sudo ntpdate -u 0.it.pool.ntp.org #|| sudo sntp -sS time.apple.com
 fi
 
 for ((i = 0; i<=10; i++)); do
