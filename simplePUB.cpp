@@ -165,7 +165,7 @@ publisher_thread(const char **path) {
         subscribers++;
     }
     zsock_destroy(&syncservice);
-    sleep(3);
+    zclock_sleep(4000);
     for(;count<num_mex; count++){
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)
