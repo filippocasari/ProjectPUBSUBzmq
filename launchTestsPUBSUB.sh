@@ -38,7 +38,8 @@ for ((i = 0; i<=10; i++)); do
         }&
 
       done
-      sleep 50
+      sleep 60
+      echo "SUBS WILL BE STOPPED"
       killall SUB2
 
     elif [[ "$argument" -eq "-p" ]]

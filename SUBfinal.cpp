@@ -15,19 +15,15 @@
 #include <netinet/in.h>
 #include <net/if.h>
 
-#define PATH_CSV "./ResultsCsv_1/"
-#define NUM_PRODUCERS 1
+
 #define NUM_CONSUMERS 1
-#define QUEUE_CAPACITY 4
 #define NUM_SUBS 1
 #define ENDPOINT endpoint_tcp
 #define NUM_MEX_MAX 10000
-#define FOLDER_EXPERIMENT "./Results/"
-#define SIGTERM_MSG "SIGTERM received.\n"
+
 using namespace std;
-//#define MSECS_MAX_WAITING 10000
+
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
-//const char *endpoint_inprocess = "inproc://example";
 const char *string_json_path;
 char *path_csv = nullptr;
 bool verbose=false;
@@ -178,7 +174,7 @@ int create_new_consumers() {
                     int c = 0;
                     Item2 item;
                     int number_of_iterations=(int)number_of_messages/num_consumers;
-                    while (c<number_of_iterations && !zsys_interrupted) {
+                    while (c<number_of_iterations && !zsys_interrupted ) {
 
                         item=lockingQueue.pop();
 
@@ -264,7 +260,7 @@ subscriber_thread(string *endpoint_custom, char *topic) {
     zmsg_t *msg = zmsg_new();
     int succ;
 
-    while(true) {
+    while( true) {
         succ=zsock_recv(sub, "s8m", &topic, &c, &msg);
         if (msg == nullptr) {
             cout<<"exit, msg null"<<endl;
@@ -304,13 +300,15 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 }
 
 
-int syncronization( const char* ip, const char* port) {
+int syncronization( const char* ip, const char* port, const char *type_connection) {
     string endpoint_sync = "tcp";
     endpoint_sync.append("://");
 
     //only for tcp, not for in process connection
-
-    endpoint_sync.append(ip);
+    if(strcmp(type_connection, "inproc")==0)
+        endpoint_sync.append(get_ip());
+    else
+        endpoint_sync.append(ip);
     endpoint_sync.append( ":");
     endpoint_sync.append(to_string(atoi(port)+1));
 
@@ -446,7 +444,7 @@ int main(int argc, char **argv) {
         return 2;
     }
     cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
-    int success=syncronization( ip, port);
+    int success=syncronization( ip, port, type_connection);
     assert(success==0);
     cout<<"Syncronization success"<<endl;
     subscriber_thread(&endpoint_customized, topic);

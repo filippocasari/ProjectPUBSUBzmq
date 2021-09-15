@@ -165,7 +165,7 @@ publisher_thread(const char **path) {
         subscribers++;
     }
     zsock_destroy(&syncservice);
-
+    sleep(3);
     for(;count<num_mex; count++){
         //zmsg_t *mex_interrupt = zmsg_recv_nowait(pipe);
         //if (mex_interrupt)
@@ -223,7 +223,8 @@ publisher_thread(const char **path) {
 
         zclock_log("Message No. %llu", count);
     }
-
+    int a=zsock_signal(pub, 0);
+    assert(a==0);
     sleep(2);
     zsock_destroy(&pub);
     return 0;
