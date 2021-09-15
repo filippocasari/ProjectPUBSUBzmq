@@ -11,14 +11,15 @@ echo "ARG 3: $verbose"
 
 
 directory_path="./ResultsCsv_" # can ben set by the user by argv
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then echo " TEST ON LINUX"  #0.it.pool.ntp.org
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  echo " TEST ON LINUX"  #0.it.pool.ntp.org
 
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS" #0.it.pool.ntp.org #|| sudo sntp -sS time.apple.com
 fi
 sudo ntpdate -u 0.ch.pool.ntp.org
 ntp_success=$?
-if[[ ntp_success -eq 0 ]];then
+if[[ ntp_success -eq 0 ]]; then
   echo "Test NTP SUCCESS"
 else
   echo "Test NTP FAILED"
