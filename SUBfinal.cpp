@@ -67,10 +67,10 @@ int payload_managing(zmsg_t **msg, const int64_t
         string say = "size of msg: " +to_string(zmsg_size(*msg));
         write_safely(&say);
         frame = zmsg_popstr(*msg);
-        if(strcmp(frame, "TERMINATE")==0){
+        if(strcmp(frame, "$TERM")==0){
             cout<<"Message received :"<<frame<<endl;
             cout<<"exit"<<endl;
-            return 1;
+            return 0;
         }
 
         if (strcmp(frame, "TIMESTAMP") == 0) {
@@ -259,9 +259,10 @@ subscriber_thread(string *endpoint_custom, char *topic) {
     string metric = "end_to_end_delay";
     zmsg_t *msg = zmsg_new();
     int succ;
-
-    while( true) {
+    bool terminated=false;
+    while( !terminated) {
         succ=zsock_recv(sub, "s8m", &topic, &c, &msg);
+
         if (msg == nullptr) {
             cout<<"exit, msg null"<<endl;
             break;
@@ -277,8 +278,8 @@ subscriber_thread(string *endpoint_custom, char *topic) {
         cout<<"message Received: No. "<< c<<endl;
         //increment_counter.lock();
         //increment_counter.unlock();
-        int a = payload_managing(&msg, &end, &c);
-        cout << "managing payload exit code: " << a << endl;
+        terminated = payload_managing(&msg, &end, &c);
+        //cout << "managing payload exit code: " << a << endl;
         if(c==(NUM_MEX_MAX-1) or succ==-1){
             cout<<"TERMINATING"<<endl;
             zclock_sleep(1000);

@@ -14,17 +14,11 @@ using namespace std;
 int main(int argc, char **argv) {
     //vector<thread> SUBS;
     //SUBS.reserve(NUM_SUB);
-    vector<thread> actors;
-    actors.reserve(NUM_SUB);
-    thread creating_publisher([&argc, &argv](){
-        int a=main_PUB(argc, argv);
-        if(a==0)
-            cout<<"SUCCESS FOR PUB"<<endl;
-        else
-            cout<<"SOMETHING WENT WRONG FOR PUB"<<endl;
-    });
+    //vector<thread> actors;
+    //actors.reserve(NUM_SUB);
+    zactor_t *actors[NUM_SUB];
     //zsock_t *sub = zsock_new_sub("inproc://CAR", "CAR");
-    for (int i = 0; i < NUM_SUB+1; i++) {
+    for (int i = 0; i < NUM_SUB; i++) {
         string i_str = "_" + to_string(i);
         //SUBS.emplace_back([&argc, &argv, &i_str]() {
         char **new_argv = argv;
@@ -40,9 +34,7 @@ int main(int argc, char **argv) {
         final_string+=argv[2]+comma2+argv[3];
         cout<<"FINAL STRING: "<<final_string<<endl;
 
-        actors.emplace_back([&final_string](){
-            main_SUB_M(final_string);
-        });
+        actors[i]= zactor_new(main_SUB_M, (void *) &final_string);
 
         sleep(2);
         //cout << "exit code of sub: " << a << endl;
@@ -52,10 +44,12 @@ int main(int argc, char **argv) {
         //cout << "CREATING NEW SUB" << endl;
     }
     zclock_sleep(6000);
-    creating_publisher.join();
-    for(auto& a: actors){
-        a.join();
+    main_PUB(argc, argv);
+    for(auto & actor : actors){
+        zactor_destroy(&actor);
     }
+    //creating_publisher.join();
+
 
 
     return 0;
