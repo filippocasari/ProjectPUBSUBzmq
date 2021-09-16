@@ -10,13 +10,14 @@
 #include "SUB.h"
 
 using namespace std;
-#define NUM_SUB 2
+#define NUM_SUB 7
 int main(int argc, char **argv) {
     //vector<thread> SUBS;
     //SUBS.reserve(NUM_SUB);
     //vector<thread> actors;
     //actors.reserve(NUM_SUB);
     zactor_t *actors[NUM_SUB];
+    string final_string;
     //zsock_t *sub = zsock_new_sub("inproc://CAR", "CAR");
     for (int i = 0; i < NUM_SUB; i++) {
         string i_str = "_" + to_string(i);
@@ -29,14 +30,14 @@ int main(int argc, char **argv) {
         string comma = ",";
         string comma2 ="&";
 
-        string final_string = argv[1];
+        final_string= argv[1];
         final_string+=comma;
         final_string+=argv[2]+comma2+argv[3];
         cout<<"FINAL STRING: "<<final_string<<endl;
 
         actors[i]= zactor_new(main_SUB_M, (void *) &final_string);
 
-        sleep(2);
+        sleep(1);
         //cout << "exit code of sub: " << a << endl;
         //});
 

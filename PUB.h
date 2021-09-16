@@ -21,7 +21,7 @@
 //default endpoint
 const char *endpoint_inprocess = "inproc://example";
 //const char *json_file_config;
-#define SUBSCRIBERS_EXPECTED 2
+#define SUBSCRIBERS_EXPECTED 7
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
 bool verbose = true;

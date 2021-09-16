@@ -285,9 +285,11 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
     sleep(3);
     string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */  ;
     name_of_csv_file.append(".csv");
-    string name_path_csv = path_csv + name_of_csv_file;
-    cout<<"OPENING FILE: "<<name_of_csv_file<<endl;
+    string name_path_csv = path_csv ;
+    name_path_csv.append("/" +name_of_csv_file);
+    cout<<"OPENING FILE: "<<name_path_csv<<endl;
     ofstream config_file;
+    sleep(3);
     config_file.open(name_path_csv, ios::app);
     config_file << "number,value,timestamp,message rate,payload size\n";
     config_file.close();
@@ -295,7 +297,7 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
     int64_t end_to_end_delay;
     string say;
     cout<<"Size of the queue: "<<lockingQueue.size()<<endl;
-    while(lockingQueue.size()>0){
+    while(true){
         if(verbose){
             say ="trying to pop new item...";
             write_safely(&say);
@@ -308,11 +310,15 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
             say ="opening file csv...";
             write_safely(&say);
         }
+        access_to_file.lock();
         config_file.open(name_path_csv, ios::app);
         config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
                        to_string(item.ts_end) +
                        "," + to_string( *msg_rate) + "," + to_string(*payload) + "\n";
         config_file.close();
+        access_to_file.unlock();
+        if(lockingQueue.size()==0)
+            break;
     }
     cout<<"all items dequeued"<<endl;
     //thread_start_consumers.join();
