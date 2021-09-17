@@ -19,10 +19,13 @@ int main(int argc, char **argv) {
     zactor_t *actors[NUM_SUB];
     string final_string;
     //zsock_t *sub = zsock_new_sub("inproc://CAR", "CAR");
+    char **new_argv = argv;
+    string i_str;
     for (int i = 0; i < NUM_SUB; i++) {
-        string i_str = "_" + to_string(i);
+         i_str= "_" ;
+         i_str.append(to_string(i));
         //SUBS.emplace_back([&argc, &argv, &i_str]() {
-        char **new_argv = argv;
+
         string temp = (argv[2] + i_str);
         new_argv[2] = (char *) temp.c_str();
         cout << "New argv[2] passed: " << new_argv[2] << endl;

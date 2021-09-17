@@ -31,7 +31,7 @@ const char *type_test;
 mutex cout_mutex;
 mutex access_to_file;
 BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
-ofstream config_file;
+//ofstream config_file;
 atomic<bool> finished;
 void write_safely(string *what_i_said){
     cout_mutex.lock();
@@ -241,11 +241,11 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
     finished=false;
-    thread thread_start_consumers([]() {
-        int succ = create_new_consumers();
-        cout<<"consumers terminate? "<< succ<<endl;
-
-    });// create new thread to manage payload
+    //thread thread_start_consumers([]() {
+    //    int succ = create_new_consumers();
+    //    cout<<"consumers terminate? "<< succ<<endl;
+//
+    //});// create new thread to manage payload
     //--------------------------------------------------------------------------------------------------------
     //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
     cout<<"topic is "<<topic<<endl;
@@ -294,7 +294,7 @@ subscriber_thread(string *endpoint_custom, char *topic) {
 
 
 
-    thread_start_consumers.join();
+    //thread_start_consumers.join();
     zsock_destroy(&sub);
 
     //terminate();
@@ -384,6 +384,9 @@ int main(int argc, char **argv) {
     const char *port;
     const char *ip;
     const char *output_file;
+    int msg_rate;
+    int payload;
+    char *name_of_experiment;
     const char *v =  (char *) argv[3];
     if(strcmp(v, "-v") == 0)
         verbose=true;
@@ -432,7 +435,12 @@ int main(int argc, char **argv) {
                 endpoint_inproc = value;
         }
         endpoint_customized = string()+type_connection+"://";
-
+        if (strcmp(key, "experiment_name") == 0)
+            name_of_experiment = (char *) json_object_get_string(val);
+        if (strcmp(key, "msg_rate_sec") == 0)
+            msg_rate = (int) strtol(json_object_get_string(val), nullptr, 10);
+        if (strcmp(key, "payload_size_bytes") == 0)
+            payload = (int) strtol(json_object_get_string(val), nullptr, 10);
         if (strcmp(type_connection, "tcp") == 0)
             endpoint_customized = endpoint_customized+ip+":"+port;
         else if (strcmp(type_connection, "inproc") == 0)
@@ -449,6 +457,46 @@ int main(int argc, char **argv) {
     assert(success==0);
     cout<<"Syncronization success"<<endl;
     subscriber_thread(&endpoint_customized, topic);
+
+    string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */  ;
+    name_of_csv_file.append(".csv");
+    string name_path_csv = path_csv ;
+    name_path_csv.append("/" +name_of_csv_file);
+    cout<<"OPENING FILE: "<<name_path_csv<<endl;
+    ofstream config_file;
+    sleep(3);
+    config_file.open(name_path_csv, ios::app);
+    config_file << "number,value,timestamp,message rate,payload size\n";
+    config_file.close();
+    Item2 item;
+    int64_t end_to_end_delay;
+    string say;
+    cout<<"Size of the queue: "<<lockingQueue.size()<<endl;
+    while(true){
+        if(verbose){
+            say ="trying to pop new item...";
+            write_safely(&say);
+        }
+        item=lockingQueue.pop();
+        char *end_pointer;
+        int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
+        end_to_end_delay = item.ts_end - start;
+        if(verbose){
+            say ="opening file csv...";
+            write_safely(&say);
+        }
+        access_to_file.lock();
+        config_file.open(name_path_csv, ios::app);
+        config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
+                       to_string(item.ts_end) +
+                       "," + to_string( msg_rate) + "," + to_string(payload) + "\n";
+        config_file.close();
+        access_to_file.unlock();
+        if(lockingQueue.size()==0)
+            break;
+    }
+
+    cout<<"all items dequeued"<<endl;
     cout << "END OF SUBSCRIBER" << endl;
     return 0;
 }

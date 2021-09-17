@@ -181,8 +181,7 @@ publisher_thread(const char *path) {
     zsock_destroy(&syncservice);
 
 
-
-
+    sleep(4);
     for(;count<num_mex; count++){
 
         if(verbose)
