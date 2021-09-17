@@ -40,13 +40,13 @@ for ((i = 0; i<=10; i++)); do
       for (( j = 0 ; j < 7; j++));do
 
         son_path="_${j}"
-        son__path="$directory_path$son_path"
+        son__path="$directory_path$i$son_path"
         {
-          ./SUB2 "$json_path$c.json" "$son__path$i/" "$verbose"
+          ./SUB2 "$json_path$c.json" "$son__path/" "$verbose"
         }&
 
       done
-      sleep 60
+      sleep 80
       echo "SUBS WILL BE STOPPED"
       killall SUB2
 

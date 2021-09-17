@@ -128,7 +128,7 @@ static void create_new_consumers(void *args) {
     //zsock_signal(pipe, 0);
     bool console = false;
     int num_consumers = NUM_CONSUMERS;
-    string name_of_experiment;
+    char *name_of_experiment;
     json_object *PARAM;
     int msg_rate;
     int payload;
@@ -144,7 +144,7 @@ static void create_new_consumers(void *args) {
                 cout<<"creating new file csv"<<endl;
         }
         if (strcmp(key, "experiment_name") == 0)
-            name_of_experiment = json_object_get_string(val);
+            name_of_experiment = (char*)json_object_get_string(val);
         if (strcmp(key, "num_consumer_threads") == 0)
             num_consumers = (int) strtol(json_object_get_string(val), nullptr, 10);
         if (strcmp(key, "msg_rate_sec") == 0)
@@ -154,7 +154,8 @@ static void create_new_consumers(void *args) {
         if(strcmp(key, "number_of_messages")==0)
             number_of_messages=(int) strtol(json_object_get_string(val), nullptr, 10);
     }
-    string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
+    string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ ;
+    name_of_csv_file.append(".csv");
     printf("Num of consumer threads: %d\n", num_consumers);
     string name_path_csv = path_csv + name_of_csv_file;
     if(num_consumers>1)
