@@ -275,7 +275,10 @@ subscriber_thread(string *endpoint_custom, char *topic, BlockingQueue<Item2> *lo
         cout<<"message Received: No. "<< c<<endl;
         //increment_counter.lock();
         //increment_counter.unlock();
-        terminated = payload_managing(&msg, &end, &c, lockingQueue);
+        thread managing([&msg, &end, &c, &lockingQueue, &terminated]{
+            terminated = payload_managing(&msg, &end, &c, lockingQueue);
+        });
+        managing.join();
         //cout << "managing payload exit code: " << a << endl;
         if(c==(NUM_MEX_MAX-1) or succ==-1){
             cout<<"TERMINATING"<<endl;
@@ -381,6 +384,7 @@ int main(int argc, char **argv) {
     const char *output_file;
     int msg_rate;
     int payload;
+    int num_mex;
     char *name_of_experiment;
     const char *v =  (char *) argv[3];
     if(strcmp(v, "-v") == 0)
@@ -388,12 +392,8 @@ int main(int argc, char **argv) {
     else
         verbose=false;
     if (PARAM != nullptr) {
-        puts("PARAMETERS PUBLISHER: ");
-
-        //int payload_size;
-        //int num_mex;
+        puts("PARAMETERS SUBSCRIBER: ");
         int int_value;
-
         const char *value;
         json_object_object_foreach(PARAM, key, val) {
 
@@ -403,6 +403,8 @@ int main(int argc, char **argv) {
                 int_value = (int) json_object_get_int64(val);
                 if (strcmp(key, "num_of_subs") == 0)
                     num_of_subs = int_value;
+                if(strcmp(key, "number_of_messages")==0)
+                    num_mex=int_value;
             }
 
             printf("\t%s: %s\n", key, value);
@@ -428,21 +430,23 @@ int main(int argc, char **argv) {
                 topic = (char *)value;
             if (strcmp(key, "endpoint_inproc") == 0)
                 endpoint_inproc = value;
+            endpoint_customized = string()+type_connection+"://";
+
+            if (strcmp(key, "experiment_name") == 0)
+                name_of_experiment = (char *) value;
+            if (strcmp(key, "msg_rate_sec") == 0)
+                msg_rate = (int) strtol(value, nullptr, 10);
+            if (strcmp(key, "payload_size_bytes") == 0)
+                payload = (int) strtol(value, nullptr, 10);
+            if (strcmp(type_connection, "tcp") == 0)
+                endpoint_customized.append(ip).append(":").append(port);
+            else if (strcmp(type_connection, "inproc") == 0)
+                endpoint_customized.append(endpoint_inproc);
+            else
+                cout<<"invalid endpoint"<<endl;
+            cout<<"string for endpoint (from json file):\t"<< endpoint_customized<<endl;
         }
-        endpoint_customized = string()+type_connection+"://";
-        if (strcmp(key, "experiment_name") == 0)
-            name_of_experiment = (char *) json_object_get_string(val);
-        if (strcmp(key, "msg_rate_sec") == 0)
-            msg_rate = (int) strtol(json_object_get_string(val), nullptr, 10);
-        if (strcmp(key, "payload_size_bytes") == 0)
-            payload = (int) strtol(json_object_get_string(val), nullptr, 10);
-        if (strcmp(type_connection, "tcp") == 0)
-            endpoint_customized = endpoint_customized+ip+":"+port;
-        else if (strcmp(type_connection, "inproc") == 0)
-            endpoint_customized = endpoint_customized+endpoint_inproc;
-        else
-            cout<<"invalid endpoint"<<endl;
-        cout<<"string for endpoint (from json file):\t"<< endpoint_customized<<endl;
+
     } else {
         cout<<"FILE JSON NOT FOUND...EXIT"<<endl;
         return 2;
@@ -452,6 +456,7 @@ int main(int argc, char **argv) {
     assert(success==0);
     cout<<"Syncronization success"<<endl;
     BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
+    lockingQueue.d_queue.resize(num_mex);
     subscriber_thread(&endpoint_customized, topic, &lockingQueue);
 
     string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */  ;
