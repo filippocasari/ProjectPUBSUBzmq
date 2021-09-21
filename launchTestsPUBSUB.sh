@@ -54,7 +54,7 @@ for ((i = 0; i<=10; i++)); do
     then
       echo "#################START ONLY PUBLISHER"
       ./PUB2 "$json_path$c.json" "-v"
-      sleep 15
+      sleep 5
     else
       {
         if [[ "$OSTYPE" == "linux-gnu"* ]]
