@@ -46,7 +46,7 @@ for ((i = 0; i<=10; i++)); do
         }&
 
       done
-      sleep 80
+      sleep 100
       echo "SUBS WILL BE STOPPED"
       killall SUB2
 
