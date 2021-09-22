@@ -20,6 +20,7 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <net/if.h>
+#include <GLFW/glfw3.h>
 #define NUM_CONSUMERS 4
 
 #define NUM_SUBS 1
@@ -311,13 +312,13 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
             say ="opening file csv...";
             write_safely(&say);
         }
-        access_to_file.lock();
+        //access_to_file.lock();
         config_file.open(name_path_csv, ios::app);
         config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
                        to_string(item.ts_end) +
                        "," + to_string( *msg_rate) + "," + to_string(*payload) + "\n";
         config_file.close();
-        access_to_file.unlock();
+        //access_to_file.unlock();
         if(lockingQueue.size()==0)
             break;
     }
