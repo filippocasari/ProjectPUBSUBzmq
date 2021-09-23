@@ -20,7 +20,6 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#include <GLFW/glfw3.h>
 #define NUM_CONSUMERS 4
 
 #define NUM_SUBS 1
@@ -38,7 +37,7 @@ const char *type_test;
 mutex cout_mutex;
 mutex access_to_file;
 BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
-ofstream config_file_common;
+//ofstream config_file_common;
 atomic<bool> finished;
 void write_safely(string *what_i_said){
     cout_mutex.lock();
@@ -69,7 +68,7 @@ int payload_managing(zmsg_t **msg, const int64_t
                 write_safely(&say);
             }
             string start = frame;
-            Item2 item(frame,*end, "end_to_end_delay",*c   ) ;
+            Item2 item(frame,end, "end_to_end_delay",c   ) ;
             lockingQueue.push(item);
             if(verbose){
                 //say="Size of the queue: "+to_string(lockingQueue.size())+"\nitem No. " + to_string(*c) +" pushed";
@@ -161,9 +160,9 @@ static void create_new_consumers(void *args) {
     string name_path_csv = path_csv + name_of_csv_file;
     if(num_consumers>1)
         access_to_file.lock();
-    config_file_common.open(name_path_csv, ios::app);
-    config_file_common << "number,value,timestamp,message rate,payload size\n";
-    config_file_common.close();
+    //config_file_common.open(name_path_csv, ios::app);
+    //config_file_common << "number,value,timestamp,message rate,payload size\n";
+    //config_file_common.close();
     if(num_consumers>1)
         access_to_file.unlock();
 
@@ -205,11 +204,11 @@ static void create_new_consumers(void *args) {
             if(num_consumers>1)
                 access_to_file.lock();
 
-            config_file_common.open(name_path_csv, ios::app);
-            config_file_common << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
+            //config_file_common.open(name_path_csv, ios::app);
+            //config_file_common << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
             to_string(item.ts_end) +
             "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
-            config_file_common.close();
+            //config_file_common.close();
             if(num_consumers>1)
                 access_to_file.unlock();
             say = "--------------THREAD No. " +id.str()+" FINISHED ITS JOB----------\nValue of c: "+to_string(c) ;
@@ -241,9 +240,6 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
     //--------------------------------------------------------------------------------------------------------
     //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
     cout<<"topic is "<<topic<<endl;
-
-
-
 
     //sub= zsock_new_sub(endpoint_custom->c_str(), topic);
 
@@ -535,7 +531,7 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
     char *name_of_experiment;
     int msg_rate;
     int payload;
-    puts("PARAMETERS PUBLISHER: ");
+    puts("PARAMETERS SUBSCRIBER: ");
     if (PARAM != nullptr) {
 
 
@@ -556,11 +552,12 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
                 int_value = (int) json_object_get_int64(val);
                 if (strcmp(key, "num_of_subs") == 0)
                     num_of_subs = int_value;
+                if (strcmp(key, "msg_rate_sec") == 0)
+                    msg_rate = int_value;
             }
 
             printf("\t%s: %s\n", key, value);
-            if (strcmp(key, "msg_rate_sec") == 0)
-                msg_rate = (int) strtol(json_object_get_string(val), nullptr, 10);
+
             if (strcmp(key, "connection_type") == 0) {
                 type_connection = (char *) value;
                 printf("connection type found: %s\n", type_connection);

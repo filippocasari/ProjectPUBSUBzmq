@@ -7,8 +7,6 @@ echo ${args[0]} ${args[1]} ${args[2]}
 #cd ./cmake-build-debug || exit
 #test_date=$(date +"%H:%M")
 test_path=$1
-
-
 directory_path=$2
 verbose=$3
 #if [[ "$OSTYPE" == "linux-gnu"* ]]; then systemctl restart chronyd && echo "TEST ON LINUX" || exit
@@ -28,13 +26,13 @@ for ((i = 0; i<=2; i++)); do
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       {
-        sudo nice --19 ./INPROCESS_TEST_S "$test_path$c.json" "$directory_path$i/" "$verbose"
+        sudo nice --19 ./INPROCESS_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
       }&
 
     elif [[ "$OSTYPE" == "darwin"* ]]
     then
       {
-        ./INPROCESS_TEST "$test_path$c.json" "$directory_path$i/" "$verbose"
+        ./INPROCESS_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
         succ=$?
             if [ $succ -eq 0 ]
             then

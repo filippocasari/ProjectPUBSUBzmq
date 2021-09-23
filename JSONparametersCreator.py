@@ -8,7 +8,7 @@ import os
 
 E_3 = 1000  # number * E_3
 msg_rate = [5, 10, 25, 50, 100]
-#msg_rate = [250, 500, 1000,5000, 10000]  # message rate, unit: messages/sec
+msg_rate = [250, 500, 1000,5000, 10000]  # message rate, unit: messages/sec
 # range_payload = [10, 25, 50, 100, 200, 500, 1000]
 range_payload = [10 * E_3, 25 * E_3, 50 * E_3]  # payload (bytes)
 topic = "CAR"  # topic for the publisher and subscribers
