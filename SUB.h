@@ -507,8 +507,8 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
         // initialize the string
     }
     //path of json file
-
-    const char *string_json_path = (const char *) str.substr(0,  pox).c_str();
+    string temp_str= str.substr(0,  pox);
+    const char *string_json_path = (const char *)temp_str.c_str();
     cout<<"STRING OF JSON FILE IS: "<<*string_json_path<<endl; // file passed
     // from the bash script or manually from terminal
     // start deserialization
