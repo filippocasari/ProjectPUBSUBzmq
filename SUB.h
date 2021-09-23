@@ -505,12 +505,13 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
 
         cout << "PATH chosen: " << path_csv << endl;
         // initialize the string
-        string_json_path = str.substr(0,  pox).c_str();
-        cout<<"STRING OF JSON FILE IS: "<<string_json_path<<endl; // file passed from the bash script or manually from terminal
+
     }
     //path of json file
 
-
+    string_json_path = (const char *) str.substr(0,  pox).c_str();
+    cout<<"STRING OF JSON FILE IS: "<<*string_json_path<<endl; // file passed
+    // from the bash script or manually from terminal
     // start deserialization
     json_object *PARAM;
     const char *endpoint_inproc;
