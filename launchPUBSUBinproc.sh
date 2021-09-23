@@ -27,7 +27,7 @@ for ((i = 0; i<=2; i++)); do
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       {
-        sudo nice --19 ./INPROCESS_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
+        ./INPROCESS_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
       }&
 
     elif [[ "$OSTYPE" == "darwin"* ]]
