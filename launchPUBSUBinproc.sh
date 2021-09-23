@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cmake ./CMakeLists.txt || echo "Error to load CMakeLists"
+if [[ "$OSTYPE" == "linux-gnu"* ]] ; then sudo cmake ./CMakeLists.txt; fi
 args=("$@")
 echo $# arguments passed
 echo ${args[0]} ${args[1]} ${args[2]}
