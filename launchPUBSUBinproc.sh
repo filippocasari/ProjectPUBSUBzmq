@@ -52,7 +52,7 @@ for ((i = 0; i<=2; i++)); do
     sleep 60
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
-      sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROCESS_TEST_S
+      sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROCESS_TEST_
       sleep 5
     fi
     killall INPROCESS_TEST_S

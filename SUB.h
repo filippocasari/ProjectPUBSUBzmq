@@ -20,6 +20,7 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <net/if.h>
+#include <atomic>
 #define NUM_CONSUMERS 4
 
 #define NUM_SUBS 1
