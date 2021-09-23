@@ -474,7 +474,6 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
     string csv = str.substr(pox + 1, pox2-1-pox);
     const char *path_csv = (const char *) csv.c_str();
     const char *v =  (const char *) substring.c_str();
-    char *cmdstring= nullptr; // string of args
     if (argc == 1) // exit if argc is less then 2
         cout<<"NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT"<<endl;
     else {
@@ -488,9 +487,6 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
         }
         cout<<"POX of ',' : "<<pox<<endl;
         cout<<"Length of string :"<<(int) str.length()<<endl;
-
-
-        cout<<"PATH: "<<path_csv<<endl;
 
         DIR *dir = opendir(path_csv);
         if (dir) {
@@ -509,11 +505,11 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
 
         cout << "PATH chosen: " << path_csv << endl;
         // initialize the string
-        cmdstring = (char *) str.substr(0,  pox).c_str();
-        printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
+        string_json_path = str.substr(0,  pox).c_str();
+        cout<<"STRING OF JSON FILE IS: "<<string_json_path<<endl; // file passed from the bash script or manually from terminal
     }
     //path of json file
-    string_json_path = cmdstring; // file passed from the bash script or manually from terminal
+
 
     // start deserialization
     json_object *PARAM;

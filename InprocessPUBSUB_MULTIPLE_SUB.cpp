@@ -20,7 +20,8 @@ int main(int argc, char **argv) {
 
     //zsock_t *sub = zsock_new_sub("inproc://CAR", "CAR");
     char **new_argv = argv;
-
+    string comma = ",";
+    string comma2 ="&";
     for (int i = 0; i < NUM_SUB; i++) {
          string final_string;
          string i_str;
@@ -32,9 +33,6 @@ int main(int argc, char **argv) {
         temp.append(i_str);
         new_argv[2] = (char *) temp.c_str();
         cout << "New argv[2] passed: " << new_argv[2] << endl;
-
-        string comma = ",";
-        string comma2 ="&";
 
         final_string= (char *)argv[1];
         final_string+=comma;
