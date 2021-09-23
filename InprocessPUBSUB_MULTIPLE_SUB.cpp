@@ -26,16 +26,19 @@ int main(int argc, char **argv) {
          i_str.append(to_string(i));
         //SUBS.emplace_back([&argc, &argv, &i_str]() {
 
-        string temp = (argv[2] + i_str);
+        string temp = ((char *)argv[2]);
+        temp.append(i_str);
         new_argv[2] = (char *) temp.c_str();
         cout << "New argv[2] passed: " << new_argv[2] << endl;
 
         string comma = ",";
         string comma2 ="&";
 
-        final_string= argv[1];
+        final_string= (char *)argv[1];
         final_string+=comma;
-        final_string+=argv[2]+comma2+argv[3];
+        final_string+=(char *)argv[2];
+        final_string+=comma2;
+        final_string+=(char *)argv[3];
         cout<<"FINAL STRING: "<<final_string<<endl;
 
         actors[i]= zactor_new(main_SUB_M, (void *) &final_string);
