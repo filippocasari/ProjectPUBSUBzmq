@@ -17,11 +17,13 @@ int main(int argc, char **argv) {
     //vector<thread> actors;
     //actors.reserve(NUM_SUB);
     zactor_t *actors[NUM_SUB];
-    string final_string;
+
     //zsock_t *sub = zsock_new_sub("inproc://CAR", "CAR");
     char **new_argv = argv;
-    string i_str;
+
     for (int i = 0; i < NUM_SUB; i++) {
+         string final_string;
+         string i_str;
          i_str= "_" ;
          i_str.append(to_string(i));
         //SUBS.emplace_back([&argc, &argv, &i_str]() {
