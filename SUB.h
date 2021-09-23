@@ -31,7 +31,7 @@ using namespace std;
 //#define MSECS_MAX_WAITING 10000
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 //const char *endpoint_inprocess = "inproc://example";
-const char *string_json_path;
+
 //bool multithread=false;
 //bool multiple_sub =false;
 const char *type_test;
@@ -134,7 +134,7 @@ static void create_new_consumers(void *args) {
     int msg_rate;
     int payload;
     int number_of_messages;
-    PARAM = json_object_from_file(string_json_path);
+    //PARAM = json_object_from_file();
     json_object_object_foreach(PARAM, key, val) {
         if (strcmp(key, "metrics_output_type") == 0)
         {
@@ -371,7 +371,7 @@ int main_S(int argc, char **argv) {
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
     }
     //path of json file
-    string_json_path = cmdstring; // file passed from the bash script or manually from terminal
+    const char *string_json_path = cmdstring; // file passed from the bash script or manually from terminal
 
     // start deserialization
     json_object *PARAM;
@@ -505,11 +505,10 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
 
         cout << "PATH chosen: " << path_csv << endl;
         // initialize the string
-
     }
     //path of json file
 
-    string_json_path = (const char *) str.substr(0,  pox).c_str();
+    const char *string_json_path = (const char *) str.substr(0,  pox).c_str();
     cout<<"STRING OF JSON FILE IS: "<<*string_json_path<<endl; // file passed
     // from the bash script or manually from terminal
     // start deserialization
@@ -517,7 +516,7 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
     const char *endpoint_inproc;
     string endpoint_customized;
 
-    int num_of_subs = NUM_SUBS;
+    //int num_of_subs = NUM_SUBS;
     PARAM = json_object_from_file(string_json_path);
     char *topic= nullptr;
     char *type_connection;
@@ -531,8 +530,6 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
     int payload;
     puts("PARAMETERS SUBSCRIBER: ");
     if (PARAM != nullptr) {
-
-
         if(strcmp(v, "-v") == 0)
             verbose=true;
         else
@@ -549,7 +546,7 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
             if (json_object_is_type(val, json_type_int)) {
                 int_value = (int) json_object_get_int64(val);
                 if (strcmp(key, "num_of_subs") == 0)
-                    num_of_subs = int_value;
+                    //num_of_subs = int_value;
                 if (strcmp(key, "msg_rate_sec") == 0)
                     msg_rate = int_value;
             }
@@ -596,7 +593,7 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
         cout<<"FILE JSON NOT FOUND...EXIT"<<endl;
 
     }
-    cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
+    //cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
     int success=syncronization( ip, port);
     assert(success==0);
     cout<<"Syncronization success"<<endl;
