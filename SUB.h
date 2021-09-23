@@ -107,7 +107,7 @@ int syncronization( const char* ip, const char* port) {
 
     //only for tcp, not for in process connection
 
-    endpoint_sync.append("120.0.0.1");
+    endpoint_sync.append("127.0.0.1");
     endpoint_sync.append( ":");
     endpoint_sync.append(to_string(atoi(port)+1));
 
