@@ -117,7 +117,6 @@ int syncronization( const char* ip, const char* port) {
     zsock_send(syncservice, "s", "INIT");
     char *string;
     zsock_recv(syncservice, "s",&string);
-    free(string);
     zsock_destroy(&syncservice);
     return 0;
 
