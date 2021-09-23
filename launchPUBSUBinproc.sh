@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cmake CMakeLists.txt || echo "Error to load CMakeLists"
+cmake ./CMakeLists.txt || echo "Error to load CMakeLists"
 args=("$@")
 echo $# arguments passed
 echo ${args[0]} ${args[1]} ${args[2]}
