@@ -22,6 +22,10 @@ int main(int argc, char **argv) {
     char **new_argv = argv;
     string comma = ",";
     string comma2 ="&";
+    thread start_publisher([&argc, &argv]{
+        main_PUB(argc, argv);
+    });
+    zclock_sleep(5000);
     for (int i = 0; i < NUM_SUB; i++) {
          string final_string;
          string i_str;
@@ -50,8 +54,7 @@ int main(int argc, char **argv) {
         //this_thread::sleep_for(chrono::milliseconds(500));
         //cout << "CREATING NEW SUB" << endl;
     }
-    zclock_sleep(6000);
-    main_PUB(argc, argv);
+    start_publisher.join();
     for(auto & actor : actors){
         zactor_destroy(&actor);
     }

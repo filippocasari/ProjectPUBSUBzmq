@@ -70,9 +70,6 @@ publisher_thread(const char *path) {
     if (PARAM != nullptr) { // file json found
         if(verbose)
             puts("PARAMETERS PUBLISHER: ");
-
-
-
         //int int_value;
         const char *value;
         // starting a new for each for the couple key, value
