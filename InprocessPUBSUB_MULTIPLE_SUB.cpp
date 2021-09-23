@@ -22,10 +22,6 @@ int main(int argc, char **argv) {
     char **new_argv = argv;
     string comma = ",";
     string comma2 ="&";
-    thread start_publisher([&argc, &argv]{
-        main_PUB(argc, argv);
-    });
-    zclock_sleep(5000);
     for (int i = 0; i < NUM_SUB; i++) {
          string final_string;
          string i_str;
@@ -37,7 +33,6 @@ int main(int argc, char **argv) {
         temp.append(i_str);
         new_argv[2] = (char *) temp.c_str();
         cout << "New argv[2] passed: " << new_argv[2] << endl;
-
         final_string= (char *)argv[1];
         final_string+=comma;
         final_string+=(char *)argv[2];
@@ -54,7 +49,8 @@ int main(int argc, char **argv) {
         //this_thread::sleep_for(chrono::milliseconds(500));
         //cout << "CREATING NEW SUB" << endl;
     }
-    start_publisher.join();
+    zclock_sleep(6000);
+    main_PUB(argc, argv);
     for(auto & actor : actors){
         zactor_destroy(&actor);
     }
