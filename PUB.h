@@ -169,7 +169,7 @@ publisher_thread(const char *path) {
     while (subscribers < SUBSCRIBERS_EXPECTED) {
         //  - wait for synchronization request
         char *stringa;
-        zsock_recv(syncservice, "s",stringa );
+        zsock_recv(syncservice, "s",&stringa );
         //  - send synchronization reply
         zsock_send(syncservice, "s", "END");
         subscribers++;
