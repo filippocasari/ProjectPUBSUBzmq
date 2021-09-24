@@ -12,13 +12,13 @@
 class Item {
         public:
         std::string name_metric;
-        std::string ts_start;
+        int64_t ts_start;
         int64_t num{};
         int64_t ts_end{};
         Item() = default;
-        Item(std::string mex, const int64_t *ts, std::string name, const int64_t *count) {
-            ts_start = (std::move(mex));
-            ts_end = *ts;
+        Item(const int64_t *start, const int64_t *end, std::string name, const int64_t *count) {
+            ts_start =*start;
+            ts_end = *end;
             name_metric = (std::move(name));
             num=*count;
         }
