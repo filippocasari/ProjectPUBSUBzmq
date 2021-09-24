@@ -10,7 +10,7 @@
 #include <iostream>
 #include <thread>
 #include <algorithm>
-#include "Utils/Item2.h"
+#include "Utils/Item.h"
 #include <mutex>
 #include <sstream>
 #include <vector>
@@ -51,40 +51,43 @@ void write_safely(string *what_i_said){
 
 // function to separate divide scope of functions
 int payload_managing(zmsg_t **msg, const int64_t
-*end, const int64_t *c, BlockingQueue<Item2> *lockingQueue) {
+*end, const int64_t *c, BlockingQueue<Item> *lockingQueue) {
 
-    auto *item=new Item2();
+    auto *item = new Item(); // create new Items
+
+    // try, if throws an exception, catch it
     try {
-        char *frame;
+        char *frame; //  it is a string refers to the first frame of the message at the beginning
 
+        // just a log (safe)
         string say = "size of msg: " +to_string(zmsg_size(*msg));
         write_safely(&say);
-        frame = zmsg_popstr(*msg);
-        if(strcmp(frame, "TERMINATE")==0){
+
+        frame = zmsg_popstr(*msg); // pop a string from the message,
+        // size of message decreases each time you pop something
+        if(strcmp(frame, "TERMINATE")==0){ // if message contains this particular string, return 1
             cout<<"Message received :"<<frame<<endl;
             cout<<"exit"<<endl;
             return 1;
         }
-
+        // if this frame is a string containing "TIMESTAMP", it means the following frames are about timestamps.
         if (strcmp(frame, "TIMESTAMP") == 0) {
-            frame = zmsg_popstr(*msg);
+            frame = zmsg_popstr(*msg); // another pop
             if(verbose){
                 say ="frame: "+ string(frame);
                 write_safely(&say);
             }
-            string start = frame;
 
+            string start = frame; // this string contains temporally the sending timestamp of the publisher
+            // let's assign values to Item instance
             item->ts_start=frame;
             item->ts_end=*end;
             item->name_metric="end_to_end_delay";
             item->num=*c;
-            //Item2 item(frame,end, "end_to_end_delay",c   ) ;
+            // push it into the queue
             lockingQueue->push(*item);
-            if(verbose){
-                //say="Size of the queue: "+to_string(lockingQueue.size())+"\nitem No. " + to_string(*c) +" pushed";
-                //write_safely(&say);
-            }
         }
+        // if the message caught is empty, exit
         if (zmsg_size(*msg) == 0) {
             if(verbose){
                 say = "NO MORE MESSAGES";
@@ -93,45 +96,55 @@ int payload_managing(zmsg_t **msg, const int64_t
 
             return -2;
         }
+        // in case of non-empty message, pop all the remaining frames
         while (zmsg_size(*msg) > 0) {
-            //puts("estrapolating other payload...");
+
             frame = zmsg_popstr(*msg);
             if(verbose){
                 say = "size of payload (byte): "+ to_string((strlen(frame) * sizeof(char)));
                 write_safely(&say);
             }
-            //zsys_info("PAYLOAD > %s", frame);
+            // zsys_info("PAYLOAD > %s", frame); // commented 'cause cout is too busy
         }
+        // destroy the message, it is not useful anymore
         zmsg_destroy(msg);
+        // return 0 if everything went how we had guessed
         return 0;
     }
+    // exit otherwise
     catch (int e) {
         return -3;
     }
 }
 
+// this function implements the sync service
+//**** note that "ip" variable is passed even if it is not used. thus, it could be useful,
+// in some cases we want our sync service not be on the localhost ****
 int syncronization( const char* ip, const char* port) {
+    // let's initialize a string
     string endpoint_sync = "tcp";
     endpoint_sync.append("://");
-
-    //only for tcp, not for in process connection
-
     endpoint_sync.append("127.0.0.1");
     endpoint_sync.append( ":");
-    endpoint_sync.append(to_string(atoi(port)+1));
+    endpoint_sync.append(to_string(atoi(port)+1)); // port number= port number (passed) +1.
+                                                            // Just to not introduce another variable
+                                                            // *** Note: atoi is not safe!
+                                                            // we have to find another function that do it better ***
 
     cout<<"Endpoint for Sync service: "<<endpoint_sync<<endl;
+    // *** WE ARE IMPLEMENTING REQ/REP pattern to get sync service ***
     zsock_t *syncservice = zsock_new_req(endpoint_sync.c_str());
-
-    zsock_send(syncservice, "s", "INIT");
+    zsock_send(syncservice, "s", "INIT"); // send a simple string to say to pub: "I am ready, boy!"
+    // now we must wait for the reply of the pub
     char *string;
     zsock_recv(syncservice, "s",&string);
+    // destroy socket. We do not need it anymore
     zsock_destroy(&syncservice);
+    // return 0; it is all okay
     return 0;
-
-
 }
 
+// despracated... it creates consumer threads to write to csv file
 static void create_new_consumers(void *args) {
     const char *path_csv = static_cast<const char *>(args);
     //zsock_signal(pipe, 0);
@@ -183,7 +196,7 @@ static void create_new_consumers(void *args) {
     write_safely(&say);
     int64_t end_to_end_delay;
     int c = 0;
-    Item2 item;
+    Item item;
     char *end_pointer;
     int number_of_iterations=(int)number_of_messages/num_consumers;
     while (c<number_of_iterations && !zsys_interrupted) {
@@ -227,11 +240,14 @@ static void create_new_consumers(void *args) {
 
 }
 
+// *** the crucial function. It takes the endpoint to connect, the topic to subscribe to , path csv to write on,
+// name of the experiment to save the file,
+// how much is the payload and what is the message rate ***
 void
 subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv, const char *name_of_experiment, const int *payload, const int *msg_rate) {
 
     // -----------------------------------------------------------------------------------------------------
-    BlockingQueue<Item2> lockingQueue;
+    BlockingQueue<Item> lockingQueue;
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
     finished=false;
     cout<<"STARTING NEW CONSUMERS"<<endl;
@@ -292,7 +308,7 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
     config_file.open(name_path_csv, ios::app);
     config_file << "number,value,timestamp,message rate,payload size\n";
     config_file.close();
-    Item2 item;
+    Item item;
     int64_t end_to_end_delay;
     string say;
     cout<<"Size of the queue: "<<lockingQueue.d_queue.size()<<endl;

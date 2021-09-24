@@ -5,7 +5,7 @@
 #include <iostream>
 #include <thread>
 #include <algorithm>
-#include "Utils/Item2.h"
+#include "Utils/Item.h"
 #include <mutex>
 #include <sstream>
 #include <vector>
@@ -57,7 +57,7 @@ char* get_ip(){
     return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
 int payload_managing(zmsg_t **msg, const int64_t
-*end, const int64_t *c, BlockingQueue<Item2> *lockingQueue) {
+*end, const int64_t *c, BlockingQueue<Item> *lockingQueue) {
     //char *end_pointer_string;
     //long start;
     try {
@@ -81,7 +81,7 @@ int payload_managing(zmsg_t **msg, const int64_t
                 write_safely(&say);
             }
             string start = frame;
-            Item2 item(frame,*end, "end_to_end_delay",*c   ) ;
+            Item item(frame, *end, "end_to_end_delay", *c   ) ;
             lockingQueue->push(item);
         }
         if (zmsg_size(*msg) == 0) {
@@ -111,7 +111,7 @@ int payload_managing(zmsg_t **msg, const int64_t
 
 
 
-int create_new_consumers(BlockingQueue<Item2> *lockingQueue, ofstream *config_file, char *string_json_path) {
+int create_new_consumers(BlockingQueue<Item> *lockingQueue, ofstream *config_file, char *string_json_path) {
     bool console = false;
     int num_consumers = NUM_CONSUMERS;
     string name_of_experiment;
@@ -169,7 +169,7 @@ int create_new_consumers(BlockingQueue<Item2> *lockingQueue, ofstream *config_fi
                     write_safely(&say);
                     int64_t end_to_end_delay;
                     int c = 0;
-                    Item2 item;
+                    Item item;
                     int number_of_iterations=(int)number_of_messages/num_consumers;
                     while (c<number_of_iterations && !zsys_interrupted ) {
 
@@ -232,7 +232,7 @@ int create_new_consumers(BlockingQueue<Item2> *lockingQueue, ofstream *config_fi
 }
 
 void
-subscriber_thread(string *endpoint_custom, char *topic, BlockingQueue<Item2> *lockingQueue) {
+subscriber_thread(string *endpoint_custom, char *topic, BlockingQueue<Item> *lockingQueue) {
 
     // -----------------------------------------------------------------------------------------------------
 
@@ -443,7 +443,7 @@ int main(int argc, char **argv) {
     int success=syncronization( ip, port, type_connection);
     assert(success==0);
     cout<<"Syncronization success"<<endl;
-    BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
+    BlockingQueue<Item> lockingQueue; //initialize lockingQueue
     lockingQueue.d_queue.resize(num_mex);
     subscriber_thread(&endpoint_customized, topic, &lockingQueue);
 
@@ -457,7 +457,7 @@ int main(int argc, char **argv) {
     config_file.open(name_path_csv, ios::app);
     config_file << "number,value,timestamp,message rate,payload size\n";
     config_file.close();
-    Item2 item;
+    Item item;
     int64_t end_to_end_delay;
     string say;
     cout<<"Size of the queue: "<<lockingQueue.size()<<endl;

@@ -1,9 +1,5 @@
 //
-// Created by filippocasari on 29/05/21.
+// Created by filippocasari on 01/06/21.
 //
 
 #include "Item.h"
-
-Item::Item() {
-
-}
