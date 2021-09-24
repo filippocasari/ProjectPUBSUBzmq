@@ -21,12 +21,11 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <atomic>
-#define NUM_CONSUMERS 4
+#define NUM_CONSUMERS 1
 
-#define NUM_SUBS 1
+#define NUM_SUBS 7
 #define ENDPOINT endpoint_tcp
 #define NUM_MEX_MAX 10000
-BlockingQueue<Item2> lockingQueue;
 using namespace std;
 //#define MSECS_MAX_WAITING 10000
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
@@ -47,7 +46,7 @@ void write_safely(string *what_i_said){
 }
 
 int payload_managing(zmsg_t **msg, const int64_t
-*end, const int64_t *c) {
+*end, const int64_t *c, BlockingQueue<Item2> *lockingQueue) {
     //char *end_pointer_string;
     //long start;
     auto *item=new Item2();
@@ -76,7 +75,7 @@ int payload_managing(zmsg_t **msg, const int64_t
             item->name_metric="end_to_end_delay";
             item->num=*c;
             //Item2 item(frame,end, "end_to_end_delay",c   ) ;
-            lockingQueue.push(*item);
+            lockingQueue->push(*item);
             if(verbose){
                 //say="Size of the queue: "+to_string(lockingQueue.size())+"\nitem No. " + to_string(*c) +" pushed";
                 //write_safely(&say);
@@ -185,7 +184,7 @@ static void create_new_consumers(void *args) {
     int number_of_iterations=(int)number_of_messages/num_consumers;
     while (c<number_of_iterations && !zsys_interrupted) {
 
-        item=lockingQueue.pop();
+        //item=lockingQueue.pop();
         zclock_sleep(10);
 
         int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
@@ -216,8 +215,8 @@ static void create_new_consumers(void *args) {
         //        break;
         //}
 
-        if(lockingQueue.size()==0)
-            break;
+        //if(lockingQueue.size()==0)
+        //    break;
     }
     say = "thread is closing...";
     write_safely(&say);
@@ -228,7 +227,7 @@ void
 subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv, const char *name_of_experiment, const int *payload, const int *msg_rate) {
 
     // -----------------------------------------------------------------------------------------------------
-
+    BlockingQueue<Item2> lockingQueue;
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
     finished=false;
     cout<<"STARTING NEW CONSUMERS"<<endl;
@@ -268,7 +267,7 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
         //cout<<"message Received: No. "<< c<<endl;
         //increment_counter.lock();
         //increment_counter.unlock();
-        int a = payload_managing(&msg, &end, &c);
+        int a = payload_managing(&msg, &end, &c, &lockingQueue);
         cout << "managing payload exit code: " << a << endl;
         if(c==(NUM_MEX_MAX-1) or succ==-1){
             cout<<"TERMINATING"<<endl;

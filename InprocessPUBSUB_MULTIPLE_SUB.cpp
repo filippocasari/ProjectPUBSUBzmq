@@ -3,21 +3,16 @@
 //
 
 #include <czmq.h>
-#include <json-c/json.h>
-#include <cmath>
-//default endpoint
-#include "PUB.h"
-#include "SUB.h"
-
+#include "PUB.h" // import our Publisher
+#include "SUB.h" // import
 using namespace std;
-#define NUM_SUB 1
+#define NUM_SUB 7
 int main(int argc, char **argv) {
     //vector<thread> SUBS;
     //SUBS.reserve(NUM_SUB);
     //vector<thread> actors;
     //actors.reserve(NUM_SUB);
     zactor_t *actors[NUM_SUB];
-
     //zsock_t *sub = zsock_new_sub("inproc://CAR", "CAR");
     char **new_argv = argv;
     string comma = ",";
