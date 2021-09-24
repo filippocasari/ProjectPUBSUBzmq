@@ -339,11 +339,11 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
 
 static void main_SUB_M(zsock_t *pipe, void *args) {
 
-    zsock_signal(pipe, 0);
-    const string *argv = (string *) args;
-    cout<<"ARGS RECEIVED: "<<argv->c_str()<<endl;
+    zsock_signal(pipe, 0); // You must call this function when you work with z-actor
+    const string *argv = (string *) args; // convert char array into string
+    cout<<"ARGS RECEIVED: "<<*argv<<endl;
     char *temp = (char *) argv->c_str();
-
+    // ---------------USING A STRANGE/DUMB METHOD TO PARSE THE ARGUMENTS ---------------
     string str = temp;
     size_t pox = str.find(',');
     int pox2 = (int ) str.find('&');
@@ -352,26 +352,22 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
     string csv = str.substr(pox + 1, pox2-1-pox);
     const char *path_csv = (const char *) csv.c_str();
     const char *v =  (const char *) substring.c_str();
-    if (argc == 1) // exit if argc is less then 2
+    if (argc == 1) // exit if argc is less than 2
         cout<<"NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT"<<endl;
     else {
-
-        //size_t strsize = 0; //size of the string to allocate memory
-
-        //strsize += (int) strlen(args[1]);
-
         if (argc == 2) {
             cout << "Path for csv not chosen..." << endl;
         }
-        cout<<"POX of ',' : "<<pox<<endl;
-        cout<<"Length of string :"<<(int) str.length()<<endl;
-
+        //cout<<"POX of ',' : "<<pox<<endl;
+        //cout<<"Length of string :"<<(int) str.length()<<endl;
+        // open the directory if exists
         DIR *dir = opendir(path_csv);
         if (dir) {
             cout << "path csv already exists" << endl;
             closedir(dir);
 
         } else if (ENOENT == errno) {
+            // make it otherwise
             int a = mkdir(path_csv, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             if (a != 0)
             {
@@ -380,17 +376,14 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
         } else {
             cout<<"Error unknown, i could not be possible to open or create a directory for csv tests"<<endl;
         }
-
         cout << "PATH chosen: " << path_csv << endl;
-        // initialize the string
     }
-    //path of json file
     string temp_str= str.substr(0,  pox);
-    const char *string_json_path = (const char *)temp_str.c_str();
+    const char *string_json_path = (const char *)temp_str.c_str(); // string that indicate the path of json file
     cout<<"STRING OF JSON FILE IS: "<<*string_json_path<<endl; // file passed
     // from the bash script or manually from terminal
     // start deserialization
-    json_object *PARAM;
+    json_object *PARAM; // json object, see library JSON-C
     const char *endpoint_inproc;
     string endpoint_customized;
 
