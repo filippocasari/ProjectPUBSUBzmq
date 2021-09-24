@@ -21,34 +21,38 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <atomic>
-#define NUM_CONSUMERS 1
+#define NUM_CONSUMERS 1 // deprecated. Just to say how many consumer threads to store values on Csv.
+                        // it is not necessary because we do not want speed thread to write on a csv file
 
-#define NUM_SUBS 7
-#define ENDPOINT endpoint_tcp
-#define NUM_MEX_MAX 10000
-using namespace std;
-//#define MSECS_MAX_WAITING 10000
-const char *endpoint_tcp = "tcp://127.0.0.1:6000";
-//const char *endpoint_inprocess = "inproc://example";
+#define NUM_SUBS 7 // You can set how many Sub you want
+#define ENDPOINT endpoint_tcp // default endpoint
+#define NUM_MEX_MAX 10000 // default messages
+//#define MSECS_MAX_WAITING 10000 // we would have implemented maximum milli secs to wait
+const char *endpoint_tcp = "tcp://127.0.0.1:6000"; // default tcp endpoint
 
-//bool multithread=false;
-//bool multiple_sub =false;
-const char *type_test;
-mutex cout_mutex;
-mutex access_to_file;
- //initialize lockingQueue
-//ofstream config_file_common;
-atomic<bool> finished;
+const char *type_test; // type of the test TODO is it necessarily global?
+
+mutex cout_mutex; // semaphore to write safely on standard output if we got multi thread consumers
+mutex access_to_file; // semaphore to access safely to csv file
+
+atomic<bool> finished; // just a simple boolean to tell
+// everyone that thread sub is finished and threads consumers must be turned off
+
+using namespace std; // using standard library
+
+// simple function to write on standard output thread safely
 void write_safely(string *what_i_said){
+    // starting critical section
     cout_mutex.lock();
     cout<<*what_i_said<<endl;
     cout_mutex.unlock();
+    // critical section ends here
 }
 
+// function to separate divide scope of functions
 int payload_managing(zmsg_t **msg, const int64_t
 *end, const int64_t *c, BlockingQueue<Item2> *lockingQueue) {
-    //char *end_pointer_string;
-    //long start;
+
     auto *item=new Item2();
     try {
         char *frame;
