@@ -26,7 +26,7 @@
 #define NUM_SUBS 1
 #define ENDPOINT endpoint_tcp
 #define NUM_MEX_MAX 10000
-
+BlockingQueue<Item2> lockingQueue;
 using namespace std;
 //#define MSECS_MAX_WAITING 10000
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
@@ -37,7 +37,7 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 const char *type_test;
 mutex cout_mutex;
 mutex access_to_file;
-BlockingQueue<Item2> lockingQueue; //initialize lockingQueue
+ //initialize lockingQueue
 //ofstream config_file_common;
 atomic<bool> finished;
 void write_safely(string *what_i_said){
@@ -50,6 +50,7 @@ int payload_managing(zmsg_t **msg, const int64_t
 *end, const int64_t *c) {
     //char *end_pointer_string;
     //long start;
+    auto *item=new Item2();
     try {
         char *frame;
 
@@ -69,8 +70,13 @@ int payload_managing(zmsg_t **msg, const int64_t
                 write_safely(&say);
             }
             string start = frame;
-            Item2 item(frame,end, "end_to_end_delay",c   ) ;
-            lockingQueue.push(item);
+
+            item->ts_start=frame;
+            item->ts_end=*end;
+            item->name_metric="end_to_end_delay";
+            item->num=*c;
+            //Item2 item(frame,end, "end_to_end_delay",c   ) ;
+            lockingQueue.push(*item);
             if(verbose){
                 //say="Size of the queue: "+to_string(lockingQueue.size())+"\nitem No. " + to_string(*c) +" pushed";
                 //write_safely(&say);
@@ -175,19 +181,14 @@ static void create_new_consumers(void *args) {
     int64_t end_to_end_delay;
     int c = 0;
     Item2 item;
+    char *end_pointer;
     int number_of_iterations=(int)number_of_messages/num_consumers;
     while (c<number_of_iterations && !zsys_interrupted) {
 
         item=lockingQueue.pop();
+        zclock_sleep(10);
 
-        say ="--------------THREAD No. "+id.str()+" IS WORKING--------";
-        write_safely(&say);
-        char *end_pointer;
         int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
-        if(verbose){
-            say =  "end : " + to_string(item.ts_end) + " start: " + to_string(start) + "\nmanaging payload";
-            write_safely(&say);
-        }
 
         end_to_end_delay = item.ts_end - start;
 
@@ -201,26 +202,22 @@ static void create_new_consumers(void *args) {
                 say ="opening file csv...";
                 write_safely(&say);
             }
-            if(num_consumers>1)
-                access_to_file.lock();
 
             //config_file_common.open(name_path_csv, ios::app);
             //config_file_common << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
             to_string(item.ts_end) +
             "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
             //config_file_common.close();
-            if(num_consumers>1)
-                access_to_file.unlock();
-            say = "--------------THREAD No. " +id.str()+" FINISHED ITS JOB----------\nValue of c: "+to_string(c) ;
-            write_safely(&say);
+
         }
         c++;
-        if(finished.load(std::memory_order_relaxed)){
-            if(lockingQueue.size()==0)
-                break;
-        }
+        //if(finished.load(std::memory_order_relaxed)){
+        //    if(lockingQueue.size()==0)
+        //        break;
+        //}
 
-
+        if(lockingQueue.size()==0)
+            break;
     }
     say = "thread is closing...";
     write_safely(&say);
@@ -247,6 +244,7 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
     int64_t c =0;
     //bool terminated = false;
     auto *sub = zsock_new_sub(endpoint_custom, topic);
+
     int64_t end;
     string metric = "end_to_end_delay";
     zmsg_t *msg = zmsg_new();
@@ -266,8 +264,8 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
         else
             end = 0;
 
-        cout<<"Recv on "<< topic<<endl;
-        cout<<"message Received: No. "<< c<<endl;
+        //cout<<"Recv on "<< topic<<endl;
+        //cout<<"message Received: No. "<< c<<endl;
         //increment_counter.lock();
         //increment_counter.unlock();
         int a = payload_managing(&msg, &end, &c);
@@ -294,30 +292,32 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
     Item2 item;
     int64_t end_to_end_delay;
     string say;
-    cout<<"Size of the queue: "<<lockingQueue.size()<<endl;
+    cout<<"Size of the queue: "<<lockingQueue.d_queue.size()<<endl;
+    char *end_pointer;
+    int64_t start;
+    config_file.open(name_path_csv, ios::app);
     while(true){
         if(verbose){
             say ="trying to pop new item...";
             write_safely(&say);
         }
         item=lockingQueue.pop();
-        char *end_pointer;
-        int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
+
+        start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
         end_to_end_delay = item.ts_end - start;
         if(verbose){
             say ="opening file csv...";
             write_safely(&say);
         }
-        //access_to_file.lock();
-        config_file.open(name_path_csv, ios::app);
         config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
                        to_string(item.ts_end) +
                        "," + to_string( *msg_rate) + "," + to_string(*payload) + "\n";
-        config_file.close();
-        //access_to_file.unlock();
-        if(lockingQueue.size()==0)
+
+        if(lockingQueue.d_queue.empty())
             break;
+
     }
+    config_file.close();
     cout<<"all items dequeued"<<endl;
     //thread_start_consumers.join();
     zsock_destroy(&sub);

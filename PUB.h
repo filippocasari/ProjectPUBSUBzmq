@@ -21,7 +21,7 @@
 //default endpoint
 const char *endpoint_inprocess = "inproc://example";
 //const char *json_file_config;
-#define SUBSCRIBERS_EXPECTED 7
+#define SUBSCRIBERS_EXPECTED 1
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
 bool verbose = true;
@@ -177,7 +177,7 @@ publisher_thread(const char *path) {
     zsock_destroy(&syncservice);
 
 
-    sleep(4);
+    sleep(10);
     for(;count<num_mex; count++){
 
         if(verbose)
