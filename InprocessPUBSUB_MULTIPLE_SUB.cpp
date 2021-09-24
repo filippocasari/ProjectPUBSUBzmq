@@ -46,11 +46,11 @@ int main(int argc, char **argv) {
         cout << "New argv[2] passed: " << *temp_char << endl;
 
         // Let's concatenate strings
-        final_string= (char *)argv[1]; // initialize string to first arg
-        final_string+=comma; // append comma
-        final_string+=(char *)argv[2]; // append second arg
-        final_string+=comma2; // append &
-        final_string+=(char *)argv[3]; // append last arg
+        final_string = (char *)argv[1]; // initialize string to first arg
+        final_string.append(comma); // append comma
+        final_string.append((char *)argv[2]); // append second arg
+        final_string.append(comma2); // append &
+        final_string.append((char *)argv[3]); // append last arg
         cout<<"FINAL STRING: "<<final_string<<endl; // print our final string
 
         // create new z-Actor, it is a thread
