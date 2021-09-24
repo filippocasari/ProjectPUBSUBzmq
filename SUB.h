@@ -246,22 +246,17 @@ static void create_new_consumers(void *args) {
 void
 subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv, const char *name_of_experiment, const int *payload, const int *msg_rate) {
 
-    // -----------------------------------------------------------------------------------------------------
-    BlockingQueue<Item> lockingQueue;
-    // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
-    finished=false;
+    // ------------------------------------- STARTING THE SUB -------------------------------------------------------------
+    BlockingQueue<Item> lockingQueue; // declare The Queue, is a blocked-locking queue, inspired by Java,
+    // but in this case works like a common queue. It can be crucial if we create more than one consumer because the queue is thread safe.
+    // It is controlled by a lock ( see Blocking Queue code, BlockingQueue.h).
+
+    finished=false; // say: "not finished" to all threads
     cout<<"STARTING NEW CONSUMERS"<<endl;
-    //zactor_new(create_new_consumers, (void *) path_csv);
 
     //--------------------------------------------------------------------------------------------------------
-    //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
-    cout<<"topic is "<<topic<<endl;
-
-    //sub= zsock_new_sub(endpoint_custom->c_str(), topic);
-
-    //long time_of_waiting = 0;
-    int64_t c =0;
-    //bool terminated = false;
+    // cout<<"topic is "<<topic<<endl;
+    int64_t c = 0 ; // this identifies the number of the message
     auto *sub = zsock_new_sub(endpoint_custom, topic);
 
     int64_t end;
