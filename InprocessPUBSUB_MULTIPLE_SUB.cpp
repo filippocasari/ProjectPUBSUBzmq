@@ -29,26 +29,27 @@ int main(int argc, char **argv) {
     });
 
     zclock_sleep(3000); // just sleep few secs to wait PUB configuration
-    string temp = ((char *)argv[2]); // takes path of csv and store it in a new variable
+
     char *temp_char; // will be used to store path csv + (number of Subscriber)
+
 
     // Let's start our loop to create Subscribers
     for (int i = 0; i < NUM_SUB; i++) {
+        string temp;
+        temp = ((char *)argv[2]); // takes path of csv and store it in a new variable
+        string final_string;
 
-        string final_string; // final string, used to pass every args to z-actors
-        string i_str; // string to store "_"+i
-        //
-        i_str= "_" ;
-        i_str.append(to_string(i));
-
-        temp.append(i_str);
-        temp_char = (char *) temp.c_str();
-        cout << "New argv[2] passed: " << *temp_char << endl;
+        string *i_str; // string to store "_"+i
+        *i_str= "_" ;
+        i_str->append(to_string(i));
+        temp=(argv[2]);
+        temp.append(*i_str);
 
         // Let's concatenate strings
-        final_string = (char *)argv[1]; // initialize string to first arg
+        // initialize string to first arg
+        final_string = (char *)argv[1];// final string, used to pass every args to z-actors
         final_string.append(comma); // append comma
-        final_string.append((char *)argv[2]); // append second arg
+        final_string.append(temp); // append second arg
         final_string.append(comma2); // append &
         final_string.append((char *)argv[3]); // append last arg
         cout<<"FINAL STRING: "<<final_string<<endl; // print our final string
