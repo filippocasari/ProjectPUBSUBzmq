@@ -1,7 +1,6 @@
 //
-// Created by Filippo Casari on 03/09/21.
+// Created by Filippo Casari
 //
-
 #ifndef PROJECTPUBSUBZMQ_SUB_H
 #define PROJECTPUBSUBZMQ_SUB_H
 #include <czmq.h>
@@ -29,7 +28,6 @@
 #define NUM_MEX_MAX 10000 // default messages
 //#define MSECS_MAX_WAITING 10000 // we would have implemented maximum milli secs to wait
 const char *endpoint_tcp = "tcp://127.0.0.1:6000"; // default tcp endpoint
-
 const char *type_test; // type of the test TODO is it necessarily global?
 
 mutex cout_mutex; // semaphore to write safely on standard output if we got multi thread consumers
@@ -50,7 +48,7 @@ void write_safely(string *what_i_said){
 }
 
 // function to separate divide scope of functions
-int payload_managing(zmsg_t **msg, const int64_t
+int payloadManaging(zmsg_t **msg, const int64_t
 *end, const int64_t *c, BlockingQueue<Item> *lockingQueue) {
 
     auto *item = new Item(); // create new Items
@@ -121,7 +119,7 @@ int payload_managing(zmsg_t **msg, const int64_t
 // this function implements the sync service
 //**** note that "ip" variable is passed even if it is not used. thus, it could be useful,
 // in some cases we want our sync service not be on the localhost ****
-int syncronization( const char* ip, const char* port) {
+int synchronizationService( const char* ip, const char* port) {
     // let's initialize a string
     string endpoint_sync = "tcp";
     endpoint_sync.append("://");
@@ -146,7 +144,7 @@ int syncronization( const char* ip, const char* port) {
 }
 
 // despracated... it creates consumer threads to write to csv file
-static void create_new_consumers(void *args) {
+static void startNewConsumers(void *args) {
     const char *path_csv = static_cast<const char *>(args);
     //zsock_signal(pipe, 0);
     bool console = false;
@@ -243,8 +241,8 @@ static void create_new_consumers(void *args) {
 // *** the crucial function. It takes the endpoint to connect, the topic to subscribe to , path csv to write on,
 // name of the experiment to save the file,
 // how much is the payload and what is the message rate ***
-static void
-subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv, const char *name_of_experiment, const int *payload, const int *msg_rate) {
+void
+subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const char *name_of_experiment, const int *payload, const int *msg_rate) {
 
     // ------------------------------------- STARTING THE SUB -------------------------------------------------------------
     BlockingQueue<Item> lockingQueue; // declare The Queue, is a blocked-locking queue, inspired by Java,
@@ -284,7 +282,7 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
         //cout<<"Recv on "<< topic<<endl;
         //cout<<"message Received: No. "<< c<<endl;
         // lets menage the payload... passing message, end timestamp, counter, queue
-        int a = payload_managing(&msg, &end, &c, &lockingQueue);
+        int a = payloadManaging(&msg, &end, &c, &lockingQueue);
 
         cout << "managing payload exit code: " << a << endl;
         // if the last number received is Mex-1 or received function does not return 0, stop
@@ -337,7 +335,7 @@ subscriber_thread(const char *endpoint_custom, char *topic, const char *path_csv
     zsock_destroy(&sub); // destroy subscriber socket ( it is mandatory)
 }
 
-static void main_SUB_M(zsock_t *pipe, void *args) {
+static void startNewSubThread(zsock_t *pipe, void *args) {
 
     zsock_signal(pipe, 0); // You must call this function when you work with z-actor
     const string *argv = (string *) args; // convert char array into string
@@ -465,143 +463,11 @@ static void main_SUB_M(zsock_t *pipe, void *args) {
 
     }
     //cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
-    int success=syncronization( ip, port);
+    int success=synchronizationService( ip, port);
     assert(success==0);
     cout<<"Syncronization success"<<endl;
-    subscriber_thread(reinterpret_cast<const char *>(&endpoint_customized), topic,
+    subscriber(reinterpret_cast<const char *>(&endpoint_customized), topic,
                       path_csv, name_of_experiment, &payload, &msg_rate);
     cout << "END OF SUBSCRIBER" << endl;
-}
-
-
-
-int main_S(int argc, char **argv) {
-    for(int i=1; i<argc; i++){
-        cout<<"ARGV["<<i<<"]: "<<argv[i]<<endl;
-    }
-    char *cmdstring; // string of args
-    char *path_csv;
-    if (argc == 1) // exit if argc is less then 2
-    {
-        cout<<"NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT"<<endl;
-        return 1;
-    } else {
-
-        //size_t strsize = 0; //size of the string to allocate memory
-
-        //strsize += (int) strlen(argv[1]);
-
-        if (argc == 2) {
-            cout << "Path for csv not chosen..." << endl;
-            return 2;
-        }
-        //size_t strsize_2 = (int) strlen(argv[2]);
-        path_csv = argv[2];
-        DIR *dir = opendir(path_csv);
-        if (dir) {
-            cout << "path csv already exists" << endl;
-            closedir(dir);
-
-        } else if (ENOENT == errno) {
-            int a = mkdir(path_csv, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-            if (a != 0)
-            {
-                cout<<"Error to create a directory"<<endl;
-                return 3;
-            }
-        } else {
-            cout<<"Error unknown, i could not be possible to open or create a directory for csv tests"<<endl;
-            return 4;
-        }
-
-        cout << "PATH chosen: " << path_csv << endl;
-        // initialize the string
-        cmdstring = argv[1];
-        printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
-    }
-    //path of json file
-    const char *string_json_path = cmdstring; // file passed from the bash script or manually from terminal
-
-    // start deserialization
-    json_object *PARAM;
-    const char *endpoint_inproc;
-    string endpoint_customized;
-
-    int num_of_subs = NUM_SUBS;
-    PARAM = json_object_from_file(string_json_path);
-    char *topic;
-    char *type_connection;
-    const char *port;
-    const char *ip;
-    const char *output_file;
-    const char *v =  (char *) argv[3];
-    if(strcmp(v, "-v") == 0)
-        verbose=true;
-    else
-        verbose=false;
-    if (PARAM != nullptr) {
-        puts("PARAMETERS PUBLISHER: ");
-
-        //int payload_size;
-        //int num_mex;
-        int int_value;
-
-        const char *value;
-        json_object_object_foreach(PARAM, key, val) {
-
-            value = json_object_get_string(val);
-
-            if (json_object_is_type(val, json_type_int)) {
-                int_value = (int) json_object_get_int64(val);
-                if (strcmp(key, "num_of_subs") == 0)
-                    num_of_subs = int_value;
-            }
-
-            printf("\t%s: %s\n", key, value);
-            if (strcmp(key, "connection_type") == 0) {
-                type_connection = (char *) value;
-                printf("connection type found: %s\n", type_connection);
-            }
-            if (strcmp(key, "type_test") == 0)
-                type_test = value;
-            if (strcmp(key, "ip") == 0) {
-                ip = value;
-                printf("ip found: %s\n", ip);
-            }
-            if (strcmp(key, "port") == 0) {
-                port = value;
-                printf("port found: %s\n", port);
-            }
-            if (strcmp(key, "metrics_output_type") == 0) {
-                output_file = value;
-                printf("output file found: %s\n", output_file);
-            }
-            if (strcmp(key, "topic") == 0)
-                topic = (char *)value;
-            if (strcmp(key, "endpoint_inproc") == 0)
-                endpoint_inproc = value;
-        }
-        endpoint_customized = string()+type_connection+"://";
-
-        if (strcmp(type_connection, "tcp") == 0)
-            endpoint_customized = endpoint_customized+ip+":"+port;
-        else if (strcmp(type_connection, "inproc") == 0)
-            endpoint_customized = endpoint_customized+endpoint_inproc;
-        else
-            cout<<"invalid endpoint"<<endl;
-        cout<<"string for endpoint (from json file):\t"<< endpoint_customized<<endl;
-    } else {
-        cout<<"FILE JSON NOT FOUND...EXIT"<<endl;
-        return 2;
-    }
-    cout<<"Numbers of SUBS : "<< num_of_subs<<endl;
-
-
-    //subscriber_thread(reinterpret_cast<const char *>(&endpoint_customized), topic, path_csv);
-    int success=syncronization( ip, port);
-    assert(success==0);
-    cout<<"Syncronization success"<<endl;
-    cout << "END OF SUBSCRIBER" << endl;
-    return 0;
 }
 #endif //PROJECTPUBSUBZMQ_SUB_H

@@ -27,7 +27,7 @@ const char *endpoint_inprocess = "inproc://example";
 bool verbose = true;
 using namespace std;
 //thread of publisher
-char* get_ip(){
+char* getIp(){
     int fd;
     struct ifreq ifr;
 
@@ -48,7 +48,7 @@ char* get_ip(){
 }
 
 int
-publisher_thread(const char *path) {
+publisher(const char *path) {
     char *endpoint_customized;
     zsock_t *pub; // new sock pub
     //path of json file for configuration
@@ -239,7 +239,7 @@ publisher_thread(const char *path) {
     return 0;
 }
 
-int main_PUB(int argc, char **argv) {
+int startPubThread(int argc, char **argv) {
 
     if (argc < 1) {
         printf("NO INPUT JSON FILE...EXIT\n");
@@ -256,9 +256,9 @@ int main_PUB(int argc, char **argv) {
         else
             verbose=false;
         printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
-        int rc =publisher_thread(cmdstring);
+        int rc =publisher(cmdstring);
         cout<<"exit code of publisher : "<< rc<<endl;
-        //zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
+        //zactor_t *pub_actor = zactor_new(publisher, cmdstring);
         //zstr_sendx (pub_actor, "BREAK", NULL);
         //puts("destroying zactor PUB");
         //zactor_destroy(&pub_actor);

@@ -17,27 +17,24 @@
 
 
 #define NUM_CONSUMERS 1
-#define NUM_SUBS 1
-#define ENDPOINT endpoint_tcp
+#define ENDPOINT tcp_endpoint_default
 #define NUM_MEX_MAX 10000
 
 using namespace std;
 
-const char *endpoint_tcp = "tcp://127.0.0.1:6000";
-
-char *path_csv = nullptr;
-bool verbose=false;
-const char *type_test;
+const char *tcp_endpoint_default = "tcp://127.0.0.1:6000";
+char *g_path_csv = nullptr;
+bool g_verbose=false;
+const char *g_type_test;
 mutex cout_mutex;
-mutex access_to_file;
-//ofstream config_file;
-atomic<bool> finished;
-void write_safely(string *what_i_said){
+mutex access_to_file_csv;
+atomic<bool> g_finished;
+void writeSafely(string *what_i_said){
     cout_mutex.lock();
     cout<<*what_i_said<<endl;
     cout_mutex.unlock();
 }
-char* get_ip(){
+char* getIp(){
     int fd;
     struct ifreq ifr;
 
@@ -56,16 +53,15 @@ char* get_ip(){
     /* display result */
     return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
-int payload_managing(zmsg_t **msg, const int64_t
+int pullPayload(zmsg_t **msg, const int64_t
 *end, const int64_t *c, BlockingQueue<Item> *lockingQueue) {
-    //char *end_pointer_string;
-    //long start;
+    char *end_pointer;
     try {
         string say;
         char *frame;
-        if(verbose){
+        if(g_verbose){
             say = "size of msg: " +to_string(zmsg_size(*msg));
-            write_safely(&say);
+            writeSafely(&say);
         }
         frame = zmsg_popstr(*msg);
         if(strcmp(frame, "$TERM")==0){
@@ -76,18 +72,18 @@ int payload_managing(zmsg_t **msg, const int64_t
 
         if (strcmp(frame, "TIMESTAMP") == 0) {
             frame = zmsg_popstr(*msg);
-            if(verbose){
+            if(g_verbose){
                 say ="frame: "+ string(frame);
-                write_safely(&say);
+                writeSafely(&say);
             }
-            string start = frame;
-            Item item(frame, *end, "end_to_end_delay", *c   ) ;
+            int64_t start_time = strtoll(frame, &end_pointer, 10);
+            Item item(start_time, end, "end_to_end_delay", c) ;
             lockingQueue->push(item);
         }
         if (zmsg_size(*msg) == 0) {
-            if(verbose){
+            if(g_verbose){
                 say = "NO MORE MESSAGES";
-                write_safely(&say);
+                writeSafely(&say);
             }
 
             return -2;
@@ -95,9 +91,9 @@ int payload_managing(zmsg_t **msg, const int64_t
         while (zmsg_size(*msg) > 0) {
             //puts("estrapolating other payload...");
             frame = zmsg_popstr(*msg);
-            if(verbose){
+            if(g_verbose){
                 say = "size of payload (byte): "+ to_string((strlen(frame) * sizeof(char)));
-                write_safely(&say);
+                writeSafely(&say);
             }
             //zsys_info("PAYLOAD > %s", frame);
         }
@@ -109,9 +105,7 @@ int payload_managing(zmsg_t **msg, const int64_t
     }
 }
 
-
-
-int create_new_consumers(BlockingQueue<Item> *lockingQueue, ofstream *config_file, char *string_json_path) {
+int createNewConsumers(BlockingQueue<Item> *lockingQueue, ofstream *config_file, char *string_json_path) {
     bool console = false;
     int num_consumers = NUM_CONSUMERS;
     string name_of_experiment;
@@ -144,45 +138,46 @@ int create_new_consumers(BlockingQueue<Item> *lockingQueue, ofstream *config_fil
     consumers.reserve(num_consumers);
     string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ + ".csv";
     printf("Num of consumer threads: %d\n", num_consumers);
-    string name_path_csv = path_csv + name_of_csv_file;
+    string name_g_path_csv = g_path_csv + name_of_csv_file;
 
-    access_to_file.lock();
-    config_file->open(name_path_csv, ios::app);
+    access_to_file_csv.lock();
+    config_file->open(name_g_path_csv, ios::app);
     *config_file << "number,value,timestamp,message rate,payload size\n";
     config_file->close();
 
-    access_to_file.unlock();
+    access_to_file_csv.unlock();
 
     sleep(1);
 
     //int c = 1;
     for (int i = 0; i < num_consumers; i++) { //same as producers
-        if(verbose){
+        if(g_verbose){
             cout<<"launch consumer No. " <<i<<endl;
         }
         consumers.emplace_back(
-                [ &console, &msg_rate, &payload, &name_path_csv, &num_consumers, &number_of_messages, &lockingQueue, &config_file]() {
+                [ &console, &msg_rate, &payload, &name_g_path_csv, &num_consumers, &number_of_messages, &lockingQueue, &config_file]() {
                     auto name = this_thread::get_id();
                     stringstream id;
                     id <<name;
                     string say = "new consumer thread created with ID: "+id.str();
-                    write_safely(&say);
+                    writeSafely(&say);
                     int64_t end_to_end_delay;
                     int c = 0;
                     Item item;
                     int number_of_iterations=(int)number_of_messages/num_consumers;
+                    int64_t start;
                     while (c<number_of_iterations && !zsys_interrupted ) {
 
                         item=lockingQueue->pop();
 
 
                         say ="--------------THREAD No. "+id.str()+" IS WORKING--------";
-                        write_safely(&say);
+                        writeSafely(&say);
                         char *end_pointer;
-                        int64_t start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
-                        if(verbose){
+                         start= item.ts_start;
+                        if(g_verbose){
                             say =  "end : " + to_string(item.ts_end) + " start: " + to_string(start) + "\nmanaging payload";
-                            write_safely(&say);
+                            writeSafely(&say);
                         }
 
                         end_to_end_delay = item.ts_end - start;
@@ -190,28 +185,28 @@ int create_new_consumers(BlockingQueue<Item> *lockingQueue, ofstream *config_fil
                         if (console) {
                             say = "Metric name: " + item.name_metric +"\nvalue: "
                                     + to_string(end_to_end_delay);
-                            write_safely(&say);
+                            writeSafely(&say);
                         } else {
                             //cout << "lockingQueue empty? " << lockingQueue->empty() << endl;
-                            if(verbose){
+                            if(g_verbose){
                                 say ="opening file csv...";
-                                write_safely(&say);
+                                writeSafely(&say);
                             }
                             if(num_consumers>1)
-                                access_to_file.lock();
+                                access_to_file_csv.lock();
 
-                            config_file->open(name_path_csv, ios::app);
+                            config_file->open(name_g_path_csv, ios::app);
                             *config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
                             to_string(item.ts_end) +
                             "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
                             config_file->close();
                             if(num_consumers>1)
-                                access_to_file.unlock();
+                                access_to_file_csv.unlock();
                             say = "--------------THREAD No. " +id.str()+" FINISHED ITS JOB----------\nValue of c: "+to_string(c) ;
-                            write_safely(&say);
+                            writeSafely(&say);
                         }
                         c++;
-                        if(finished.load(std::memory_order_relaxed)){
+                        if(g_finished.load(std::memory_order_relaxed)){
                             if(lockingQueue->size()==0)
                                 break;
                         }
@@ -219,7 +214,7 @@ int create_new_consumers(BlockingQueue<Item> *lockingQueue, ofstream *config_fil
 
                     }
                     say = "thread is closing...";
-                    write_safely(&say);
+                    writeSafely(&say);
                 });
 
         this_thread::sleep_for(chrono::milliseconds(100) );
@@ -232,14 +227,14 @@ int create_new_consumers(BlockingQueue<Item> *lockingQueue, ofstream *config_fil
 }
 
 void
-subscriber_thread(string *endpoint_custom, char *topic, BlockingQueue<Item> *lockingQueue) {
+launchSubscriber(string *endpoint_custom, char *topic, BlockingQueue<Item> *lockingQueue) {
 
     // -----------------------------------------------------------------------------------------------------
 
     // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
-    finished=false;
+    g_finished=false;
     //thread thread_start_consumers([]() {
-    //    int succ = create_new_consumers();
+    //    int succ = createNewConsumers();
     //    cout<<"consumers terminate? "<< succ<<endl;
 //
     //});// create new thread to manage payload
@@ -265,26 +260,26 @@ subscriber_thread(string *endpoint_custom, char *topic, BlockingQueue<Item> *loc
             cout<<"exit, msg null"<<endl;
             break;
         }
-        if (strcmp(type_test, "LAN") == 0)
+        if (strcmp(g_type_test, "LAN") == 0)
             end = zclock_time();
-        else if (strcmp(type_test, "LOCAL") == 0)
+        else if (strcmp(g_type_test, "LOCAL") == 0)
             end = zclock_usecs();
         else
             end = 0;
         say="message Received: No. ";
         say.append(to_string(c));
-        write_safely(&say);
+        writeSafely(&say);
         //increment_counter.lock();
         //increment_counter.unlock();
         thread managing([&msg, &end, &c, &lockingQueue, &terminated]{
-            terminated = payload_managing(&msg, &end, &c, lockingQueue);
+            terminated = pullPayload(&msg, &end, &c, lockingQueue);
         });
         managing.join();
         //cout << "managing payload exit code: " << a << endl;
         if(c==(NUM_MEX_MAX-1) or succ==-1){
             cout<<"TERMINATING"<<endl;
             zclock_sleep(1000);
-            finished=true;
+            g_finished=true;
             break;
         }
         //zmsg_destroy(&msg);
@@ -297,13 +292,13 @@ subscriber_thread(string *endpoint_custom, char *topic, BlockingQueue<Item> *loc
 }
 
 
-int syncronization( const char* ip, const char* port, const char *type_connection) {
+int launchSynchronizationService( const char* ip, const char* port, const char *type_connection) {
     string endpoint_sync = "tcp";
     endpoint_sync.append("://");
 
     //only for tcp, not for in process connection
     if(strcmp(type_connection, "inproc")==0)
-        endpoint_sync.append(get_ip());
+        endpoint_sync.append(getIp());
     else
         endpoint_sync.append(ip);
     endpoint_sync.append( ":");
@@ -342,14 +337,14 @@ int main(int argc, char **argv) {
             return 2;
         }
         //size_t strsize_2 = (int) strlen(argv[2]);
-        path_csv = argv[2];
-        DIR *dir = opendir(path_csv);
+        g_path_csv = argv[2];
+        DIR *dir = opendir(g_path_csv);
         if (dir) {
             cout << "path csv already exists" << endl;
             closedir(dir);
 
         } else if (ENOENT == errno) {
-            int a = mkdir(path_csv, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            int a = mkdir(g_path_csv, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             if (a != 0)
             {
                 cout<<"Error to create a directory"<<endl;
@@ -360,7 +355,7 @@ int main(int argc, char **argv) {
             return 4;
         }
 
-        cout << "PATH chosen: " << path_csv << endl;
+        cout << "PATH chosen: " << g_path_csv << endl;
         // initialize the string
         string_json_path = argv[1]; // file passed from the bash script or manually from terminal
         printf("INPUT FILE JSON (NAME): %s\n", string_json_path);
@@ -386,9 +381,9 @@ int main(int argc, char **argv) {
     char *name_of_experiment;
     const char *v =  (char *) argv[3];
     if(strcmp(v, "-v") == 0)
-        verbose=true;
+        g_verbose=true;
     else
-        verbose=false;
+        g_verbose=false;
 
     if (PARAM != nullptr) {
         puts("READING PARAMETERS OF SUBSCRIBER... ");
@@ -413,8 +408,8 @@ int main(int argc, char **argv) {
                 endpoint_customized.append("://");
             }
 
-            else if (strcmp(key, "type_test") == 0)
-                type_test = value;
+            else if (strcmp(key, "g_type_test") == 0)
+                g_type_test = value;
             else if (strcmp(key, "ip") == 0)
                 ip = value;
             else if (strcmp(key, "port") == 0)
@@ -427,7 +422,7 @@ int main(int argc, char **argv) {
                 endpoint_inproc = value;
             else if (strcmp(key, "experiment_name") == 0)
                 name_of_experiment = value;
-            if(verbose)
+            if(g_verbose)
                 printf("\t%s: %s\n", key, value);
         }
         if (strcmp(type_connection, "tcp") == 0)
@@ -440,45 +435,45 @@ int main(int argc, char **argv) {
         return 2;
     }
     cout<<"endpoint (final) : "<< endpoint_customized<<endl;
-    int success=syncronization( ip, port, type_connection);
+    int success=launchSynchronizationService( ip, port, type_connection);
     assert(success==0);
     cout<<"Syncronization success"<<endl;
     BlockingQueue<Item> lockingQueue; //initialize lockingQueue
     lockingQueue.d_queue.resize(num_mex);
-    subscriber_thread(&endpoint_customized, topic, &lockingQueue);
+    launchSubscriber(&endpoint_customized, topic, &lockingQueue);
 
     string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */  ;
     name_of_csv_file.append(".csv");
-    string name_path_csv = path_csv ;
-    name_path_csv.append("/" +name_of_csv_file);
-    cout<<"OPENING FILE: "<<name_path_csv<<endl;
+    string name_g_path_csv = g_path_csv ;
+    name_g_path_csv.append("/" +name_of_csv_file);
+    cout<<"OPENING FILE: "<<name_g_path_csv<<endl;
     ofstream config_file;
     sleep(3);
-    config_file.open(name_path_csv, ios::app);
+    config_file.open(name_g_path_csv, ios::app);
     config_file << "number,value,timestamp,message rate,payload size\n";
     config_file.close();
     Item item;
     int64_t end_to_end_delay;
     string say;
     cout<<"Size of the queue: "<<lockingQueue.size()<<endl;
-    config_file.open(name_path_csv, ios::app);
+    config_file.open(name_g_path_csv, ios::app);
     int64_t start;
     while(true){
-        if(verbose){
+        if(g_verbose){
             say ="trying to pop new item...";
-            write_safely(&say);
+            writeSafely(&say);
         }
         item=lockingQueue.pop();
         char *end_pointer;
-        start = strtoll(item.ts_start.c_str(), &end_pointer, 10);
+        start = item.ts_start;
         end_to_end_delay = item.ts_end - start;
-        //access_to_file.lock();
+        //access_to_file_csv.lock();
         config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
                        to_string(item.ts_end) +
                        "," + to_string( msg_rate) + "," + to_string(payload) + "\n";
-        //access_to_file.unlock();
+        //access_to_file_csv.unlock();
         if(lockingQueue.size()==0){
-            finished=true;
+            g_finished=true;
             break;
         }
 
