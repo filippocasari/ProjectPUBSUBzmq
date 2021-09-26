@@ -236,7 +236,7 @@ launchSubscriber(string *endpoint_custom, char *topic, BlockingQueue<Item> *lock
     //thread thread_start_consumers([]() {
     //    int succ = createNewConsumers();
     //    cout<<"consumers terminate? "<< succ<<endl;
-//
+
     //});// create new thread to manage payload
     //--------------------------------------------------------------------------------------------------------
     //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
