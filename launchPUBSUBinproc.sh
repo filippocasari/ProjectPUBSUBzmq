@@ -26,27 +26,28 @@ for ((i = 0; i<=5; i++)); do
     echo "Start test $c at $var #########"
     echo "##########################################################"
     sleep 5
-    ./INPROCESS_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
-    succ=$?
-        if [ $succ -eq 0 ]
-        then
-          echo
-          echo "test succeeded..."
-          sleep 5
-          echo "##########################################################"
-          echo "send SIGTERM and SIGKILL TO INPROC TEST"
-        else
-          # shellcheck disable=SC1072
-          echo " test failed"
-          echo "exit code: "$succ
-        fi
+    {
+      ./INPROCESS_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
+      succ=$?
+      if [ $succ -eq 0 ]
+      then
+        echo
+        echo "test succeeded..."
+        sleep 5
+        echo "##########################################################"
+        echo "send SIGTERM and SIGKILL TO INPROC TEST"
+      else
+        # shellcheck disable=SC1072
+        echo " test failed"
+        echo "exit code: "$succ
+      fi
+    }&
+    sleep 75
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROCESS_TEST_M
-      sleep 5
     fi
     killall INPROCESS_TEST_M
-
     echo "##########################################################"
     echo "End test $c at $var #########"
     echo "##########################################################"

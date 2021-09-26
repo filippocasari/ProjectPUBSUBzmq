@@ -28,6 +28,7 @@
 #define NUM_SUBS 7 // You can set how many Sub you want
 #define ENDPOINT endpoint_tcp // default endpoint
 #define NUM_MEX_MAX 10000 // default messages
+#define TIMEOUT 60000
 //#define MSECS_MAX_WAITING 10000 // we would have implemented maximum milli secs to wait
 const char *endpoint_tcp = "tcp://127.0.0.1:6000"; // default tcp endpoint
 const char *type_test; // type of the test TODO is it necessarily global?
@@ -35,7 +36,7 @@ const char *type_test; // type of the test TODO is it necessarily global?
 mutex cout_mutex; // semaphore to write safely on standard output if we got multi thread consumers
 mutex access_to_file; // semaphore to access safely to csv file
 
-atomic<bool> finished; // just a simple boolean to tell
+//atomic<bool> finished; // just a simple boolean to tell
 // everyone that thread sub is finished and threads consumers must be turned off
 
 using namespace std; // using standard library
@@ -252,7 +253,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
     // but in this case works like a common queue. It can be crucial if we create more than one consumer because the queue is thread safe.
     // It is controlled by a lock ( see Blocking Queue code, BlockingQueue.h).
 
-    finished = false; // say: "not finished" to all threads ( if there are )
+    //finished = false; // say: "not finished" to all threads ( if there are ), deprecated
 
     //--------------------------------------------------------------------------------------------------------
     // NEW SUB
@@ -270,8 +271,8 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
     string say; // string "say" just to print safely
 
     // ----------------- BEGINNING OF WHILE LOOP TO RECEIVE MESSAGES --------------------------------------
-
-    while (!zsys_interrupted) {
+    int64_t starting_point = zclock_time();
+    while (!zsys_interrupted and ((zclock_time()-starting_point)<=TIMEOUT)) {
         // function to receive. It is blocking. It takes 1 string, 1 int64, 1 message ( that contains other payload)
         succ = zsock_recv(sub, "s8m", &topic, &c, &msg);
         // the message is null, size message incorrect
