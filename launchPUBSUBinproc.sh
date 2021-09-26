@@ -1,12 +1,15 @@
 #!/bin/bash
 
-sudo cmake ./CMakeLists.txt || echo "Error to load CMakeLists"
-
+if [[ "$OSTYPE" == "darwin"* ]]
+then
+    cmake ./CMakeLists.txt || echo "Error to load CMakeLists"
+else
+    sudo cmake ./CMakeLists.txt || echo "Error to load CMakeLists"
+fi
 args=("$@")
 echo $# arguments passed
 echo ${args[0]} ${args[1]} ${args[2]}
-#cd ./cmake-build-debug || exit
-#test_date=$(date +"%H:%M")
+
 test_path=$1
 directory_path=$2
 verbose=$3
