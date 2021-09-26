@@ -18,7 +18,7 @@ verbose=$3
  # echo " TESTS ON MAC OS"
 #fi
 for ((i = 0; i<=5; i++)); do
-
+  mkdir "$directory_path$i/"
   for ((c = 0; c <=14; c++)); do
     date +"%FORMAT"
     var=$(date)
@@ -26,34 +26,20 @@ for ((i = 0; i<=5; i++)); do
     echo "Start test $c at $var #########"
     echo "##########################################################"
     sleep 5
-
-    if [[ "$OSTYPE" == "linux-gnu"* ]]
-    then
-      {
-        ./INPROCESS_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
-      }&
-
-    elif [[ "$OSTYPE" == "darwin"* ]]
-    then
-      {
-        ./INPROCESS_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
-        succ=$?
-            if [ $succ -eq 0 ]
-            then
-              echo
-              echo "test succeeded..."
-              sleep 5
-              echo "##########################################################"
-              echo "send SIGTERM and SIGKILL TO INPROC TEST"
-            else
-              # shellcheck disable=SC1072
-              echo " test failed"
-              echo "exit code: "$succ
-            fi
-      }&
-
-    fi
-    sleep 75
+    ./INPROCESS_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
+    succ=$?
+        if [ $succ -eq 0 ]
+        then
+          echo
+          echo "test succeeded..."
+          sleep 5
+          echo "##########################################################"
+          echo "send SIGTERM and SIGKILL TO INPROC TEST"
+        else
+          # shellcheck disable=SC1072
+          echo " test failed"
+          echo "exit code: "$succ
+        fi
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROCESS_TEST_M

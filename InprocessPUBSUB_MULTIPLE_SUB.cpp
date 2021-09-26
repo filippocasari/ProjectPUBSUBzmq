@@ -34,10 +34,7 @@ int main(int argc, char **argv) {
         string temp;
         temp = ((char *)argv[2]); // takes path of csv and store it in a new variable
         string final_string;
-
-        string i_str= "_" ; // string to store "_"+i
-        i_str.append(to_string(i));
-        temp.append(i_str);
+        temp.append(to_string(i));
 
         // Let's concatenate strings
         // initialize string to first arg
