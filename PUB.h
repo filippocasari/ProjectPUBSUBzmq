@@ -80,7 +80,6 @@ publisher(const char *path) {
             //int_value = (int) json_object_get_int64(val);
             if (strcmp(key, "msg_rate_sec") == 0)
                 msg_rate_sec = (int) json_object_get_int64(val);
-
             if (strcmp(key, "type_test") == 0)
                 type_test = value;
             if (strcmp(key, "number_of_messages") == 0)
@@ -93,8 +92,6 @@ publisher(const char *path) {
                 ip = value;
             if (strcmp(key, "port") == 0)
                 port = value;
-            if (strcmp(key, "metric output file") == 0)
-                output_file = value;
             if (strcmp(key, "topic") == 0)
                 topic = value;
 
@@ -102,15 +99,13 @@ publisher(const char *path) {
                 endpoint_inproc = value;
             if(strcmp(key, "number_of_messages")==0)
                 num_mex=(int) strtol(json_object_get_string(val), nullptr, 10);
+            // printing...
+            if(verbose){
+                cout<<key<<" : "<<value<<endl;
+            }
 
         }
-        // printing...
-        if(verbose){
-            printf("ip found: %s\n", ip);
-            printf("output file found: %s\n", output_file);
-            printf("port found: %s\n", port);
-            printf("connection type found: %s\n", type_connection);
-        }
+
         // create a new endpoint composed of the items inside the json file
         char endpoint[20];
         endpoint[0]='\0';
@@ -132,13 +127,9 @@ publisher(const char *path) {
 
     } else {
         puts("error");
-        return -1;
-        //default endpoint
-        //pub = zsock_new_pub(ENDPOINT);
+        return 2;
     }
-
     int64_t count = 0;
-
     puts("pub connected");
     //size_of_payload = (int) strtol(payload_size, NULL, 10);
     //max_mex = strtol(num_mex, NULL, 10);
@@ -243,22 +234,21 @@ int startPubThread(int argc, char **argv) {
 
     if (argc < 1) {
         printf("NO INPUT JSON FILE...EXIT\n");
-        return -1;
+        return 1;
     } else {
         for(int i=1; i<argc; i++){
             cout<<"ARGV["<<i<<"]: "<<argv[i]<<endl;
         }
-        const char *cmdstring;
-        const char *v =  (char *) argv[3];
-        cmdstring = strdup(argv[1]);
+        const char *file_json=strdup(argv[1]);
+        const char *v =  strdup( argv[3]);
         if(strcmp(v, "-v") == 0)
             verbose=true;
         else
             verbose=false;
-        printf("INPUT FILE JSON (NAME): %s\n", cmdstring);
-        int rc =publisher(cmdstring);
+        printf("INPUT FILE JSON (NAME): %s\n", file_json);
+        int rc =publisher(file_json);
         cout<<"exit code of publisher : "<< rc<<endl;
-        //zactor_t *pub_actor = zactor_new(publisher, cmdstring);
+        //zactor_t *pub_actor = zactor_new(publisher, file_json);
         //zstr_sendx (pub_actor, "BREAK", NULL);
         //puts("destroying zactor PUB");
         //zactor_destroy(&pub_actor);

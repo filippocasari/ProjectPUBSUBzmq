@@ -25,25 +25,19 @@ int main(int argc, char **argv) {
     // starting new thread PUB. Must be initialized before the SUB, because Sync Service is implemented
     // and PUB must listen on it. SUB will send their messages for sync to the PUB.
     thread start_pub([&argc, &argv]{
-        main_PUB(argc, argv);
+        startPubThread(argc, argv);
     });
 
     zclock_sleep(3000); // just sleep few secs to wait PUB configuration
-
-    char *temp_char; // will be used to store path csv + (number of Subscriber)
-
-
     // Let's start our loop to create Subscribers
     for (int i = 0; i < NUM_SUB; i++) {
         string temp;
         temp = ((char *)argv[2]); // takes path of csv and store it in a new variable
         string final_string;
 
-        string *i_str; // string to store "_"+i
-        *i_str= "_" ;
-        i_str->append(to_string(i));
-        temp=(argv[2]);
-        temp.append(*i_str);
+        string i_str= "_" ; // string to store "_"+i
+        i_str.append(to_string(i));
+        temp.append(i_str);
 
         // Let's concatenate strings
         // initialize string to first arg
@@ -55,7 +49,7 @@ int main(int argc, char **argv) {
         cout<<"FINAL STRING: "<<final_string<<endl; // print our final string
 
         // create new z-Actor, it is a thread
-        actors[i]= zactor_new(main_SUB_M, (void *) &final_string);
+        actors[i]= zactor_new(startNewSubThread, (void *) &final_string);
 
         sleep(1); // sleep for a while, just to configure our Sub
     }

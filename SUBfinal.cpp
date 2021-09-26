@@ -240,7 +240,7 @@ launchSubscriber(string *endpoint_custom, char *topic, BlockingQueue<Item> *lock
     //});// create new thread to manage payload
     //--------------------------------------------------------------------------------------------------------
     //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
-    cout<<"topic is "<<topic<<endl;
+    //cout<<"topic is "<<topic<<endl;
     zsock_t *sub = zsock_new_sub(endpoint_custom->c_str(), topic);
 
     //long time_of_waiting = 0;

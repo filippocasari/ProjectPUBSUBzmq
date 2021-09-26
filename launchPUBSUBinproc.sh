@@ -14,9 +14,9 @@ verbose=$3
 #elif [[ "$OSTYPE" == "darwin"* ]]; then
  # echo " TESTS ON MAC OS"
 #fi
-for ((i = 0; i<=2; i++)); do
+for ((i = 0; i<=5; i++)); do
 
-  for ((c = 0; c <=11; c++)); do
+  for ((c = 0; c <=14; c++)); do
     date +"%FORMAT"
     var=$(date)
     echo "##########################################################"
@@ -50,7 +50,7 @@ for ((i = 0; i<=2; i++)); do
       }&
 
     fi
-    sleep 65
+    sleep 75
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROCESS_TEST_M
