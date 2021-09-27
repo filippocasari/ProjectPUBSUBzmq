@@ -75,8 +75,8 @@ int payloadManaging(zmsg_t **msg, const int64_t
         if (strcmp(frame, "TIMESTAMP") == 0) {
             frame = zmsg_popstr(*msg); // another pop
             if (verbose) {
-                say = "frame: " + string(frame);
-                write_safely(&say);
+                //say = "frame: " + string(frame);
+                //write_safely(&say);
             }
             char *pointer;
             int64_t start = strtoll(frame, &pointer,
@@ -104,8 +104,8 @@ int payloadManaging(zmsg_t **msg, const int64_t
 
             frame = zmsg_popstr(*msg);
             if (verbose) {
-                say = "size of payload (byte): " + to_string((strlen(frame) * sizeof(char)));
-                write_safely(&say);
+                //say = "size of payload (byte): " + to_string((strlen(frame) * sizeof(char)));
+                //write_safely(&say);
             }
             // zsys_info("PAYLOAD > %s", frame); // commented 'cause cout is too busy
         }
@@ -272,7 +272,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
 
     // ----------------- BEGINNING OF WHILE LOOP TO RECEIVE MESSAGES --------------------------------------
     int64_t starting_point = zclock_time();
-    while (!zsys_interrupted and ((zclock_time()-starting_point)<=TIMEOUT)) {
+    while (!zsys_interrupted and ((zclock_time()-starting_point)<=TIMEOUT) and c<NUM_MEX_MAX-1) {
         // function to receive. It is blocking. It takes 1 string, 1 int64, 1 message ( that contains other payload)
         succ = zsock_recv(sub, "s8m", &topic, &c, &msg);
         // the message is null, size message incorrect

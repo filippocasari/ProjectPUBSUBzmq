@@ -7,8 +7,8 @@ import os
 # 2) if tests will be on lan
 
 E_3 = 1000  # number * E_3
-msg_rate = [5, 10, 25, 50, 100]
-msg_rate = [250, 500, 1000,5000, 10000]  # message rate, unit: messages/sec
+# msg_rate = [5, 10, 25, 50, 100]
+msg_rate = [250, 500, 1000, 5000, 10000]  # message rate, unit: messages/sec
 # range_payload = [10, 25, 50, 100, 200, 500, 1000]
 range_payload = [10 * E_3, 25 * E_3, 50 * E_3]  # payload (bytes)
 topic = "CAR"  # topic for the publisher and subscribers
@@ -21,6 +21,7 @@ num_of_subs = 1  # number of subs, can not be more than one anymore (deprecated)
 # as subs
 num_consumer_threads = 1  # number of threads who want to eat items of linked-blocking queue
 number_of_messages = 10000  # number of messages that PUB must send
+
 
 def create_dir(path):
     num_test = 0  # just a counter, increase during the program
@@ -42,11 +43,12 @@ def create_dir(path):
             except:
                 print("Error, we can not write/open the file " + string_name, sys.stderr)
 
+
 if (sys.argv[2].upper() == "LAN"):
     is_on_LAN = True  # if tests are on LAN, path and configurations are different
 else:
     is_on_LAN = False
-    connection_type="inproc"
+    connection_type = "inproc"
 print("IS on LAN: ", str(is_on_LAN))
 try:
     dir_name = sys.argv[1]  # get first argv
@@ -74,7 +76,7 @@ if not os.path.exists(str(cwd + dir_name)):  # if path does not exist yet
             print("this path already exists")
     if is_on_LAN:
 
-        path_of_PUB = cwd + string_temp  + "PUB"
+        path_of_PUB = cwd + string_temp + "PUB"
         print("PATH PUB: ", path_of_PUB)
         path_of_SUB = cwd + string_temp + "SUB"
         print("PATH SUB: ", path_of_SUB)
@@ -84,23 +86,11 @@ if not os.path.exists(str(cwd + dir_name)):  # if path does not exist yet
         print("###################### STARTING TO CREATE NEW CONFIGURATIONS ####################################\n\
         ################################################################################################")
 
-
         try:
-            create_dir(str(path_of_PUB+"/"))
-            ip=sys.argv[3] # ip of the publisher
-            create_dir(str(path_of_SUB+"/"))
+            create_dir(str(path_of_PUB + "/"))
+            ip = sys.argv[3]  # ip of the publisher
+            create_dir(str(path_of_SUB + "/"))
         except:
             print(path_of_PUB + " does not exist")
 else:
-    create_dir(cwd+dir_name)
-
-
-
-
-
-
-
-
-
-
-
+    create_dir(cwd + dir_name)

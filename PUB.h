@@ -220,10 +220,8 @@ publisher(const char *path) {
         if(verbose)
             zclock_log("Message No. %llu", count);
     }
-    zclock_sleep(2000);
-    zmsg_t *msg = zmsg_new();
-    zmsg_pushstr(msg, "TERMINATE");
-    zsock_send(pub, "s1m", &topic, -1, msg);
+    zclock_sleep(4000);
+    zsock_send(pub, "s1s", &topic, -1, "TERMINATE");
     zclock_sleep(2000);
     //zsock_disconnect(pub, "%s", endpoint_customized);
     zsock_destroy(&pub);
