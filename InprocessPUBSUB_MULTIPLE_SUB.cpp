@@ -24,9 +24,8 @@ int main(int argc, char **argv) {
 
     // starting new thread PUB. Must be initialized before the SUB, because Sync Service is implemented
     // and PUB must listen on it. SUB will send their messages for sync to the PUB.
-    thread start_pub([&argc, &argv]{
-        startPubThread(argc, argv);
-    });
+    zactor_t *publisher_actor= zactor_new(startPubThread, argv);
+
 
     zclock_sleep(3000); // just sleep few secs to wait PUB configuration
     // Let's start our loop to create Subscribers
@@ -52,7 +51,7 @@ int main(int argc, char **argv) {
     }
 
     // join Pub thread
-    start_pub.join();
+    zactor_destroy(&publisher_actor);
 
     // short for loop to join our SUB threads
     for(auto & actor : actors){

@@ -228,30 +228,21 @@ publisher(const char *path) {
     return 0;
 }
 
-int startPubThread(int argc, char **argv) {
-
-    if (argc < 1) {
-        printf("NO INPUT JSON FILE...EXIT\n");
-        return 1;
-    } else {
-        for(int i=1; i<argc; i++){
-            cout<<"ARGV["<<i<<"]: "<<argv[i]<<endl;
-        }
-        const char *file_json=strdup(argv[1]);
-        const char *v =  strdup( argv[3]);
-        if(strcmp(v, "-v") == 0)
-            verbose=true;
-        else
-            verbose=false;
-        printf("INPUT FILE JSON (NAME): %s\n", file_json);
-        int rc =publisher(file_json);
-        cout<<"exit code of publisher : "<< rc<<endl;
-        //zactor_t *pub_actor = zactor_new(publisher, file_json);
-        //zstr_sendx (pub_actor, "BREAK", NULL);
-        //puts("destroying zactor PUB");
-        //zactor_destroy(&pub_actor);
-
-    }
-    return 0;
+static void startPubThread(zsock_t *pipe, void *args) {
+    zsock_signal(pipe, 0);
+    char **args_new = (char**)args;
+    const char *file_json=strdup((char*)args_new[1]);
+    const char *v =  strdup( (char*)args_new[3]);
+    if(strcmp(v, "-v") == 0)
+        verbose=true;
+    else
+        verbose=false;
+    printf("INPUT FILE JSON (NAME): %s\n", file_json);
+    int rc =publisher(file_json);
+    cout<<"exit code of publisher : "<< rc<<endl;
+    //zactor_t *pub_actor = zactor_new(publisher, file_json);
+    //zstr_sendx (pub_actor, "BREAK", NULL);
+    //puts("destroying zactor PUB");
+    //zactor_destroy(&pub_actor);
 }
 #endif //PROJECTPUBSUBZMQ_PUB_H
