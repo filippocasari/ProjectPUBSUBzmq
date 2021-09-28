@@ -456,7 +456,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
     }
     int success = synchronizationService(ip, port);
     cout << "SUB> Synchronization success" << endl;
-    subscriber(reinterpret_cast<const char *>(&endpoint_customized), topic,
+    subscriber(endpoint_customized.c_str(), topic,
                path_csv, name_of_experiment, &payload, &msg_rate);
     cout << "SUB> END OF SUBSCRIBER" << endl;
 }
