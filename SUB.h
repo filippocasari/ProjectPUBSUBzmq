@@ -345,7 +345,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
     zsock_signal(pipe, 0); // You must call this function when you work with z-actor
 
     const string *argv= (string *) args;
-    cout << "SUB> ARGS RECEIVED: " << argv << endl;
+    cout << "SUB> ARGS RECEIVED: " << *argv << endl;
 
     // ---------------USING A STRANGE/DUMB METHOD TO PARSE THE ARGUMENTS ---------------
 

@@ -32,7 +32,9 @@ int main(int argc, char **argv) {
     zclock_sleep(3000); // just sleep few secs to wait PUB configuration
     // Let's start our loop to create Subscribers
     string final_string;
+    string array_of_strings[NUM_SUB];
     for (int i = 0; i < NUM_SUB; i++) {
+
         // Let's concatenate strings
         // initialize string to first arg
         final_string = (char *)argv[1];// final string, used to pass every args to z-actors
@@ -43,9 +45,9 @@ int main(int argc, char **argv) {
         final_string.append(comma2); // append &
         final_string.append((char *)argv[3]); // append last arg
         cout<<"FINAL STRING: "<<final_string<<endl; // print our final string
-
+        array_of_strings[i]= strdup(final_string.c_str());
         // create new z-Actor, it is a thread
-        actors[i]= zactor_new(startNewSubThread,  &final_string);
+        actors[i]= zactor_new(startNewSubThread,  &array_of_strings[i]);
 
         //sleep(1); // sleep for a while, just to configure our Sub
     }
