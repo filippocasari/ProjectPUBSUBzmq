@@ -343,16 +343,16 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
 static void startNewSubThread(zsock_t *pipe, void *args) {
 
     zsock_signal(pipe, 0); // You must call this function when you work with z-actor
-    const auto *argv = static_cast<const string *>(args); // convert char array into string
-    cout << "SUB> ARGS RECEIVED: " << *argv << endl;
+    const string argv = (const char*)(args); // convert char array into string
+    cout << "SUB> ARGS RECEIVED: " << argv << endl;
 
     // ---------------USING A STRANGE/DUMB METHOD TO PARSE THE ARGUMENTS ---------------
 
-    size_t pox = (int)argv->find(',');
-    int pox2 = (int) argv->find('&');
-    int argc = (int) strlen((const char*)argv->c_str());
-    string substring = argv->substr(pox2, (int)argv->length() - pox2);
-    string csv = argv->substr(pox + 1, pox2 - 1 - pox);
+    auto pox = (int32_t)argv.find(',');
+    auto pox2 = (int32_t )argv.find('&');
+    auto argc = (int32_t ) strlen(argv.c_str());
+    string substring = argv.substr(pox2, (int32_t )argv.length() - pox2);
+    string csv = argv.substr(pox + 1, pox2 - 1 - pox);
     const char *path_csv = (const char *) csv.c_str();
     const char *v = (const char *) substring.c_str();
     if (argc == 1) // exit if argc is less than 2
@@ -380,7 +380,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
         }
         cout << "SUB> PATH chosen: " << path_csv << endl;
     }
-    string json_file = argv->substr(0, pox);
+    string json_file = argv.substr(0, pox);
     cout << "SUB> STRING OF JSON FILE IS: " << json_file << endl; // file passed
     // from the bash script or manually from terminal
     // start deserialization
