@@ -343,7 +343,8 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
 static void startNewSubThread(zsock_t *pipe, void *args) {
 
     zsock_signal(pipe, 0); // You must call this function when you work with z-actor
-    const string argv =(const char*) (&args); // convert char array into string
+    const auto pointer=(int64_t)(&args); // convert char array into string
+    const string argv= (const char *) pointer;
     cout << "SUB> ARGS RECEIVED: " << argv << endl;
 
     // ---------------USING A STRANGE/DUMB METHOD TO PARSE THE ARGUMENTS ---------------
