@@ -18,7 +18,7 @@ verbose=$3
  # echo " TESTS ON MAC OS"
 #fi
 for ((i = 0; i<=5; i++)); do
-  mkdir "$directory_path$i/" || exit
+  mkdir "$directory_path$i/" || "KEEP GOING..."
   for ((c = 0; c <=14; c++)); do
     date +"%FORMAT"
     var=$(date)
