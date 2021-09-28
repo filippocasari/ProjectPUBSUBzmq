@@ -17,7 +17,7 @@ verbose=$3
 #elif [[ "$OSTYPE" == "darwin"* ]]; then
  # echo " TESTS ON MAC OS"
 #fi
-for ((i = 0; i<=5; i++)); do
+for ((i = 0; i<=10; i++)); do
   mkdir "$directory_path$i/" || echo "KEEP GOING..."
   for ((c = 0; c <=14; c++)); do
     date +"%FORMAT"
