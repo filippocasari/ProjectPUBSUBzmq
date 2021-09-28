@@ -45,9 +45,9 @@ for ((i = 0; i<=5; i++)); do
     sleep 75
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
-      sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROCESS_TEST_M
+      sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROC_TEST_M
     fi
-    killall INPROCESS_TEST_M
+    killall INPROC_TEST_M
     echo "##########################################################"
     echo "End test $c at $var #########"
     echo "##########################################################"
