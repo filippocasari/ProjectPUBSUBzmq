@@ -134,7 +134,7 @@ int synchronizationService(const char *ip, const char *port) {
     // *** Note: atoi is not safe!
     // we have to find another function that do it better ***
 
-    cout << "Endpoint for Sync service: " << endpoint_sync << endl;
+    cout << "SUB> Endpoint for Sync service: " << endpoint_sync << endl;
     // *** WE ARE IMPLEMENTING REQ/REP pattern to get sync service ***
     zsock_t *syncservice = zsock_new_req(endpoint_sync.c_str());
     zsock_send(syncservice, "s", "INIT"); // send a simple string to say to pub: "I am ready, boy!"
@@ -165,7 +165,7 @@ static void startNewConsumers(void *args) {
             if (strcmp(value, "console") == 0)
                 console = true;
             else
-                cout << "creating new file csv" << endl;
+                cout << "SUB> creating new file csv" << endl;
         }
         if (strcmp(key, "experiment_name") == 0)
             name_of_experiment = (char *) json_object_get_string(val);
@@ -180,7 +180,7 @@ static void startNewConsumers(void *args) {
     }
     string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ ;
     name_of_csv_file.append(".csv");
-    printf("Num of consumer threads: %d\n", num_consumers);
+    printf("SUB> Num of consumer threads: %d\n", num_consumers);
     string name_path_csv = path_csv + name_of_csv_file;
     if (num_consumers > 1)
         access_to_file.lock();
@@ -194,7 +194,7 @@ static void startNewConsumers(void *args) {
     auto name = this_thread::get_id();
     stringstream id;
     id << name;
-    string say = "new consumer thread created with ID: " + id.str();
+    string say = "SUB> new consumer thread created with ID: " + id.str();
     write_safely(&say);
     int64_t end_to_end_delay;
     int c = 0;
@@ -236,7 +236,7 @@ static void startNewConsumers(void *args) {
         //if(lockingQueue.size()==0)
         //    break;
     }
-    say = "thread is closing...";
+    say = "SUB> thread is closing...";
     write_safely(&say);
 
 }
@@ -277,7 +277,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
         succ = zsock_recv(sub, "s8m", &topic, &c, &msg);
         // the message is null, size message incorrect
         if (msg == nullptr) {
-            cout << "exit, msg null" << endl;
+            cout << "SUB> exit, msg null" << endl;
             break;
         }
         // timestamps of receiving
@@ -291,7 +291,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
         cout << "managing payload exit code: " << a << endl;
         // if the last number received is Mex-1 or received function does not return 0, stop
         if (c == (NUM_MEX_MAX - 1) or succ == -1) {
-            cout << "TERMINATING ABNORMALLY" << endl;
+            cout << "SUB> TERMINATING ABNORMALLY" << endl;
             break;
         }
     }
@@ -308,13 +308,13 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
     config_file << "number,value,timestamp,message rate,payload size\n";
     config_file.close();
     // printing size of the Queue
-    cout << "Size of the queue: " << lockingQueue.d_queue.size() << endl;
+    cout << "SUB> Size of the queue: " << lockingQueue.d_queue.size() << endl;
     config_file.open(name_path_csv, ios::app); // open the csv file and try to append metrics
     // ---------------------- STARTING CONSUMER THREAD --------------------------------------
 
     while (true) {
         if (verbose) {
-            say = "trying to pop new item...";
+            say = "SUB> trying to pop new item...";
             write_safely(&say);
         }
         // pop Item from the queue ( it is internally already thread safe)
@@ -322,7 +322,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
         // now, compute the difference between two nodes
         end_to_end_delay = item.ts_end - item.ts_start;
         if (verbose) {
-            say = "opening file csv...";
+            say = "SUB> opening file csv...";
             write_safely(&say);
         }
         // try to write metrics on csv
@@ -343,7 +343,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
 
     zsock_signal(pipe, 0); // You must call this function when you work with z-actor
     const string *argv = (string *) args; // convert char array into string
-    cout << "ARGS RECEIVED: " << *argv << endl;
+    cout << "SUB> ARGS RECEIVED: " << *argv << endl;
     char *temp = (char *) argv->c_str();
     // ---------------USING A STRANGE/DUMB METHOD TO PARSE THE ARGUMENTS ---------------
     string str = temp;
@@ -355,17 +355,17 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
     const char *path_csv = (const char *) csv.c_str();
     const char *v = (const char *) substring.c_str();
     if (argc == 1) // exit if argc is less than 2
-        cout << "NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT" << endl;
+        cout << "SUB> NO INPUT JSON FILE OR TOO MANY ARGUMENTS...EXIT" << endl;
     else {
         if (argc == 2) {
-            cout << "Path for csv not chosen..." << endl;
+            cout << "SUB> Path for csv not chosen..." << endl;
         }
         //cout<<"POX of ',' : "<<pox<<endl;
         //cout<<"Length of string :"<<(int) str.length()<<endl;
         // open the directory if exists
         DIR *dir = opendir(path_csv);
         if (dir) {
-            cout << "path csv already exists" << endl;
+            cout << "SUB> path csv already exists" << endl;
             closedir(dir);
 
         } else if (ENOENT == errno) {
@@ -375,13 +375,13 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
                 cout << "Error to create a directory" << endl;
             }
         } else {
-            cout << "Error unknown, i could not be possible to open or create a directory for csv tests" << endl;
+            cout << "SUB> Error unknown, i could not be possible to open or create a directory for csv tests" << endl;
         }
-        cout << "PATH chosen: " << path_csv << endl;
+        cout << "SUB> PATH chosen: " << path_csv << endl;
     }
     string temp_str = str.substr(0, pox);
     const char *string_json_path = (const char *) temp_str.c_str(); // string that indicate the path of json file
-    cout << "STRING OF JSON FILE IS: " << *string_json_path << endl; // file passed
+    cout << "SUB> STRING OF JSON FILE IS: " << *string_json_path << endl; // file passed
     // from the bash script or manually from terminal
     // start deserialization
     json_object *PARAM; // json object, see library JSON-C
@@ -400,7 +400,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
     char *name_of_experiment;
     int msg_rate;
     int payload;
-    puts("PARAMETERS SUBSCRIBER: ");
+    puts("SUB> PARAMETERS SUBSCRIBER: ");
     if (PARAM != nullptr) {
         if (strcmp(v, "-v") == 0)
             verbose = true;
@@ -454,11 +454,10 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
 
     }
     int success = synchronizationService(ip, port);
-    assert(success == 0);
-    cout << "Synchronization success" << endl;
+    cout << "SUB> Synchronization success" << endl;
     subscriber(reinterpret_cast<const char *>(&endpoint_customized), topic,
                path_csv, name_of_experiment, &payload, &msg_rate);
-    cout << "END OF SUBSCRIBER" << endl;
+    cout << "SUB> END OF SUBSCRIBER" << endl;
 }
 
 #endif //PROJECTPUBSUBZMQ_SUB_H

@@ -69,7 +69,7 @@ publisher(const char *path) {
     const char *output_file;
     if (PARAM != nullptr) { // file json found
         if(verbose)
-            puts("PARAMETERS PUBLISHER: ");
+            puts("PUB> PARAMETERS PUBLISHER: ");
         //int int_value;
         const char *value;
         // starting a new for each for the couple key, value
@@ -121,12 +121,12 @@ publisher(const char *path) {
             endpoint_customized = strcat(endpoint_customized, endpoint_inproc);
         }
         if(verbose)
-            printf("string for endpoint (from json file): %s\t", endpoint_customized);
+            printf("PUB> string for endpoint (from json file): %s\t", endpoint_customized);
 
         pub = zsock_new_pub(endpoint_customized);
 
     } else {
-        puts("error");
+        puts("PUB> error");
         return 2;
     }
     int64_t count = 0;
@@ -134,8 +134,8 @@ publisher(const char *path) {
     //size_of_payload = (int) strtol(payload_size, NULL, 10);
     //max_mex = strtol(num_mex, NULL, 10);
     if(verbose){
-        printf("PAYLOAD SIZE: %d\n", payload_size);
-        printf("message rate: %d\n", msg_rate_sec);
+        printf("PUB> PAYLOAD SIZE: %d\n", payload_size);
+        printf("PUB> message rate: %d\n", msg_rate_sec);
     }
 
     int64_t timestamp;
@@ -153,10 +153,10 @@ publisher(const char *path) {
     endpoint_sync.append(to_string(atoi(port)+1));
 
     auto *syncservice = zsock_new_rep(endpoint_sync.c_str());
-    printf ("Waiting for subscribers\n");
+    printf ("PUB> Waiting for subscribers\n");
     int subscribers = 0;
 
-    cout<<"Endpoint for sync service: "<<endpoint_sync<<endl;
+    cout<<"PUB> Endpoint for sync service: "<<endpoint_sync<<endl;
     while (subscribers < SUBSCRIBERS_EXPECTED) {
         //  - wait for synchronization request
         char *stringa;
