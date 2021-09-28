@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
         cout<<"FINAL STRING: "<<final_string<<endl; // print our final string
 
         // create new z-Actor, it is a thread
-        actors[i]= zactor_new(startNewSubThread, (void *) &final_string);
+        actors[i]= zactor_new(startNewSubThread,  &final_string);
 
         //sleep(1); // sleep for a while, just to configure our Sub
     }
