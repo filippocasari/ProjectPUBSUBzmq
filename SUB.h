@@ -127,7 +127,7 @@ int synchronizationService(const char *ip, const char *port) {
     // let's initialize a string
     string endpoint_sync = "tcp";
     endpoint_sync.append("://");
-    endpoint_sync.append("127.0.0.1");
+    endpoint_sync.append("0.0.0.0");
     endpoint_sync.append(":");
     endpoint_sync.append(to_string(atoi(port) + 1)); // port number= port number (passed) +1.
     // Just to not introduce another variable
