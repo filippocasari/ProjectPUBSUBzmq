@@ -29,8 +29,8 @@ int main(int argc, char **argv) {
 
     zclock_sleep(3000); // just sleep few secs to wait PUB configuration
     // Let's start our loop to create Subscribers
+    string final_string;
     for (int i = 0; i < NUM_SUB; i++) {
-        string final_string;
         // Let's concatenate strings
         // initialize string to first arg
         final_string = (char *)argv[1];// final string, used to pass every args to z-actors

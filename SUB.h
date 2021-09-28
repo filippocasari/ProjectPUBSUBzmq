@@ -61,7 +61,7 @@ int payloadManaging(zmsg_t **msg, const int64_t
         char *frame; //  it is a string refers to the first frame of the message at the beginning
 
         // just a log (safe)
-        //string say = "size of msg: " + to_string(zmsg_size(*msg));
+        string say = "size of msg: " + to_string(zmsg_size(*msg));
         //write_safely(&say);
 
         frame = zmsg_popstr(*msg); // pop a string from the message,
@@ -343,16 +343,16 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
 static void startNewSubThread(zsock_t *pipe, void *args) {
 
     zsock_signal(pipe, 0); // You must call this function when you work with z-actor
-    const string *argv = (string *) args; // convert char array into string
+    const auto *argv = static_cast<const string *>(args); // convert char array into string
     cout << "SUB> ARGS RECEIVED: " << *argv << endl;
-    char *temp = (char *) argv->c_str();
+
     // ---------------USING A STRANGE/DUMB METHOD TO PARSE THE ARGUMENTS ---------------
-    string str = temp;
-    size_t pox = str.find(',');
-    int pox2 = (int) str.find('&');
+
+    size_t pox = argv->find(',');
+    int pox2 = (int) argv->find('&');
     int argc = (int) strlen(reinterpret_cast<const char *>(argv->c_str()));
-    string substring = str.substr(pox2, str.length() - pox2);
-    string csv = str.substr(pox + 1, pox2 - 1 - pox);
+    string substring = argv->substr(pox2, argv->length() - pox2);
+    string csv = argv->substr(pox + 1, pox2 - 1 - pox);
     const char *path_csv = (const char *) csv.c_str();
     const char *v = (const char *) substring.c_str();
     if (argc == 1) // exit if argc is less than 2
@@ -380,9 +380,8 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
         }
         cout << "SUB> PATH chosen: " << path_csv << endl;
     }
-    string temp_str = str.substr(0, pox);
-    const char *string_json_path = (const char *) temp_str.c_str(); // string that indicate the path of json file
-    cout << "SUB> STRING OF JSON FILE IS: " << *string_json_path << endl; // file passed
+    string json_file = argv->substr(0, pox);
+    cout << "SUB> STRING OF JSON FILE IS: " << json_file << endl; // file passed
     // from the bash script or manually from terminal
     // start deserialization
     json_object *PARAM; // json object, see library JSON-C
@@ -390,7 +389,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
     string endpoint_customized;
 
     //int num_of_subs = NUM_SUBS;
-    PARAM = json_object_from_file(string_json_path);
+    PARAM = json_object_from_file(json_file.c_str());
     char *topic = nullptr;
     char *type_connection;
     const char *port;
