@@ -28,7 +28,7 @@ bool g_verbose = false;
 const char *g_type_test;
 mutex cout_mutex;
 mutex access_to_file_csv;
-atomic<bool> g_finished;
+//atomic<bool> g_finished;
 
 void writeSafely(string *what_i_said) {
     cout_mutex.lock();
@@ -210,12 +210,6 @@ int createNewConsumers(BlockingQueue<Item> *lockingQueue, ofstream *config_file,
                             writeSafely(&say);
                         }
                         c++;
-                        if (g_finished.load(std::memory_order_relaxed)) {
-                            if (lockingQueue->size() == 0)
-                                break;
-                        }
-
-
                     }
                     say = "thread is closing...";
                     writeSafely(&say);
@@ -233,33 +227,16 @@ int createNewConsumers(BlockingQueue<Item> *lockingQueue, ofstream *config_file,
 void
 launchSubscriber(string *endpoint_custom, char *topic, BlockingQueue<Item> *lockingQueue) {
 
-    // -----------------------------------------------------------------------------------------------------
-
-    // -----------------------------------------CREATING CONSUMERS----------------------------------------------------
-    g_finished = false;
-    //thread thread_start_consumers([]() {
-    //    int succ = createNewConsumers();
-    //    cout<<"consumers terminate? "<< succ<<endl;
-
-    //});// create new thread to manage payload
-    //--------------------------------------------------------------------------------------------------------
-    //auto *sub = static_cast<zsock_t *>(args); // create new sub socket
-    //cout<<"topic is "<<topic<<endl;
     zsock_t *sub = zsock_new_sub(endpoint_custom->c_str(), topic);
-
-    //long time_of_waiting = 0;
     int64_t c = 0;
-    //bool terminated = false;
 
     int64_t end;
-    string metric = "end_to_end_delay";
     zmsg_t *msg = zmsg_new();
     int succ;
     bool terminated = false;
     string say;
     while (!terminated) {
         succ = zsock_recv(sub, "s8m", &topic, &c, &msg);
-
         if (msg == nullptr) {
             cout << "exit, msg null" << endl;
             break;
@@ -273,8 +250,6 @@ launchSubscriber(string *endpoint_custom, char *topic, BlockingQueue<Item> *lock
         say = "message Received: No. ";
         say.append(to_string(c));
         writeSafely(&say);
-        //increment_counter.lock();
-        //increment_counter.unlock();
         thread managing([&msg, &end, &c, &lockingQueue, &terminated] {
             terminated = pullPayload(&msg, &end, &c, lockingQueue);
         });
@@ -283,10 +258,8 @@ launchSubscriber(string *endpoint_custom, char *topic, BlockingQueue<Item> *lock
         if (c == (NUM_MEX_MAX - 1) or succ == -1) {
             cout << "TERMINATING" << endl;
             zclock_sleep(1000);
-            g_finished = true;
-            break;
+            terminated=true;
         }
-        //zmsg_destroy(&msg);
     }
     sleep(3);
     //thread_start_consumers.join();
@@ -452,7 +425,7 @@ int main(int argc, char **argv) {
     cout << "Size of the queue: " << lockingQueue.size() << endl;
     config_file.open(name_g_path_csv, ios::app);
     int64_t start;
-    while (true) {
+    while (!lockingQueue.d_queue.empty()) {
         if (g_verbose) {
             say = "trying to pop new item...";
             writeSafely(&say);
@@ -465,10 +438,6 @@ int main(int argc, char **argv) {
                        to_string(item.ts_end) +
                        "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
         //access_to_file_csv.unlock();
-        if (lockingQueue.size() == 0) {
-            g_finished = true;
-            break;
-        }
 
     }
 
