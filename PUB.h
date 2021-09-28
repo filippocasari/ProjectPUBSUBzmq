@@ -158,7 +158,7 @@ publisher(const char *path) {
     }
     sleep(1);
     zsock_destroy(&syncservice);
-    sleep(10);
+    sleep(6);
     for(;count<num_mex; count++){
 
         if(verbose)
