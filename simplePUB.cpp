@@ -13,7 +13,6 @@
 
 //default endpoint
 const char *endpoint_tcp = "tcp://127.0.0.1:6000";
-const char *endpoint_inprocess = "inproc://example";
 //const char *json_file_config;
 
 #define ENDPOINT endpoint_tcp // it can be set by the developer
@@ -189,7 +188,6 @@ publisher_thread(const char **path) {
             timestamp=0000000000000;
         }
 
-
         //int nDigits = floor(1 + log10(abs((int) timestamp)));
         time_string =to_string(timestamp);
         printf("TIMESTAMP: %lld\n", timestamp);
@@ -197,7 +195,7 @@ publisher_thread(const char **path) {
         int rc = zmsg_pushstr(msg, time_string.c_str());
         assert(rc == 0);
         printf("SIZE OF RESIDUAL STRING (OF ZEROS) : %ld\n", payload_size - (long)(time_string.length()));
-        std::string string_residual_payload;
+        string string_residual_payload;
         if (payload_size > (long) time_string.length()) {
             puts("PAYLOAD IS NOT NULL");
             string_residual_payload = string(payload_size-(long) time_string.length(), '0');
@@ -249,6 +247,5 @@ int main(int argc, char **argv) {
         //zactor_destroy(&pub_actor);
 
     }
-    //zsock_destroy(&pub);
     return 0;
 }
