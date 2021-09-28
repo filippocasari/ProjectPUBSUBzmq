@@ -28,7 +28,7 @@
 //#define NUM_SUBS 7 // You can set how many Sub you want
 #define ENDPOINT endpoint_tcp // default endpoint
 #define NUM_MEX_MAX 10000 // default messages
-#define TIMEOUT 60000
+#define TIMEOUT 85000
 //#define MSECS_MAX_WAITING 10000 // we would have implemented maximum milli secs to wait
 const char *endpoint_tcp = "tcp://127.0.0.1:6000"; // default tcp endpoint
 //const char *type_test; // type of the test TODO is it necessarily global?
@@ -272,8 +272,9 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
     string say; // string "say" just to print safely
 
     // ----------------- BEGINNING OF WHILE LOOP TO RECEIVE MESSAGES --------------------------------------
-    int64_t starting_point = zclock_time();
-    while (!zsys_interrupted and ((zclock_time()-starting_point)<=TIMEOUT) and c<NUM_MEX_MAX-1) {
+    int64_t starting_point = zclock_mono();
+
+    while (!zsys_interrupted and ((zclock_mono()-starting_point)<=TIMEOUT) and c<NUM_MEX_MAX-1) {
         // function to receive. It is blocking. It takes 1 string, 1 int64, 1 message ( that contains other payload)
         succ = zsock_recv(sub, "s8m", &topic, &c, &msg);
         // the message is null, size message incorrect
@@ -283,7 +284,6 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
         }
         // timestamps of receiving
         end = zclock_time();
-
         //cout<<"Recv on "<< topic<<endl;
         //cout<<"message Received: No. "<< c<<endl;
         // lets menage the payload... passing message, end timestamp, counter, queue
