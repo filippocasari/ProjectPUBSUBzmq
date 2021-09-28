@@ -61,8 +61,8 @@ int payloadManaging(zmsg_t **msg, const int64_t
         char *frame; //  it is a string refers to the first frame of the message at the beginning
 
         // just a log (safe)
-        string say = "size of msg: " + to_string(zmsg_size(*msg));
-        write_safely(&say);
+        //string say = "size of msg: " + to_string(zmsg_size(*msg));
+        //write_safely(&say);
 
         frame = zmsg_popstr(*msg); // pop a string from the message,
         // size of message decreases each time you pop something
@@ -289,7 +289,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
         // lets menage the payload... passing message, end timestamp, counter, queue
         int a = payloadManaging(&msg, &end, &c, &lockingQueue);
 
-        cout << "managing payload exit code: " << a << endl;
+        //cout << "managing payload exit code: " << a << endl;
         // if the last number received is Mex-1 or received function does not return 0, stop
         if (c == (NUM_MEX_MAX - 1) or succ == -1) {
             cout << "SUB> TERMINATING ABNORMALLY" << endl;
