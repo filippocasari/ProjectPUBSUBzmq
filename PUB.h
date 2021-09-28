@@ -18,8 +18,6 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <net/if.h>
-//default endpoint
-const char *endpoint_inprocess = "inproc://example";
 //const char *json_file_config;
 #define SUBSCRIBERS_EXPECTED 7
 #define ENDPOINT endpoint_tcp // it can be set by the developer
@@ -49,7 +47,6 @@ char* getIp(){
 
 int
 publisher(const char *path) {
-    char *endpoint_customized;
     zsock_t *pub; // new sock pub
     //path of json file for configuration
     //json obj for deserialization
@@ -58,7 +55,6 @@ publisher(const char *path) {
     int payload_size = 10; //payload, 10 default bytes
     int num_mex = NUM_MEX_DEFAULT; // maximum messages for the publisher, 10 default
     const char *topic; // name of the topic
-    const char *endpoint_inproc;
     int msg_rate_sec = 1; //message rate, mex/sec
     // deserializing file
 
@@ -66,7 +62,6 @@ publisher(const char *path) {
     const char *type_connection;
     const char *port;
     const char *ip;
-    const char *output_file;
     if (PARAM != nullptr) { // file json found
         if(verbose)
             puts("PUB> PARAMETERS PUBLISHER: ");
@@ -94,9 +89,6 @@ publisher(const char *path) {
                 port = value;
             if (strcmp(key, "topic") == 0)
                 topic = value;
-
-            if (strcmp(key, "endpoint_inproc") == 0)
-                endpoint_inproc = value;
             if(strcmp(key, "number_of_messages")==0)
                 num_mex=(int) strtol(json_object_get_string(val), nullptr, 10);
             // printing...

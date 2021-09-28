@@ -25,13 +25,13 @@
 #define NUM_CONSUMERS 1 // deprecated. Just to say how many consumer threads to store values on Csv.
 // it is not necessary because we do not want speed thread to write on a csv file
 
-#define NUM_SUBS 7 // You can set how many Sub you want
+//#define NUM_SUBS 7 // You can set how many Sub you want
 #define ENDPOINT endpoint_tcp // default endpoint
 #define NUM_MEX_MAX 10000 // default messages
 #define TIMEOUT 60000
 //#define MSECS_MAX_WAITING 10000 // we would have implemented maximum milli secs to wait
 const char *endpoint_tcp = "tcp://127.0.0.1:6000"; // default tcp endpoint
-const char *type_test; // type of the test TODO is it necessarily global?
+//const char *type_test; // type of the test TODO is it necessarily global?
 
 mutex cout_mutex; // semaphore to write safely on standard output if we got multi thread consumers
 mutex access_to_file; // semaphore to access safely to csv file
@@ -102,7 +102,7 @@ int payloadManaging(zmsg_t **msg, const int64_t
         // in case of non-empty message, pop all the remaining frames
         while (zmsg_size(*msg) > 0) {
 
-            frame = zmsg_popstr(*msg);
+            zmsg_popstr(*msg);
             if (verbose) {
                 //say = "size of payload (byte): " + to_string((strlen(frame) * sizeof(char)));
                 //write_safely(&say);
@@ -287,7 +287,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
         //cout<<"Recv on "<< topic<<endl;
         //cout<<"message Received: No. "<< c<<endl;
         // lets menage the payload... passing message, end timestamp, counter, queue
-        int a = payloadManaging(&msg, &end, &c, &lockingQueue);
+        payloadManaging(&msg, &end, &c, &lockingQueue);
 
         //cout << "managing payload exit code: " << a << endl;
         // if the last number received is Mex-1 or received function does not return 0, stop
@@ -394,7 +394,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
     char *type_connection;
     const char *port;
     const char *ip;
-    const char *output_file;
+    //const char *output_file;
     //bool console = false;
     //int num_consumers = NUM_CONSUMERS;
     char *name_of_experiment;
@@ -423,15 +423,13 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
             }
             if (strcmp(key, "connection_type") == 0)
                 type_connection = (char *) value;
-            if (strcmp(key, "type_test") == 0)
-                type_test = value;
             if (strcmp(key, "ip") == 0)
                 ip = value;
             if (strcmp(key, "port") == 0) {
                 port = value;
             }
-            if (strcmp(key, "metrics_output_type") == 0)
-                output_file = value;
+            //if (strcmp(key, "metrics_output_type") == 0)
+            //    output_file = value;
             if (strcmp(key, "experiment_name") == 0)
                 name_of_experiment = (char *) json_object_get_string(val);
             if (strcmp(key, "payload_size_bytes") == 0)
@@ -453,7 +451,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
         cout << "FILE JSON NOT FOUND...EXIT" << endl;
 
     }
-    int success = synchronizationService(ip, port);
+    synchronizationService(ip, port);
     cout << "SUB> Synchronization success" << endl;
     subscriber(endpoint_customized.c_str(), topic,
                path_csv, name_of_experiment, &payload, &msg_rate);

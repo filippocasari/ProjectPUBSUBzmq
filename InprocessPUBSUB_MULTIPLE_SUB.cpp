@@ -10,6 +10,8 @@ using namespace std;
 
 // main function, let's play
 int main(int argc, char **argv) {
+    if(argc<4)
+        return 1;
     //vector<thread> SUBS; // if you want working with thread of c++
     //SUBS.reserve(NUM_SUB); // reserve "n" subscriber threads
 
