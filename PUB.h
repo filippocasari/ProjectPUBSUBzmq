@@ -107,23 +107,21 @@ publisher(const char *path) {
         }
 
         // create a new endpoint composed of the items inside the json file
-        char endpoint[20];
-        endpoint[0]='\0';
-        endpoint_customized = strcat(endpoint, type_connection);
-        endpoint_customized = strcat(endpoint_customized, "://");
+        string endpoint=type_connection;
+        endpoint.append("://");
 
         //only for tcp, not for in process connection
         if (strcmp(type_connection, "tcp") == 0) {
-            endpoint_customized = strcat(endpoint_customized, ip);
-            endpoint_customized = strcat(endpoint_customized, ":");
-            endpoint_customized = strcat(endpoint_customized, port);
-        } else if (strcmp(type_connection, "inproc") == 0) {
-            endpoint_customized = strcat(endpoint_customized, endpoint_inproc);
+            endpoint.append(ip);
+            endpoint.append(":");
+            endpoint.append(port);
+        }else{
+            endpoint.append(topic);
         }
         if(verbose)
-            printf("PUB> string for endpoint (from json file): %s\t", endpoint_customized);
+            cout<<"PUB> string for endpoint (from json file): "<< endpoint<<endl;
 
-        pub = zsock_new_pub(endpoint_customized);
+        pub = zsock_new_pub(endpoint.c_str());
 
     } else {
         puts("PUB> error");
