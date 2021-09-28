@@ -162,10 +162,10 @@ publisher(const char *path) {
         //  - send synchronization reply
         zsock_send(syncservice, "s", "END");
         subscribers++;
+        cout<<"SUB "<<subscribers<<" SYNCHRONIZED"<<endl;
     }
+    sleep(1);
     zsock_destroy(&syncservice);
-
-
     sleep(10);
     for(;count<num_mex; count++){
 

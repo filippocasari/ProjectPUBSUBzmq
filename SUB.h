@@ -142,6 +142,7 @@ int synchronizationService(const char *ip, const char *port) {
     char *string;
     zsock_recv(syncservice, "s", &string);
     // destroy socket. We do not need it anymore
+    sleep(2);
     zsock_destroy(&syncservice);
     // return 0; it is all okay
     return 0;
