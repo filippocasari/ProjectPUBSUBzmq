@@ -348,10 +348,10 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
 
     // ---------------USING A STRANGE/DUMB METHOD TO PARSE THE ARGUMENTS ---------------
 
-    size_t pox = argv->find(',');
+    size_t pox = (int)argv->find(',');
     int pox2 = (int) argv->find('&');
     int argc = (int) strlen(reinterpret_cast<const char *>(argv->c_str()));
-    string substring = argv->substr(pox2, argv->length() - pox2);
+    string substring = argv->substr(pox2, (int)argv->length() - pox2);
     string csv = argv->substr(pox + 1, pox2 - 1 - pox);
     const char *path_csv = (const char *) csv.c_str();
     const char *v = (const char *) substring.c_str();
