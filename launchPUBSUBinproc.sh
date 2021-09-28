@@ -27,7 +27,7 @@ for ((i = 0; i<=5; i++)); do
     echo "##########################################################"
     sleep 5
     {
-      ./INPROCESS_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
+      ./INPROC_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
       succ=$?
       if [ $succ -eq 0 ]
       then
