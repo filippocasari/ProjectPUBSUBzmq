@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
         // create new z-Actor, it is a thread
         actors[i]= zactor_new(startNewSubThread, (void *) &final_string);
 
-        sleep(1); // sleep for a while, just to configure our Sub
+        //sleep(1); // sleep for a while, just to configure our Sub
     }
 
     // join Pub thread
