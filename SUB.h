@@ -288,7 +288,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
         //cout << "managing payload exit code: " << a << endl;
         // if the last number received is Mex-1 or received function does not return 0, stop
         if (c == (NUM_MEX_MAX - 1) or succ == -1) {
-            cout << "SUB> TERMINATING ABNORMALLY" << endl;
+            cout << "SUB> TERMINATING " << endl;
             break;
         }
     }

@@ -8,11 +8,12 @@ from matplotlib import pyplot as plt
 
 number_of_messages = 10000
 E_3 = 1000  # variable to specify the amount of payload
-msg_rates = [250, 500, 1000, 10000]  # message rate, messages/second
+msg_rates = [250, 500, 1000, 5000, 10000]  # message rate, messages/second
 range_payload = [10 * E_3, 25 * E_3, 50 * E_3]  # amount of payload, # bytes
 # msg_rates = [250.0, 10.0, 2250.0, 2500.0, 100.0]
 # range_payload = [10, 2250, 2500, 100, 200, 25000, 1000]
-num_experiments = 8  # number of directory of tests
+num_experiments = 5  # number of directory of tests
+num_sub = 7
 dir_base = sys.argv[2]  # get the directory base
 dad_path = sys.argv[1]
 which_experiment = sys.argv[3]  # local or lan
@@ -32,49 +33,62 @@ def plotting_delays(xlim, ylim, w, x_scrap, ylim_2):
     j = 0  # counter to get the next scrap
 
     for payload in range_payload:  # for each payload plot and calculate  delay
-        print("PAYLOAD (bytes): ", payload)
+        print("\n\n******* PAYLOAD (bytes): " + str(payload) + " *********\n\n")
+        print("\n With this payload we should have " + str(num_sub * num_experiments * number_of_messages) + "\n")
         msg_rate_250 = dataframe_.loc[(dataframe_['message rate'] == 250) & (dataframe_['payload size'] == payload)]
         msg_rate_250_mean = msg_rate_250['value'].mean() / millisecs_div
         msg_rate_250_std = msg_rate_250['value'].std() / millisecs_div
         print("mean for msg rate = 250 is : ", msg_rate_250_mean, " with std: ", msg_rate_250_std)
-        packet_loss_250 = 100.0-(
-                ((len(msg_rate_250)) * 100.0) / (
-                    number_of_messages * num_experiments))
+        print("LEN of array msg_rate 250 is: " + str(len(msg_rate_250)))
+        packet_loss_250 = 100.0 - ((len(msg_rate_250)) / (number_of_messages * num_experiments * num_sub)) * 100.0
         print("Packet loss (%): ", packet_loss_250)
 
         msg_rate_500 = dataframe_.loc[(dataframe_['message rate'] == 500) & (dataframe_['payload size'] == payload)]
         msg_rate_500_mean = msg_rate_500['value'].mean() / millisecs_div
         msg_rate_500_std = msg_rate_500['value'].std() / millisecs_div
         print("mean for msg rate = 500 is : ", msg_rate_500_mean, " with std: ", msg_rate_500_std)
-        packet_loss_500 = (
-                ((number_of_messages * num_experiments - len(msg_rate_500)) * 100.0) / (
-                    number_of_messages * num_experiments))
+        packet_loss_500 = 100.0 - (
+                ((len(msg_rate_500)) * 100.0) / (
+                number_of_messages * num_experiments * num_sub))
+        print("LEN of array msg_rate 500 is: " + str(len(msg_rate_500)))
         print("Packet loss (%): ", packet_loss_500)
 
         msg_rate_1000 = dataframe_.loc[(dataframe_['message rate'] == 1000) & (dataframe_['payload size'] == payload)]
         msg_rate_1000_mean = msg_rate_1000['value'].mean() / millisecs_div
         msg_rate_1000_std = msg_rate_1000['value'].std() / millisecs_div
         print("mean for msg rate = 1000 is : ", msg_rate_1000_mean, " with std: ", msg_rate_1000_std)
-        packet_loss_1000 = (
-                ((number_of_messages * num_experiments - len(msg_rate_1000)) * 100.0) / (
-                    number_of_messages * num_experiments))
+        packet_loss_1000 = 100.0 - (
+                ((len(msg_rate_1000)) * 100.0) / (
+                number_of_messages * num_experiments * num_sub))
+        print("LEN of array msg_rate 1000 is: " + str(len(msg_rate_1000)))
         print("Packet loss (%): ", packet_loss_1000)
+
+        msg_rate_5000 = dataframe_.loc[(dataframe_['message rate'] == 5000) & (dataframe_['payload size'] == payload)]
+        msg_rate_5000_mean = msg_rate_5000['value'].mean() / millisecs_div
+        msg_rate_5000_std = msg_rate_5000['value'].std() / millisecs_div
+        print("mean for msg rate = 5000 is : ", msg_rate_5000_mean, " with std: ", msg_rate_5000_std)
+        packet_loss_5000 = 100.0 - (
+                ((len(msg_rate_5000)) * 100.0) / (
+                number_of_messages * num_experiments * num_sub))
+        print("LEN of array msg_rate 5000 is: " + str(len(msg_rate_5000)))
+        print("Packet loss (%): ", packet_loss_5000)
 
         msg_rate_10000 = dataframe_.loc[(dataframe_['message rate'] == 10000) & (dataframe_['payload size'] == payload)]
         msg_rate_10000_mean = msg_rate_10000['value'].mean() / millisecs_div
         msg_rate_10000_std = msg_rate_10000['value'].std() / millisecs_div
         print("mean for msg rate = 10000 is : ", msg_rate_10000_mean, " with std: ", msg_rate_10000_std)
-        packet_loss_10000 = (
-                ((number_of_messages * num_experiments - len(msg_rate_10000)) * 100.0) / (
-                    number_of_messages * num_experiments))
+        packet_loss_10000 = 100.0 - (
+                ((len(msg_rate_10000)) * 100.0) / (
+                number_of_messages * num_experiments * num_sub))
+        print("LEN of array msg_rate 10000 is: " + str(len(msg_rate_10000)))
         print("Packet loss (%): ", packet_loss_10000)
         # Creating a lists for the plots
 
         # creating an array for delays (mean) and one for error (standard deviation)
 
-        delays = [msg_rate_250_mean, msg_rate_500_mean, msg_rate_1000_mean, msg_rate_10000_mean]
-        error = [msg_rate_250_std, msg_rate_500_std, msg_rate_1000_std, msg_rate_10000_std]
-        loss = [packet_loss_250, packet_loss_500, packet_loss_1000, packet_loss_10000]
+        delays = [msg_rate_250_mean, msg_rate_500_mean, msg_rate_1000_mean, msg_rate_5000_mean, msg_rate_10000_mean]
+        error = [msg_rate_250_std, msg_rate_500_std, msg_rate_1000_std, msg_rate_5000_std, msg_rate_10000_std]
+        loss = [packet_loss_250, packet_loss_500, packet_loss_1000, msg_rate_5000_mean, packet_loss_10000]
         msg_rates_temp = np.array(msg_rates) + x_scrap[j]
 
         ax1.bar(msg_rates_temp, delays, yerr=error, align='center', alpha=0.5, ecolor='black', capsize=6, width=w,
@@ -86,7 +100,8 @@ def plotting_delays(xlim, ylim, w, x_scrap, ylim_2):
         ax1.set_xlabel('message rate [msg/sec]')
         ax1.set_title(
             'Average of end to end delays\n '
-            'with standard deviation\ntest execution: ' + which_experiment + ' on ' + where)
+            'with standard deviation\ntest execution: ' + which_experiment + ' on ' + where + "\nwith "
+            + str(num_sub) + " SUB")
         ax1.yaxis.grid(True)
 
         plt.tight_layout()
@@ -115,8 +130,8 @@ def plotting_delays(xlim, ylim, w, x_scrap, ylim_2):
 
 
 # try to make it simpler: concat every csv(s)
-for j in range(5):
-    for i in range(num_experiments):  # for each experiments
+for j in range(num_experiments):
+    for i in range(num_sub):  # for each experiments
         dir_temp = dad_path + str(j) + dir_base + str(i)  # "ResultsPath"+"number"
         print("dir temp is : ", dir_temp)
         count = 0
@@ -124,11 +139,12 @@ for j in range(5):
             for rate in msg_rates:  # same for each rate
                 path = dir_temp + '/' + 'test_' + str(count) + '.csv'  # concat string to read the test
                 print("PATH FINAL ANALYZED: ", path)
+                count += 1  # increase counter
                 try:
                     data_frame_temp = pd.read_csv(path, error_bad_lines=False)  # open csv file
                 except:
                     continue
-                count += 1  # increase counter
+
                 # real concat pandas arrays
                 dataframe_ = pd.DataFrame(data=pd.concat([dataframe_, data_frame_temp]),
                                           columns=data_frame_temp.columns)
@@ -140,4 +156,4 @@ w = 75  # width of a bar
 plotting_delays((0, 1200), (-1, 2), w, x_scrap, (0, 0.2))
 x_scrap = [-200, 0, 200]
 w = 110
-plotting_delays((-200, 11000), (-200, 1000), w, x_scrap, (0, 30))
+plotting_delays((-200, 11000), (-50, 200), w, x_scrap, (0, 100))

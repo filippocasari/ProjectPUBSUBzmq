@@ -59,6 +59,7 @@ char *getIp() {
 int pullPayload(zmsg_t **msg, const int64_t
 *end, const int64_t *c, BlockingQueue<Item> *lockingQueue) {
     char *end_pointer;
+    auto *item = new Item(); // create new Items
     try {
         string say;
         char *frame;
@@ -79,9 +80,13 @@ int pullPayload(zmsg_t **msg, const int64_t
                 say = "frame: " + string(frame);
                 writeSafely(&say);
             }
-            int64_t start_time = strtoll(frame, &end_pointer, 10);
-            Item item(start_time, end, "end_to_end_delay", c);
-            lockingQueue->push(item);
+            int64_t start = strtoll(frame, &end_pointer, 10);
+            // let's assign values to Item instance
+            item->ts_start = start;
+            item->ts_end = *end;
+            item->name_metric = "end_to_end_delay";
+            item->num = *c;
+            lockingQueue->push(*item);
         }
         if (zmsg_size(*msg) == 0) {
             if (g_verbose) {
@@ -236,7 +241,7 @@ launchSubscriber(string *endpoint_custom, char *topic, BlockingQueue<Item> *lock
     bool terminated = false;
     string say;
     while (!terminated) {
-        succ = zsock_recv(sub, "s8m", &topic, &c, &msg);
+        succ = zsock_recv(sub, "s8sscii", &topic, &c, &msg );
         if (msg == nullptr) {
             cout << "exit, msg null" << endl;
             break;
@@ -250,10 +255,8 @@ launchSubscriber(string *endpoint_custom, char *topic, BlockingQueue<Item> *lock
         say = "message Received: No. ";
         say.append(to_string(c));
         writeSafely(&say);
-        thread managing([&msg, &end, &c, &lockingQueue, &terminated] {
-            terminated = pullPayload(&msg, &end, &c, lockingQueue);
-        });
-        managing.join();
+        pullPayload(&msg, &end, &c, lockingQueue);
+
         //cout << "managing payload exit code: " << a << endl;
         if (c == (NUM_MEX_MAX - 1) or succ == -1) {
             cout << "TERMINATING" << endl;
@@ -425,7 +428,7 @@ int main(int argc, char **argv) {
     cout << "Size of the queue: " << lockingQueue.size() << endl;
     config_file.open(name_g_path_csv, ios::app);
     int64_t start;
-    while (!lockingQueue.d_queue.empty()) {
+    while (lockingQueue.size()!=0) {
         if (g_verbose) {
             say = "trying to pop new item...";
             writeSafely(&say);
