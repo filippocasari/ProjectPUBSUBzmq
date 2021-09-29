@@ -168,7 +168,7 @@ publisher(const char *path) {
 
         if (strcmp(type_test, "LAN")==0)
         {
-            timestamp= zclock_time();
+            timestamp= zclock_mono();
         }
         else if(strcmp(type_test, "LOCAL")==0){
             timestamp = zclock_usecs();

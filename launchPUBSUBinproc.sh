@@ -42,7 +42,7 @@ for ((i = 0; i<=10; i++)); do
         echo "exit code: "$succ
       fi
     }&
-    sleep 100
+    sleep 100 # 100 secs of time to get the results
     if [[ "$OSTYPE" == "linux-gnu"* ]]
     then
       sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROC_TEST_M

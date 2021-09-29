@@ -28,7 +28,7 @@
 //#define NUM_SUBS 7 // You can set how many Sub you want
 #define ENDPOINT endpoint_tcp // default endpoint
 #define NUM_MEX_MAX 10000 // default messages
-#define TIMEOUT 85000
+#define TIMEOUT 70000
 //#define MSECS_MAX_WAITING 10000 // we would have implemented maximum milli secs to wait
 const char *endpoint_tcp = "tcp://127.0.0.1:6000"; // default tcp endpoint
 //const char *type_test; // type of the test TODO is it necessarily global?
@@ -183,13 +183,10 @@ static void startNewConsumers(void *args) {
     name_of_csv_file.append(".csv");
     printf("SUB> Num of consumer threads: %d\n", num_consumers);
     string name_path_csv = path_csv + name_of_csv_file;
-    if (num_consumers > 1)
-        access_to_file.lock();
     //config_file_common.open(name_path_csv, ios::app);
     //config_file_common << "number,value,timestamp,message rate,payload size\n";
     //config_file_common.close();
-    if (num_consumers > 1)
-        access_to_file.unlock();
+
 
     sleep(1);
     auto name = this_thread::get_id();
@@ -200,8 +197,7 @@ static void startNewConsumers(void *args) {
     int64_t end_to_end_delay;
     int c = 0;
     Item *item = new Item();
-    int number_of_iterations = (int) number_of_messages / num_consumers;
-    while (c < number_of_iterations && !zsys_interrupted) {
+    while (c < number_of_messages-1 && !zsys_interrupted) {
 
         //item=lockingQueue.pop();
         zclock_sleep(10);
@@ -283,7 +279,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
             break;
         }
         // timestamps of receiving
-        end = zclock_time();
+        end = zclock_mono();
         //cout<<"Recv on "<< topic<<endl;
         //cout<<"message Received: No. "<< c<<endl;
         // lets menage the payload... passing message, end timestamp, counter, queue
@@ -305,15 +301,16 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
     name_path_csv.append("/" + name_of_csv_file);
     cout << "OPENING FILE: " << name_path_csv << endl;
     // open the file csv and append the (column) names of metrics
-    config_file.open(name_path_csv, ios::app);
+    config_file.open(name_path_csv, ios::app); // open the csv file and try to append metrics
     config_file << "number,value,timestamp,message rate,payload size\n";
     config_file.close();
     // printing size of the Queue
-    cout << "SUB> Size of the queue: " << lockingQueue.d_queue.size() << endl;
-    config_file.open(name_path_csv, ios::app); // open the csv file and try to append metrics
-    // ---------------------- STARTING CONSUMER THREAD --------------------------------------
+    int size_queue= (int)lockingQueue.size();
+    cout << "SUB> Size of the queue: " << size_queue << endl;
 
-    while (true) {
+    // ---------------------- STARTING CONSUMER THREAD --------------------------------------
+    config_file.open(name_path_csv, ios::app); // open the csv file and try to append metrics
+    while(lockingQueue.size()!=0) {
         if (verbose) {
             say = "SUB> trying to pop new item...";
             write_safely(&say);
@@ -326,13 +323,12 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
             say = "SUB> opening file csv...";
             write_safely(&say);
         }
+
         // try to write metrics on csv
         config_file << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
                        to_string(item.ts_end) +
                        "," + to_string(*msg_rate) + "," + to_string(*payload) + "\n";
         // when queue is empty, exit
-        if (lockingQueue.d_queue.empty())
-            break;
 
     }
     config_file.close(); // close the csv file. We do not need to write on it anymore
