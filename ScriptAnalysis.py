@@ -89,6 +89,7 @@ def plotting_delays(xlim, ylim, w, x_scrap, ylim_2):
         delays = [msg_rate_250_mean, msg_rate_500_mean, msg_rate_1000_mean, msg_rate_5000_mean, msg_rate_10000_mean]
         error = [msg_rate_250_std, msg_rate_500_std, msg_rate_1000_std, msg_rate_5000_std, msg_rate_10000_std]
         loss = [packet_loss_250, packet_loss_500, packet_loss_1000, msg_rate_5000_mean, packet_loss_10000]
+        msg_rates = [250*80, 500*80, 1000*80, 5000*80, 10000*80]
         msg_rates_temp = np.array(msg_rates) + x_scrap[j]
 
         ax1.bar(msg_rates_temp, delays, yerr=error, align='center', alpha=0.5, ecolor='black', capsize=6, width=w,
@@ -97,7 +98,7 @@ def plotting_delays(xlim, ylim, w, x_scrap, ylim_2):
         ax1.set_ylabel('Average of delays [milliseconds]')
         ax1.set_xticks(msg_rates)
         ax1.set_xticklabels(msg_rates)
-        ax1.set_xlabel('message rate [msg/sec]')
+        ax1.set_xlabel('message rate [kbit/sec]')
         ax1.set_title(
             'Average of end to end delays\n '
             'with standard deviation\ntest execution: ' + which_experiment + ' on ' + where + "\nwith "
@@ -117,7 +118,7 @@ def plotting_delays(xlim, ylim, w, x_scrap, ylim_2):
         ax2.set_ylabel('Packet loss (%)')
         ax2.set_xticks(msg_rates)
         ax2.set_xticklabels(msg_rates)
-        ax2.set_xlabel('message rate [msg/sec]')
+        ax2.set_xlabel('message rate [kbit/sec]')
         ax2.set_title(
             'Packet Loss\n '
             + which_experiment + ' on ' + where)
@@ -151,9 +152,17 @@ for j in range(num_experiments):
                 # print(dataframe_)
 
 print(dataframe_)  # print our dataframe
-x_scrap = [-75, 0, 75]  # array of craps, must be "x" dimension for "x" message rate
-w = 75  # width of a bar
-plotting_delays((0, 1200), (-1, 2), w, x_scrap, (0, 0.2))
-x_scrap = [-200, 0, 200]
-w = 110
-plotting_delays((-200, 11000), (-50, 200), w, x_scrap, (0, 100))
+factor=80
+x_scrap = [-75*factor, 0, 75*factor]  # array of craps, must be "x" dimension for "x" message rate
+w = 75*factor  # width of a bar
+plotting_delays((0, 1200*factor), (-1, 2), w, x_scrap, (0, 0.2))
+x_scrap = [-200*factor, 0, 200*factor]
+w = 110*factor
+plotting_delays((-200, 11000*factor), (-50, 200), w, x_scrap, (0, 100))
+
+#x_scrap = [-75, 0, 75]  # array of craps, must be "x" dimension for "x" message rate
+#w = 75  # width of a bar
+#plotting_delays((0, 1200), (-1, 2), w, x_scrap, (0, 0.2))
+#x_scrap = [-200, 0, 200]
+#w = 110
+#plotting_delays((-200, 11000), (-50, 200), w, x_scrap, (0, 100))

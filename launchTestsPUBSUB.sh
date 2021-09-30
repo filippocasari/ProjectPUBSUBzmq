@@ -10,7 +10,7 @@ echo "ARG 2: $json_path"
 echo "ARG 3: $verbose"
 
 
-directory_path="./ResultsLAN_CH_" # can ben set by the user by argv
+directory_path="./RES_LAN_3SUB_LOCAL_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo " TEST ON LINUX"  #0.it.pool.ntp.org
 
@@ -26,7 +26,7 @@ else
 fi
 sleep 3
 for ((i = 0; i<=10; i++)); do
-
+  mkdir $directory_path"$i"
   for ((c = 0; c <15; c++)); do
     date +"%FORMAT"
     var=$(date)
@@ -37,7 +37,7 @@ for ((i = 0; i<=10; i++)); do
     if [[ "$argument" == "-s" ]]
     then
       echo "#################START ONLY SUBSCRIBERS"
-      for (( j = 0 ; j < 7; j++));do
+      for (( j = 0 ; j < 3; j++));do
 
         son_path="_${j}"
         son__path="$directory_path$i$son_path"
@@ -49,53 +49,49 @@ for ((i = 0; i<=10; i++)); do
       sleep 100
       echo "SUBS WILL BE STOPPED"
       killall SUB2
-
-    elif [[ "$argument" -eq "-p" ]]
+    fi
+    if [[ "$argument" == "-p" ]]
     then
-      echo "#################START ONLY PUBLISHER"
+      echo "################# START ONLY PUBLISHER ###############"
       ./PUB2 "$json_path$c.json" "-v"
       sleep 5
-    else
+
+    elif [[ "$argument" == "-sp" ]]
+      then
+      echo "MODE: PUB SUB BOTH"
       {
-        if [[ "$OSTYPE" == "linux-gnu"* ]]
+        ./PUB2 "$json_path$c.json" "-v"
+        succ=$?
+        if [ $succ -eq 0 ]
         then
-          ./SUB2 "$json_path$c.json" "$directory_path$i/" "$verbose"
-        elif [[ "$OSTYPE" == "darwin"* ]];
-        then
-          ./SUB2 "$json_path$c.json" "$directory_path$i/" "$verbose"
+          echo
+          echo "test succeeded..."
+          sleep 5
+          echo "##########################################################"
+          echo "send SIGTERM and SIGKILL TO SUB"
+        else
+          # shellcheck disable=SC1072
+          echo " test failed"
+          echo "exit code: "$succ
         fi
       }&
+      for (( j = 0 ; j < 3; j++));do
+        {
+           echo starting sub "$j"
+           son_path="/${j}"
+           son__path="$directory_path$i$son_path"
+          ./SUB2 "$json_path$c.json" "$son__path" "$verbose"
+        }&
+      done
+      sleep 90
 
-      sleep 5
-      ./PUB2 "$json_path$c.json"
-
-      succ=$?
-      if [ $succ -eq 0 ]
-      then
-        echo
-        echo "test succeeded..."
-        sleep 5
-        echo "##########################################################"
-        echo "send SIGTERM and SIGKILL TO SUB"
-      else
-        # shellcheck disable=SC1072
-        echo " test failed"
-        echo "exit code: "$succ
-      fi
       sleep 10
 
     fi
-
-    if [[ "$OSTYPE" == "linux-gnu"* ]]
-    then
-      if [[ "$argument" == "-s" ]];then
-      sudo start-stop-daemon --stop --oknodo --retry 15 -n SUB2
-      elif [[ "$argument" == "-p" ]];then
-        sudo start-stop-daemon --stop --oknodo --retry 15 -n PUB2
-      fi
-    fi
     killall SUB2
+    killall PUB2
     sleep 5
+
     echo "##########################################################"
     echo "End test $c at $var #########"
     echo "##########################################################"

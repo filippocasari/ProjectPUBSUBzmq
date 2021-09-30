@@ -22,7 +22,6 @@
 #define SUBSCRIBERS_EXPECTED 7
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
-bool verbose = true;
 using namespace std;
 //thread of publisher
 char* getIp(){
@@ -44,13 +43,12 @@ char* getIp(){
     /* display result */
     return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
-
+bool g_time_mono=false;
 int
-publisher(const char *path) {
+publisher(const char *path, const bool *verbose) {
     zsock_t *pub; // new sock pub
     //path of json file for configuration
     //json obj for deserialization
-
     json_object *PARAM = json_object_from_file(path);
     int payload_size = 10; //payload, 10 default bytes
     int num_mex = NUM_MEX_DEFAULT; // maximum messages for the publisher, 10 default
@@ -168,7 +166,10 @@ publisher(const char *path) {
 
         if (strcmp(type_test, "LAN")==0)
         {
-            timestamp= zclock_mono();
+            if(g_time_mono)
+                timestamp= zclock_mono();
+            else
+                timestamp=zclock_time();
         }
         else if(strcmp(type_test, "LOCAL")==0){
             timestamp = zclock_usecs();
@@ -223,12 +224,13 @@ static void startPubThread(zsock_t *pipe, void *args) {
     char **args_new = (char**)args;
     const char *file_json=strdup((char*)args_new[1]);
     const char *v =  strdup( (char*)args_new[3]);
+    bool verbose;
     if(strcmp(v, "-v") == 0)
         verbose=true;
     else
         verbose=false;
     printf("INPUT FILE JSON (NAME): %s\n", file_json);
-    int rc =publisher(file_json);
+    int rc =publisher(file_json, &verbose);
     cout<<"exit code of publisher : "<< rc<<endl;
     //zactor_t *pub_actor = zactor_new(publisher, file_json);
     //zstr_sendx (pub_actor, "BREAK", NULL);

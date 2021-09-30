@@ -22,7 +22,7 @@
 #include <net/if.h>
 #include <atomic>
 
-#define NUM_CONSUMERS 1 // deprecated. Just to say how many consumer threads to store values on Csv.
+//#define NUM_CONSUMERS 1 // deprecated. Just to say how many consumer threads to store values on Csv.
 // it is not necessary because we do not want speed thread to write on a csv file
 
 //#define NUM_SUBS 7 // You can set how many Sub you want
@@ -32,15 +32,12 @@
 //#define MSECS_MAX_WAITING 10000 // we would have implemented maximum milli secs to wait
 const char *endpoint_tcp = "tcp://127.0.0.1:6000"; // default tcp endpoint
 //const char *type_test; // type of the test TODO is it necessarily global?
-
+using namespace std; // using standard library
 mutex cout_mutex; // semaphore to write safely on standard output if we got multi thread consumers
 mutex access_to_file; // semaphore to access safely to csv file
-
 //atomic<bool> finished; // just a simple boolean to tell
 // everyone that thread sub is finished and threads consumers must be turned off
-
-using namespace std; // using standard library
-
+bool g_time_mono=false;
 // simple function to write on standard output thread safely
 void write_safely(string *what_i_said) {
     // starting critical section
@@ -52,7 +49,7 @@ void write_safely(string *what_i_said) {
 
 // function to separate divide scope of functions
 int payloadManaging(zmsg_t **msg, const int64_t
-*end, const int64_t *c, BlockingQueue<Item> *lockingQueue) {
+*end, const int64_t *c, BlockingQueue<Item> *lockingQueue,const bool *verbose) {
 
     auto *item = new Item(); // create new Items
 
@@ -148,102 +145,13 @@ int synchronizationService(const char *ip, const char *port) {
     return 0;
 }
 
-// despracated... it creates consumer threads to write to csv file
-static void startNewConsumers(void *args) {
-    const char *path_csv = static_cast<const char *>(args);
-    //zsock_signal(pipe, 0);
-    bool console = false;
-    int num_consumers = NUM_CONSUMERS;
-    char *name_of_experiment;
-    json_object *PARAM;
-    int msg_rate;
-    int payload;
-    int number_of_messages;
-    //PARAM = json_object_from_file();
-    json_object_object_foreach(PARAM, key, val) {
-        if (strcmp(key, "metrics_output_type") == 0) {
-            char *value = const_cast<char *>(json_object_get_string(val));
-            if (strcmp(value, "console") == 0)
-                console = true;
-            else
-                cout << "SUB> creating new file csv" << endl;
-        }
-        if (strcmp(key, "experiment_name") == 0)
-            name_of_experiment = (char *) json_object_get_string(val);
-        if (strcmp(key, "num_consumer_threads") == 0)
-            num_consumers = (int) strtol(json_object_get_string(val), nullptr, 10);
-        if (strcmp(key, "msg_rate_sec") == 0)
-            msg_rate = (int) strtol(json_object_get_string(val), nullptr, 10);
-        if (strcmp(key, "payload_size_bytes") == 0)
-            payload = (int) strtol(json_object_get_string(val), nullptr, 10);
-        if (strcmp(key, "number_of_messages") == 0)
-            number_of_messages = (int) strtol(json_object_get_string(val), nullptr, 10);
-    }
-    string name_of_csv_file = name_of_experiment /*+ '_' + std::to_string(zclock_time()) */ ;
-    name_of_csv_file.append(".csv");
-    printf("SUB> Num of consumer threads: %d\n", num_consumers);
-    string name_path_csv = path_csv + name_of_csv_file;
-    //config_file_common.open(name_path_csv, ios::app);
-    //config_file_common << "number,value,timestamp,message rate,payload size\n";
-    //config_file_common.close();
-
-
-    sleep(1);
-    auto name = this_thread::get_id();
-    stringstream id;
-    id << name;
-    string say = "SUB> new consumer thread created with ID: " + id.str();
-    write_safely(&say);
-    int64_t end_to_end_delay;
-    int c = 0;
-    Item *item = new Item();
-    while (c < number_of_messages-1 && !zsys_interrupted) {
-
-        //item=lockingQueue.pop();
-        zclock_sleep(10);
-
-        int64_t start = item->ts_start;
-
-        end_to_end_delay = item->ts_end - start;
-
-        if (console) {
-            say = "Metric name: " + item->name_metric + "\nvalue: "
-                  + to_string(end_to_end_delay);
-            write_safely(&say);
-        } else {
-            //cout << "lockingQueue empty? " << lockingQueue->empty() << endl;
-            if (verbose) {
-                say = "opening file csv...";
-                write_safely(&say);
-            }
-
-            //config_file_common.open(name_path_csv, ios::app);
-            //config_file_common << to_string(item.num) + "," + to_string(end_to_end_delay) + "," +
-            to_string(item->ts_end) +
-            "," + to_string(msg_rate) + "," + to_string(payload) + "\n";
-            //config_file_common.close();
-
-        }
-        c++;
-        //if(finished.load(std::memory_order_relaxed)){
-        //    if(lockingQueue.size()==0)
-        //        break;
-        //}
-
-        //if(lockingQueue.size()==0)
-        //    break;
-    }
-    say = "SUB> thread is closing...";
-    write_safely(&say);
-
-}
 
 // *** the crucial function. It takes the endpoint to connect, the topic to subscribe to , path csv to write on,
 // name of the experiment to save the file,
 // how much is the payload and what is the message rate ***
 void
 subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const char *name_of_experiment,
-           const int *payload, const int *msg_rate) {
+           const int *payload, const int *msg_rate, const bool *verbose) {
 
     // ------------------------------------- STARTING THE SUB -------------------------------------------------------------
     BlockingQueue<Item> lockingQueue; // declare The Queue, is a blocked-locking queue, inspired by Java,
@@ -279,11 +187,15 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
             break;
         }
         // timestamps of receiving
-        end = zclock_mono();
+        if(g_time_mono)
+            end = zclock_mono();
+        else
+            end=zclock_time();
+
         //cout<<"Recv on "<< topic<<endl;
         //cout<<"message Received: No. "<< c<<endl;
         // lets menage the payload... passing message, end timestamp, counter, queue
-        payloadManaging(&msg, &end, &c, &lockingQueue);
+        payloadManaging(&msg, &end, &c, &lockingQueue, verbose);
 
         //cout << "managing payload exit code: " << a << endl;
         // if the last number received is Mex-1 or received function does not return 0, stop
@@ -344,7 +256,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
     cout << "SUB> ARGS RECEIVED: " << *argv << endl;
 
     // ---------------USING A STRANGE/DUMB METHOD TO PARSE THE ARGUMENTS ---------------
-
+    bool verbose=false;
     auto pox = (int32_t)argv->find(',');
     auto pox2 = (int32_t )argv->find('&');
     auto argc = (int32_t ) strlen(argv->c_str());
@@ -451,7 +363,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
     synchronizationService(ip, port);
     cout << "SUB> Synchronization success" << endl;
     subscriber(endpoint_customized.c_str(), topic,
-               path_csv, name_of_experiment, &payload, &msg_rate);
+               path_csv, name_of_experiment, &payload, &msg_rate, &verbose);
     cout << "SUB> END OF SUBSCRIBER" << endl;
 }
 

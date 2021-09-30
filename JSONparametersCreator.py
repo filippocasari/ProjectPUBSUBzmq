@@ -14,7 +14,7 @@ range_payload = [10 * E_3, 25 * E_3, 50 * E_3]  # payload (bytes)
 topic = "CAR"  # topic for the publisher and subscribers
 connection_type = "tcp"  # can be tcp or inproc
 endpoint_inproc = "CAR"  # where inproc is set, this is its endpoint
-ip = "192.168.1.143"  # ip of PUB and SUB (if local)
+ip = "127.0.0.1"  # ip of PUB and SUB (if local)
 port = "5600"  # port
 metrics_output_type = "csv"  # can be csv or console (=only stdout)
 num_of_subs = 1  # number of subs, can not be more than one anymore (deprecated). It used zactor to create more thread
