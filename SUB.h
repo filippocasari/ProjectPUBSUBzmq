@@ -37,7 +37,6 @@ mutex cout_mutex; // semaphore to write safely on standard output if we got mult
 mutex access_to_file; // semaphore to access safely to csv file
 //atomic<bool> finished; // just a simple boolean to tell
 // everyone that thread sub is finished and threads consumers must be turned off
-bool g_time_mono=false;
 // simple function to write on standard output thread safely
 void write_safely(string *what_i_said) {
     // starting critical section
