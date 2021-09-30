@@ -10,7 +10,7 @@ echo "ARG 2: $json_path"
 echo "ARG 3: $verbose"
 
 
-directory_path="./RES_LAN_3SUB_LOCAL_" # can ben set by the user by argv
+directory_path="./RES_LAN_5SUB_LOCAL_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo " TEST ON LINUX"  #0.it.pool.ntp.org
 
@@ -37,7 +37,7 @@ for ((i = 0; i<=10; i++)); do
     if [[ "$argument" == "-s" ]]
     then
       echo "#################START ONLY SUBSCRIBERS"
-      for (( j = 0 ; j < 3; j++));do
+      for (( j = 0 ; j < 5; j++));do
 
         son_path="_${j}"
         son__path="$directory_path$i$son_path"
@@ -75,7 +75,7 @@ for ((i = 0; i<=10; i++)); do
           echo "exit code: "$succ
         fi
       }&
-      for (( j = 0 ; j < 3; j++));do
+      for (( j = 0 ; j < 5; j++));do
         {
            echo starting sub "$j"
            son_path="/${j}"

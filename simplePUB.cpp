@@ -17,7 +17,7 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
-#define SUBSCRIBERS_EXPECTED 3
+#define SUBSCRIBERS_EXPECTED 5
 using namespace std;
 //thread of publisher
 
@@ -160,7 +160,7 @@ publisher_thread(const char **path) {
         free (stringa);
         //  - send synchronization reply
         zsock_send(syncservice, "s", "END");
-        cout<<"PUB "<<subscribers<<" connected"<<endl;
+        cout<<"SUB "<<subscribers<<" connected"<<endl;
         subscribers++;
     }
     zclock_sleep(4000);
