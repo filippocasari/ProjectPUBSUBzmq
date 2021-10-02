@@ -6,11 +6,11 @@ import os
 # 1) path where create json files
 # 2) if tests will be on lan
 
-E_3 = 1000  # number * E_3
+  # number * E_3
 # msg_rate = [5, 10, 25, 50, 100]
-msg_rate = [250, 500, 1000, 5000, 10000]  # message rate, unit: messages/sec
+msg_rate = [200, 400, 600, 800, 1000]  # message rate, unit: messages/sec
 # range_payload = [10, 25, 50, 100, 200, 500, 1000]
-range_payload = [10 * E_3, 25 * E_3, 50 * E_3]  # payload (bytes)
+range_payload = [64, 2000, 32000]  # payload (bytes)
 topic = "CAR"  # topic for the publisher and subscribers
 connection_type = "tcp"  # can be tcp or inproc
 endpoint_inproc = "CAR"  # where inproc is set, this is its endpoint

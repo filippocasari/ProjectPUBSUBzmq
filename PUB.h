@@ -24,25 +24,7 @@
 #define NUM_MEX_DEFAULT 10
 using namespace std;
 //thread of publisher
-char* getIp(){
-    int fd;
-    struct ifreq ifr;
 
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    /* I want to get an IPv4 IP address */
-    ifr.ifr_addr.sa_family = AF_INET;
-
-    /* I want IP address attached to "eth0" */
-    strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
-
-    ioctl(fd, SIOCGIFADDR, &ifr);
-
-    close(fd);
-
-    /* display result */
-    return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
-}
 bool g_time_mono=false;
 int
 publisher(const char *path, const bool *verbose) {
@@ -181,38 +163,26 @@ publisher(const char *path, const bool *verbose) {
         time_string =to_string(timestamp);
         if(verbose)
             printf("TIMESTAMP: %lld\n", timestamp);
-        zmsg_t *msg = zmsg_new(); // creating new zmq message
-        int rc = zmsg_pushstr(msg, time_string.c_str());
-        assert(rc == 0);
+
         if(verbose)
             printf("SIZE OF RESIDUAL STRING (OF ZEROS) : %ld\n", payload_size - (long)(time_string.length()));
         std::string string_residual_payload;
-        if (payload_size > (long) time_string.length()) {
+        string_residual_payload = string(payload_size-(long) time_string.length(), '0');
+        //printf("String of zeros: %s\n", string_residual_payload);
+        zchunk_t *chunk= zchunk_new(string_residual_payload.c_str(),abs(payload_size - (long)(time_string.length())) );
 
-            string_residual_payload = string(payload_size-(long) time_string.length(), '0');
-            //printf("String of zeros: %s\n", string_residual_payload);
-            zchunk_t *chunk= zchunk_new(string_residual_payload.c_str(),abs(payload_size - (long)(time_string.length())) );
-            if (zsock_send(pub, "s8ssc", topic,count, "TIMESTAMP", time_string.c_str(), chunk) == -1) {
-                puts("error to send,packet loss");
-            }
-
-            zchunk_destroy(&chunk);
-            zmsg_destroy(&msg);
-            //  Interrupted
-        } else {
-
-            //printf("String of zeros: %c\n", string_residual_payload);
-            if (zsock_bsend(pub, "sss", &topic, "TIMESTAMP", time_string.c_str()) == -1){
-                puts("sending interrupted...");
-                return 1;
-            }
-
+        if (zsock_send(pub, "s8ssc", topic,count, "TIMESTAMP", time_string.c_str(), chunk) == -1) {
+            puts("error to send,packet loss");
+            break;
         }
+
+        zchunk_destroy(&chunk);
+        //  Interrupted
         if(verbose)
             zclock_log("Message No. %llu", count);
     }
     zclock_sleep(4000);
-    zsock_send(pub, "s1s", &topic, -1, "TERMINATE");
+    zsock_send(pub, "s1sss", &topic, -1, "T", "ER","MIN", "ATE");
     zclock_sleep(2000);
     //zsock_disconnect(pub, "%s", endpoint_customized);
     zsock_destroy(&pub);

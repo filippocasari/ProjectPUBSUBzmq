@@ -17,7 +17,10 @@ verbose=$3
 #elif [[ "$OSTYPE" == "darwin"* ]]; then
  # echo " TESTS ON MAC OS"
 #fi
-for ((i = 0; i<=10; i++)); do
+for ((i = 0; i<=9; i++)); do
+  echo
+  echo "####################### MASTER TEST $i ##########################"
+  echo
   mkdir "$directory_path$i/" || echo "KEEP GOING..."
   for ((c = 0; c <=14; c++)); do
     date +"%FORMAT"
@@ -42,17 +45,15 @@ for ((i = 0; i<=10; i++)); do
         echo "exit code: "$succ
       fi
     }&
-    sleep 100 # 100 secs of time to get the results
-    if [[ "$OSTYPE" == "linux-gnu"* ]]
-    then
-      sudo start-stop-daemon --stop --oknodo --retry 15 -n INPROC_TEST_M
-    fi
+    if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 110 secs" && sleep 110
+    else echo "sleep of 90 secs" && sleep 90; fi
+    # 100 secs of sleep to get the results
     killall INPROC_TEST_M
     echo "##########################################################"
     echo "End test $c at $var #########"
     echo "##########################################################"
    # start-stop-daemon --stop --oknodo --retry 15 -n PUB
-    sleep 10 #sleep 10 secs until next test
+    sleep 3 #sleep 10 secs until next test
 
   done
 done

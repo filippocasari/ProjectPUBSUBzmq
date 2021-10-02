@@ -23,7 +23,6 @@ int main(int argc, char **argv) {
     // THE (DUMB) IDEA IS TO LINK ARG[1], ARG[2] and ARG[3] with the above symbols
     // The final string passed must be: path of file Json + "," + path of Csv + "&" + verbose
     // This rule can definitely be changed, it is awful
-
     // starting new thread PUB. Must be initialized before the SUB, because Sync Service is implemented
     // and PUB must listen on it. SUB will send their messages for sync to the PUB.
     zactor_t *publisher_actor= zactor_new(startPubThread, argv);

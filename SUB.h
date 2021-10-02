@@ -224,16 +224,16 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
     config_file.open(name_path_csv, ios::app); // open the csv file and try to append metrics
     while(lockingQueue.size()!=0) {
         if (verbose) {
-            say = "SUB> trying to pop new item...";
-            write_safely(&say);
+            //say = "SUB> trying to pop new item...";
+            //write_safely(&say);
         }
         // pop Item from the queue ( it is internally already thread safe)
         item = lockingQueue.pop();
         // now, compute the difference between two nodes
         end_to_end_delay = item.ts_end - item.ts_start;
         if (verbose) {
-            say = "SUB> opening file csv...";
-            write_safely(&say);
+            //say = "SUB> opening file csv...";
+            //write_safely(&say);
         }
 
         // try to write metrics on csv
