@@ -17,7 +17,7 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
-#define SUBSCRIBERS_EXPECTED 7
+#define SUBSCRIBERS_EXPECTED 1
 using namespace std;
 //thread of publisher
 
@@ -183,7 +183,7 @@ publisher_thread(const char **path) {
             timestamp = zclock_usecs();
         }
         // catching timestamp
-
+        timestamp=zclock_usecs();
 
         //int nDigits = floor(1 + log10(abs((int) timestamp)));
         time_string = to_string(timestamp);
@@ -209,7 +209,7 @@ publisher_thread(const char **path) {
 
         zclock_log("Message No. %llu", count);
     }
-    sleep(2);
+    zclock_sleep(2000);
     zsock_destroy(&pub);
     return 0;
 }

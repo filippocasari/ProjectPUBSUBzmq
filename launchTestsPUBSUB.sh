@@ -10,7 +10,7 @@ echo "ARG 2: $json_path"
 echo "ARG 3: $verbose"
 
 
-directory_path="./MACM1/7SUB_tcp_local_" # can ben set by the user by argv
+directory_path="./MACM1/TEST_2/1SUB_tcp_local_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo " TEST ON LINUX"  #0.it.pool.ntp.org
 
@@ -59,7 +59,6 @@ for ((i = 0; i<=10; i++)); do
     elif [[ "$argument" == "-sp" ]]
       then
       echo "MODE: PUB SUB BOTH"
-      if [ $c -eq 0  ] || [ $c -eq 5  ] || [ $c -eq 10  ] ; then continue; fi
       {
         ./PUB2 "$json_path$c.json" "-v"
         succ=$?
@@ -77,7 +76,7 @@ for ((i = 0; i<=10; i++)); do
         fi
       }&
       sleep 5
-      for (( j = 0 ; j < 7; j++));do
+      for (( j = 0 ; j < 1; j++));do
         {
            echo starting sub "$j"
            son_path="/${j}"
@@ -86,8 +85,8 @@ for ((i = 0; i<=10; i++)); do
         }&
       done
 
-      if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 110 secs" && sleep 110
-          else echo "sleep of 90 secs" && sleep 90; fi
+      if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 70 secs" && sleep 70
+          else echo "sleep of 60 secs" && sleep 60; fi
     fi
     killall SUB2
     killall PUB2

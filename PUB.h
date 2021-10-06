@@ -19,7 +19,7 @@
 #include <netinet/in.h>
 #include <net/if.h>
 //const char *json_file_config;
-#define SUBSCRIBERS_EXPECTED 7
+#define SUBSCRIBERS_EXPECTED 1
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
 using namespace std;
@@ -136,9 +136,10 @@ publisher(const char *path, const bool *verbose) {
         subscribers++;
         cout<<"SUB "<<subscribers<<" SYNCHRONIZED"<<endl;
     }
-    sleep(1);
+
     zsock_destroy(&syncservice);
-    sleep(6);
+    cout<<"waiting before starting sending"<<endl;
+    zclock_sleep(6000);
     for(;count<num_mex; count++){
 
         if(verbose)
