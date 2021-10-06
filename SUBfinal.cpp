@@ -14,11 +14,7 @@
 #include <net/if.h>
 #include "SUB.h"
 
-#define NUM_CONSUMERS 1
-#define NUM_MEX_MAX 10000
-
 using namespace std;
-mutex access_to_file_csv;
 //atomic<bool> g_finished;
 
 void writeSafely(string *what_i_said) {
@@ -27,35 +23,13 @@ void writeSafely(string *what_i_said) {
     cout_mutex.unlock();
 }
 
-char *getIp() {
-    int fd;
-    struct ifreq ifr;
-
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    /* I want to get an IPv4 IP address */
-    ifr.ifr_addr.sa_family = AF_INET;
-
-    /* I want IP address attached to "eth0" */
-    strncpy(ifr.ifr_name, "eth0", IFNAMSIZ - 1);
-
-    ioctl(fd, SIOCGIFADDR, &ifr);
-
-    close(fd);
-
-    /* display result */
-    return inet_ntoa(((struct sockaddr_in *) &ifr.ifr_addr)->sin_addr);
-}
-
-
-
 int launchSynchronizationService(const char *ip, const char *port) {
     string endpoint_sync = "tcp://";
     endpoint_sync.append(ip);
     endpoint_sync.append(":");
     endpoint_sync.append(to_string(atoi(port) + 1));
 
-    cout << "Endpoint for Sync service: " << endpoint_sync << endl;
+    cout << "SUB>Endpoint for Sync service: " << endpoint_sync << endl;
     zsock_t *syncservice = zsock_new_req(endpoint_sync.c_str());
 
     zsock_send(syncservice, "s", "INIT");
@@ -181,12 +155,10 @@ int main(int argc, char **argv) {
         cout << "FILE JSON NOT FOUND...EXIT" << endl;
         return 2;
     }
-    cout << "endpoint (final) : " << endpoint_customized << endl;
+    cout << "SUB>endpoint : " << endpoint_customized << endl;
     int success = launchSynchronizationService(ip, port);
     assert(success == 0);
     cout << "Synchronization success" << endl;
-    BlockingQueue<Item> lockingQueue; //initialize lockingQueue
-    lockingQueue.d_queue.resize(num_mex);
 
     subscriber(endpoint_customized.c_str(), topic,g_path_csv,name_of_experiment, &payload, &msg_rate, &verbose);
     cout << "END OF SUBSCRIBER" << endl;

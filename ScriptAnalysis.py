@@ -4,14 +4,14 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-number_of_messages = 10000
+number_of_messages = 5000
 E_3 = 1000  # variable to specify the amount of payload
 msg_rates = [200, 400, 600, 800, 1000]  # message rate, messages/second
 range_payload = [64, 2000, 32000]  # amount of payload, # bytes
 # msg_rates = [250.0, 10.0, 2250.0, 2500.0, 100.0]
 # range_payload = [10, 2250, 2500, 100, 200, 25000, 1000]
-num_experiments = 9  # number of directory of tests
-num_sub = 1
+num_experiments = 10  # number of directory of tests
+num_sub = 7
 dir_base = sys.argv[2]  # get the directory base
 dad_path = sys.argv[1]
 which_experiment = sys.argv[3]  # local or lan
@@ -39,24 +39,24 @@ def plotting_delays_2(x_lim, y_lim, weight_line, x_scrap, y_lim_2):
         MSG_RATE = []  # for each payload plot and calculate  delay
         print("\n\n******* PAYLOAD (bytes): " + str(PAYLOAD) + " *********\n\n")
         for rate in msg_rates:
-
             print("\n With this payload we should have " + str(num_sub * num_experiments * number_of_messages) + "\n")
 
             msg_rate_ = dataframe_.loc[(dataframe_['message rate'] == rate) & (dataframe_['payload size'] == PAYLOAD)]
             msg_rate_mean = (msg_rate_['value']).mean() / millisecs_div
             msg_rate_std = (msg_rate_['value']).std() / millisecs_div
-
-            print("mean for msg rate = "+str(msg_rate_)+" is : ", msg_rate_mean, " with std: ", msg_rate_std)
+            print("Len of dataframe: ", len(msg_rate_))
+            print("mean for msg rate = " + str(msg_rate_) + " is : ", msg_rate_mean, " with std: ", msg_rate_std)
             print("LEN of array msg_rate  is: " + str(len(msg_rate_)), rate)
             packet_loss_ = 100.0 - ((len(msg_rate_)) / (number_of_messages * num_experiments * num_sub)) * 100.0
             print("Packet loss (%): ", packet_loss_)
             delays.append(msg_rate_mean)
             error.append(msg_rate_std)
             loss.append(packet_loss_)
-            MSG_RATE.append(rate*factor)
+            MSG_RATE.append(rate * factor)
         msg_rates_temp = np.array(MSG_RATE) + x_scrap[j]
 
-        ax1.bar(msg_rates_temp, delays, yerr=error, align='center', alpha=0.5, ecolor='black', capsize=6, width=weight_line,
+        ax1.bar(msg_rates_temp, delays, yerr=error, align='center', alpha=0.5, ecolor='black', capsize=6,
+                width=weight_line,
                 label='payload: ' + str(PAYLOAD) + ' bytes')
         j += 1  # next scrap
         ax1.set_ylabel('Average of delays [milliseconds]')
@@ -163,7 +163,8 @@ def plotting_delays(x_lim, y_lim, weight_line, x_scrap, y_lim_2):
 
         msg_rates_temp = np.array(msg_rates) + x_scrap[j]
 
-        ax1.bar(msg_rates_temp, delays, yerr=error, align='center', alpha=0.5, ecolor='black', capsize=6, width=weight_line,
+        ax1.bar(msg_rates_temp, delays, yerr=error, align='center', alpha=0.5, ecolor='black', capsize=6,
+                width=weight_line,
                 label='payload: ' + str(payload) + ' bytes')
         j += 1  # next scrap
         ax1.set_ylabel('Average of delays [milliseconds]')
@@ -223,13 +224,13 @@ for j in range(num_experiments):
                 # print(dataframe_)
 
 print(dataframe_)  # print our dataframe
-
-x_scrap = [-60 * factor, 0, 60 * factor]  # array of craps, must be "x" dimension for "x" message rate
+x_scrap = [-60 * factor, 0, 60 * factor]
+# x_scrap = [-120 * factor,-60*factor, 0, 60 * factor, 120*factor]  # array of craps, must be "x" dimension for "x" message rate
 w = 60 * factor  # width of a bar
-plotting_delays_2((0, 1200 * factor), (-1, 2), w, x_scrap, (0, 10))
-#x_scrap = [-200 * factor, 0, 200 * factor]
-#w = 190 * factor
-#plotting_delays_2((1500, 11000 * factor), (-1, 2), w, x_scrap, (0, 10))
+plotting_delays_2((0, 1200 * factor), (-0.7, 0.7), w, x_scrap, (0, 10))
+# x_scrap = [-200 * factor, 0, 200 * factor]
+# w = 190 * factor
+# plotting_delays_2((1500, 11000 * factor), (-1, 2), w, x_scrap, (0, 10))
 
 # x_scrap = [-75, 0, 75]  # array of craps, must be "x" dimension for "x" message rate
 # w = 75  # width of a bar

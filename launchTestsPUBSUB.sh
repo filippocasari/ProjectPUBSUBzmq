@@ -10,14 +10,14 @@ echo "ARG 2: $json_path"
 echo "ARG 3: $verbose"
 
 
-directory_path="./RES_LAN_5SUB_LOCAL_" # can ben set by the user by argv
+directory_path="./MACM1/7SUB_tcp_local_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo " TEST ON LINUX"  #0.it.pool.ntp.org
 
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS" #0.it.pool.ntp.org #|| sudo sntp -sS time.apple.com
 fi
-sudo ntpdate -s 0.ch.pool.ntp.org
+#sudo ntpdate -s 0.ch.pool.ntp.org
 ntp_success=$?
 if [[ ntp_success -eq 0 ]]; then
   echo "Test NTP SUCCESS"
@@ -59,6 +59,7 @@ for ((i = 0; i<=10; i++)); do
     elif [[ "$argument" == "-sp" ]]
       then
       echo "MODE: PUB SUB BOTH"
+      if [ $c -eq 0  ] || [ $c -eq 5  ] || [ $c -eq 10  ] ; then continue; fi
       {
         ./PUB2 "$json_path$c.json" "-v"
         succ=$?
@@ -75,7 +76,8 @@ for ((i = 0; i<=10; i++)); do
           echo "exit code: "$succ
         fi
       }&
-      for (( j = 0 ; j < 5; j++));do
+      sleep 5
+      for (( j = 0 ; j < 7; j++));do
         {
            echo starting sub "$j"
            son_path="/${j}"
@@ -83,10 +85,9 @@ for ((i = 0; i<=10; i++)); do
           ./SUB2 "$json_path$c.json" "$son__path" "$verbose"
         }&
       done
-      sleep 90
 
-      sleep 10
-
+      if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 110 secs" && sleep 110
+          else echo "sleep of 90 secs" && sleep 90; fi
     fi
     killall SUB2
     killall PUB2

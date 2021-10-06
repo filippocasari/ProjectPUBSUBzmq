@@ -3,7 +3,6 @@
 //
 #ifndef PROJECTPUBSUBZMQ_SUB_H
 #define PROJECTPUBSUBZMQ_SUB_H
-
 #include <czmq.h>
 #include <json-c/json.h>
 #include <fstream>
@@ -27,7 +26,7 @@
 
 //#define NUM_SUBS 7 // You can set how many Sub you want
 #define ENDPOINT endpoint_tcp // default endpoint
-#define NUM_MEX_MAX 10000 // default messages
+#define NUM_MEX_MAX 5000 // default messages
 #define TIMEOUT 70000
 //#define MSECS_MAX_WAITING 10000 // we would have implemented maximum milli secs to wait
 const char *endpoint_tcp = "tcp://127.0.0.1:6000"; // default tcp endpoint
@@ -124,7 +123,7 @@ int synchronizationService(const char *ip, const char *port) {
     // let's initialize a string
     string endpoint_sync = "tcp";
     endpoint_sync.append("://");
-    endpoint_sync.append("0.0.0.0");
+    endpoint_sync.append(ip);
     endpoint_sync.append(":");
     endpoint_sync.append(to_string(atoi(port) + 1)); // port number= port number (passed) +1.
     // Just to not introduce another variable
@@ -157,9 +156,10 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
     BlockingQueue<Item> lockingQueue; // declare The Queue, is a blocked-locking queue, inspired by Java,
     // but in this case works like a common queue. It can be crucial if we create more than one consumer because the queue is thread safe.
     // It is controlled by a lock ( see Blocking Queue code, BlockingQueue.h).
-
+    //if(lockingQueue.size()<(int)NUM_MEX_MAX)
+    //    lockingQueue.d_queue.resize((int)NUM_MEX_MAX);
     //finished = false; // say: "not finished" to all threads ( if there are ), deprecated
-
+    int id=(int)random();
     //--------------------------------------------------------------------------------------------------------
     // NEW SUB
     auto *sub = zsock_new_sub(endpoint_custom, topic); // new sub socket from ZMQ
@@ -172,26 +172,25 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
     zmsg_t *msg = zmsg_new(); // create an empty message
     ofstream config_file; // initializing a new csv file
     Item item; // declare new object Item to dequeue
-    int64_t end_to_end_delay; // this is the end to end delay
+    double end_to_end_delay; // this is the end to end delay
     string say; // string "say" just to print safely
 
     // ----------------- BEGINNING OF WHILE LOOP TO RECEIVE MESSAGES --------------------------------------
-    int64_t starting_point = zclock_mono();
-
-    while (!zsys_interrupted and ((zclock_mono()-starting_point)<=TIMEOUT) and c<NUM_MEX_MAX-1) {
+    //int64_t starting_point = zclock_mono();
+    int counter=0;
+    while (!zsys_interrupted and c<NUM_MEX_MAX-1) {
         // function to receive. It is blocking. It takes 1 string, 1 int64, 1 message ( that contains other payload)
         succ = zsock_recv(sub, "s8m", &topic, &c, &msg);
         // the message is null, size message incorrect
+        counter++;
         if (msg == nullptr) {
             cout << "SUB> exit, msg null" << endl;
             break;
         }
         // timestamps of receiving
-        if(time_mono)
-            end = zclock_mono();
-        else
-            end=zclock_time();
-
+        end=zclock_usecs();
+        if(counter%1000==0)
+            cout<<"SUB No. "<<id<<", counter value: "<<counter<<endl;
         //cout<<"Recv on "<< topic<<endl;
         //cout<<"message Received: No. "<< c<<endl;
         // lets menage the payload... passing message, end timestamp, counter, queue
@@ -199,7 +198,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
 
         //cout << "managing payload exit code: " << a << endl;
         // if the last number received is Mex-1 or received function does not return 0, stop
-        if (c == (NUM_MEX_MAX - 1) or succ == -1) {
+        if (succ == -1) {
             cout << "SUB> TERMINATING " << endl;
             break;
         }
@@ -222,6 +221,8 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
 
     // ---------------------- STARTING CONSUMER THREAD --------------------------------------
     config_file.open(name_path_csv, ios::app); // open the csv file and try to append metrics
+    int i=0;
+    long start_time=zclock_mono();
     while(lockingQueue.size()!=0) {
         if (verbose) {
             //say = "SUB> trying to pop new item...";
@@ -230,7 +231,7 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
         // pop Item from the queue ( it is internally already thread safe)
         item = lockingQueue.pop();
         // now, compute the difference between two nodes
-        end_to_end_delay = item.ts_end - item.ts_start;
+        end_to_end_delay =((double) item.ts_end - (double)item.ts_start)/1000.0;
         if (verbose) {
             //say = "SUB> opening file csv...";
             //write_safely(&say);
@@ -241,10 +242,14 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
                        to_string(item.ts_end) +
                        "," + to_string(*msg_rate) + "," + to_string(*payload) + "\n";
         // when queue is empty, exit
+        i++;
 
     }
     config_file.close(); // close the csv file. We do not need to write on it anymore
+    long end_time=zclock_mono();
     cout << "all items dequeued" << endl;
+    cout<<"csv lines: "<<i<<endl;
+    cout<<"time to deque all items: "<<(end_time-start_time)<<endl;
     zsock_destroy(&sub); // destroy subscriber socket ( it is mandatory)
 }
 
@@ -355,7 +360,7 @@ static void startNewSubThread(zsock_t *pipe, void *args) {
             endpoint_customized = endpoint_customized + endpoint_inproc;
         else
             cout << "invalid endpoint" << endl;
-        cout << "string for endpoint (from json file):\t" << endpoint_customized << endl;
+        cout << "SUB>string for endpoint (from json file):\t" << endpoint_customized << endl;
     } else {
         cout << "FILE JSON NOT FOUND...EXIT" << endl;
 

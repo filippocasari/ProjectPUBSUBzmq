@@ -9,7 +9,6 @@ fi
 args=("$@")
 echo $# arguments passed
 echo ${args[0]} ${args[1]} ${args[2]}
-
 test_path=$1
 directory_path=$2
 verbose=$3
@@ -17,6 +16,7 @@ verbose=$3
 #elif [[ "$OSTYPE" == "darwin"* ]]; then
  # echo " TESTS ON MAC OS"
 #fi
+name_experiment="Log/test_log_"
 for ((i = 0; i<=9; i++)); do
   echo
   echo "####################### MASTER TEST $i ##########################"
@@ -30,7 +30,7 @@ for ((i = 0; i<=9; i++)); do
     echo "##########################################################"
     sleep 5
     {
-      ./INPROC_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose"
+      ./INPROC_TEST_M "$test_path$c.json" "$directory_path$i/" "$verbose" &> "$name_experiment$i$var.txt"
       succ=$?
       if [ $succ -eq 0 ]
       then
@@ -45,9 +45,11 @@ for ((i = 0; i<=9; i++)); do
         echo "exit code: "$succ
       fi
     }&
-    if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 110 secs" && sleep 110
-    else echo "sleep of 90 secs" && sleep 90; fi
-    # 100 secs of sleep to get the results
+
+    #wait_time=(10000/200)+10
+    if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 70 secs" && sleep 70
+    else echo "sleep of 60 secs" && sleep 60; fi
+    # x secs of sleep to get the results
     killall INPROC_TEST_M
     echo "##########################################################"
     echo "End test $c at $var #########"

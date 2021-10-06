@@ -20,7 +20,7 @@ metrics_output_type = "csv"  # can be csv or console (=only stdout)
 num_of_subs = 1  # number of subs, can not be more than one anymore (deprecated). It used zactor to create more thread
 # as subs
 num_consumer_threads = 1  # number of threads who want to eat items of linked-blocking queue
-number_of_messages = 10000  # number of messages that PUB must send
+number_of_messages = 5000  # number of messages that PUB must send
 
 
 def create_dir(path):

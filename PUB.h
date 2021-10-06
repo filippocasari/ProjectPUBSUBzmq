@@ -142,7 +142,7 @@ publisher(const char *path, const bool *verbose) {
     for(;count<num_mex; count++){
 
         if(verbose)
-            printf("millisecs of sleeping: %Lf\n", milli_secs_of_sleeping);
+            printf("millisecs of sleeping: %d\n", (int)milli_secs_of_sleeping);
         //printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
         zclock_sleep((int) milli_secs_of_sleeping); //  Wait for x milliseconds
 
@@ -156,10 +156,8 @@ publisher(const char *path, const bool *verbose) {
         else if(strcmp(type_test, "LOCAL")==0){
             timestamp = zclock_usecs();
         }
+        timestamp=zclock_usecs();
         // catching timestamp
-        else{
-            timestamp=0;
-        }
         time_string =to_string(timestamp);
         if(verbose)
             printf("TIMESTAMP: %lld\n", timestamp);
@@ -170,20 +168,18 @@ publisher(const char *path, const bool *verbose) {
         string_residual_payload = string(payload_size-(long) time_string.length(), '0');
         //printf("String of zeros: %s\n", string_residual_payload);
         zchunk_t *chunk= zchunk_new(string_residual_payload.c_str(),abs(payload_size - (long)(time_string.length())) );
-
+        printf("size of chunk: %zu", zchunk_size(chunk));
         if (zsock_send(pub, "s8ssc", topic,count, "TIMESTAMP", time_string.c_str(), chunk) == -1) {
             puts("error to send,packet loss");
-            break;
         }
-
         zchunk_destroy(&chunk);
         //  Interrupted
         if(verbose)
             zclock_log("Message No. %llu", count);
     }
     zclock_sleep(4000);
-    zsock_send(pub, "s1sss", &topic, -1, "T", "ER","MIN", "ATE");
-    zclock_sleep(2000);
+    //zsock_send(pub, "s1sss", &topic, -1, "T", "ER","MIN", "ATE");
+    //zclock_sleep(2000);
     //zsock_disconnect(pub, "%s", endpoint_customized);
     zsock_destroy(&pub);
     return 0;
