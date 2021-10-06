@@ -4,14 +4,14 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-number_of_messages = 5000
+number_of_messages = 4999
 E_3 = 1000  # variable to specify the amount of payload
 msg_rates = [200, 400, 600, 800, 1000]  # message rate, messages/second
 range_payload = [64, 2000, 32000]  # amount of payload, # bytes
 # msg_rates = [250.0, 10.0, 2250.0, 2500.0, 100.0]
 # range_payload = [10, 2250, 2500, 100, 200, 25000, 1000]
 num_experiments = 10  # number of directory of tests
-num_sub = 7
+num_sub = 1
 dir_base = sys.argv[2]  # get the directory base
 dad_path = sys.argv[1]
 which_experiment = sys.argv[3]  # local or lan
@@ -47,7 +47,7 @@ def plotting_delays_2(x_lim, y_lim, weight_line, x_scrap, y_lim_2):
             print("Len of dataframe: ", len(msg_rate_))
             print("mean for msg rate = " + str(msg_rate_) + " is : ", msg_rate_mean, " with std: ", msg_rate_std)
             print("LEN of array msg_rate  is: " + str(len(msg_rate_)), rate)
-            packet_loss_ = 100.0 - ((len(msg_rate_)) / (number_of_messages * num_experiments * num_sub)) * 100.0
+            packet_loss_ = 100.0 - ((len(msg_rate_)) / ((number_of_messages) * num_experiments * num_sub)) * 100.0
             print("Packet loss (%): ", packet_loss_)
             delays.append(msg_rate_mean)
             error.append(msg_rate_std)
@@ -215,6 +215,7 @@ for j in range(num_experiments):
                 count += 1  # increase counter
                 try:
                     data_frame_temp = pd.read_csv(path, error_bad_lines=False)  # open csv file
+                    data_frame_temp = data_frame_temp.iloc[1:, :]
                 except:
                     continue
 
