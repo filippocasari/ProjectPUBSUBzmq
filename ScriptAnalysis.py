@@ -102,7 +102,7 @@ def plotting_delays_2(x_lim, y_lim, weight_line, x_scrap, y_lim_2):
         ax2.set_xticklabels(MSG_RATE)
         ax2.set_xlabel('message rate [msg/sec]')
         ax2.set_title(
-            'Packet Loss\n '
+            'Messages out of range\n '
             + which_experiment + ' on ' + where)
         ax2.yaxis.grid(True)
         ax2.set_xlim(x_lim)
@@ -246,7 +246,7 @@ print(dataframe_)  # print our dataframe
 x_scrap = [-60 * factor, 0, 60 * factor]
 # x_scrap = [-120 * factor,-60*factor, 0, 60 * factor, 120*factor]  # array of craps, must be "x" dimension for "x" message rate
 w = 60 * factor  # width of a bar
-plotting_delays_2((0, 1200 * factor), (-0.3, 1.4), w, x_scrap, (0, 1))
+plotting_delays_2((0, 1200 * factor), (-0.3, 10), w, x_scrap, (0, 1))
 # x_scrap = [-200 * factor, 0, 200 * factor]
 # w = 190 * factor
 # plotting_delays_2((1500, 11000 * factor), (-1, 2), w, x_scrap, (0, 10))

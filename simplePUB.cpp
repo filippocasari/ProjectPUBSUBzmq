@@ -17,7 +17,7 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
-#define SUBSCRIBERS_EXPECTED 7
+#define SUBSCRIBERS_EXPECTED 1
 using namespace std;
 //thread of publisher
 bool g_time_nano_sec=false;
