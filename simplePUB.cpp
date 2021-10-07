@@ -20,7 +20,7 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 #define SUBSCRIBERS_EXPECTED 7
 using namespace std;
 //thread of publisher
-
+bool g_time_nano_sec=false;
 char* get_ip(){
     int fd;
     struct ifreq ifr;
@@ -176,14 +176,11 @@ publisher_thread(const char **path) {
         //printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
         zclock_sleep((int) milli_secs_of_sleeping); //  Wait for x milliseconds
 
-        if (strcmp(type_test, "LAN") == 0) {
-            //timestamp = zclock_time();
+        if(g_time_nano_sec)
             timestamp=zclock_usecs();
-        } else if (strcmp(type_test, "LOCAL") == 0) {
-            timestamp = zclock_usecs();
-        }
+        else
+            timestamp=zclock_time();
         // catching timestamp
-        timestamp=zclock_usecs();
 
         //int nDigits = floor(1 + log10(abs((int) timestamp)));
         time_string = to_string(timestamp);
