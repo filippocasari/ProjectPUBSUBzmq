@@ -10,7 +10,7 @@ echo "ARG 2: $json_path"
 echo "ARG 3: $verbose"
 
 
-directory_path="./MACM1/TEST_2_RESTORED/7SUB_TCP_NET_2_" # can ben set by the user by argv
+directory_path="./MACM1/TEST_2_RESTORED/1SUB_TCP_NET_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo " TEST ON LINUX"  #0.it.pool.ntp.org
 
