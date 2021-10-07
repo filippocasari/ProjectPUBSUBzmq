@@ -34,7 +34,8 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000"; // default tcp endpoint
 using namespace std; // using standard library
 mutex cout_mutex; // semaphore to write safely on standard output if we got multi thread consumers
 mutex access_to_file; // semaphore to access safely to csv file
-bool time_mono=false;
+//bool time_mono=false;
+bool g_time_nano_secs=false;
 //atomic<bool> finished; // just a simple boolean to tell
 // everyone that thread sub is finished and threads consumers must be turned off
 // simple function to write on standard output thread safely
@@ -188,7 +189,10 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
             break;
         }
         // timestamps of receiving
-        end=zclock_usecs();
+        if(g_time_nano_secs)
+            end=zclock_usecs();
+        else
+            end=zclock_time();
         if(counter%1000==0)
             cout<<"SUB No. "<<id<<", counter value: "<<counter<<endl;
         //cout<<"Recv on "<< topic<<endl;
