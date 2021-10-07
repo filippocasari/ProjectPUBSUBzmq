@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-number_of_messages = 4999
+number_of_messages = 5000
 E_3 = 1000  # variable to specify the amount of payload
 msg_rates = [200, 400, 600, 800, 1000]  # message rate, messages/second
 range_payload = [64, 2000, 32000]  # amount of payload, # bytes
@@ -233,7 +233,7 @@ for j in range(num_experiments):
                 count += 1  # increase counter
                 try:
                     data_frame_temp = pd.read_csv(path, error_bad_lines=False)  # open csv file
-                    data_frame_temp = data_frame_temp.iloc[1:, :]
+                    #data_frame_temp = data_frame_temp.iloc[1:, :]
                 except:
                     continue
 

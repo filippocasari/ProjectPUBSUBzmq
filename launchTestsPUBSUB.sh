@@ -10,7 +10,7 @@ echo "ARG 2: $json_path"
 echo "ARG 3: $verbose"
 
 
-directory_path="./MACM1/TEST_2_RESTORED/7SUB_TCP/7SUB_tcp_local_" # can ben set by the user by argv
+directory_path="./MACM1/TEST_2_RESTORED/7SUB_TCP_NET/7SUB_tcp_net_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo " TEST ON LINUX"  #0.it.pool.ntp.org
 
@@ -37,7 +37,7 @@ for ((i = 0; i<=10; i++)); do
     if [[ "$argument" == "-s" ]]
     then
       echo "#################START ONLY SUBSCRIBERS"
-      for (( j = 0 ; j < 5; j++));do
+      for (( j = 0 ; j < 7; j++));do
 
         son_path="_${j}"
         son__path="$directory_path$i$son_path"
@@ -85,7 +85,7 @@ for ((i = 0; i<=10; i++)); do
         }&
       done
 
-      if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 70 secs" && sleep 55
+    if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 70 secs" && sleep 55
           else echo "sleep of 60 secs" && sleep 35; fi
     fi
     killall SUB2
