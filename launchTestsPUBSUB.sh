@@ -10,7 +10,7 @@ echo "ARG 2: $json_path"
 echo "ARG 3: $verbose"
 
 
-directory_path="./MACM1/TEST_2_RESTORED/7SUB_TCP_NET/7SUB_tcp_net_" # can ben set by the user by argv
+directory_path="./MACM1/TEST_2_RESTORED/7SUB_TCP_NET_2_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo " TEST ON LINUX"  #0.it.pool.ntp.org
 
@@ -25,9 +25,16 @@ else
   echo "Test NTP FAILED"
 fi
 sleep 3
-for ((i = 0; i<=10; i++)); do
+for ((i = 0; i<10; i++)); do
   mkdir $directory_path"$i"
   for ((c = 0; c <15; c++)); do
+    sudo ntpdate -u 0.ch.pool.ntp.org
+    ntp_success=$?
+    if [[ ntp_success -eq 0 ]]; then
+      echo "Test NTP SUCCESS"
+    else
+      echo "Test NTP FAILED"
+    fi
     date +"%FORMAT"
     var=$(date)
     echo "##########################################################"
@@ -39,14 +46,15 @@ for ((i = 0; i<=10; i++)); do
       echo "#################START ONLY SUBSCRIBERS"
       for (( j = 0 ; j < 7; j++));do
 
-        son_path="_${j}"
+        son_path="/${j}"
         son__path="$directory_path$i$son_path"
         {
-          ./SUB2 "$json_path$c.json" "$son__path/" "$verbose"
+          ./SUB2 "$json_path$c.json" "$son__path" "$verbose"
         }&
 
       done
-      sleep 100
+      if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 70 secs" && sleep 55
+                else echo "sleep of 60 secs" && sleep 35; fi
       echo "SUBS WILL BE STOPPED"
       killall SUB2
     fi

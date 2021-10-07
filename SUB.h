@@ -27,7 +27,7 @@
 //#define NUM_SUBS 7 // You can set how many Sub you want
 #define ENDPOINT endpoint_tcp // default endpoint
 #define NUM_MEX_MAX 5000 // default messages
-#define TIMEOUT 70000
+#define TIMEOUT 30000
 //#define MSECS_MAX_WAITING 10000 // we would have implemented maximum milli secs to wait
 const char *endpoint_tcp = "tcp://127.0.0.1:6000"; // default tcp endpoint
 //const char *type_test; // type of the test TODO is it necessarily global?
@@ -179,7 +179,8 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
     // ----------------- BEGINNING OF WHILE LOOP TO RECEIVE MESSAGES --------------------------------------
     //int64_t starting_point = zclock_mono();
     int counter=0;
-    while (!zsys_interrupted and c<NUM_MEX_MAX-1) {
+    long starting_time=zclock_mono();
+    while (!zsys_interrupted and c<NUM_MEX_MAX-1 and (zclock_mono()-starting_time)<TIMEOUT) {
         // function to receive. It is blocking. It takes 1 string, 1 int64, 1 message ( that contains other payload)
         succ = zsock_recv(sub, "s8m", &topic, &c, &msg);
         // the message is null, size message incorrect
@@ -227,6 +228,11 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
     config_file.open(name_path_csv, ios::app); // open the csv file and try to append metrics
     int i=0;
     long start_time=zclock_mono();
+    double divisor;
+    if(g_time_nano_secs)
+        divisor=1000.0;
+    else
+        divisor=1.0;
     while(lockingQueue.size()!=0) {
         if (verbose) {
             //say = "SUB> trying to pop new item...";
@@ -235,7 +241,8 @@ subscriber(const char *endpoint_custom, char *topic, const char *path_csv, const
         // pop Item from the queue ( it is internally already thread safe)
         item = lockingQueue.pop();
         // now, compute the difference between two nodes
-        end_to_end_delay =((double) item.ts_end - (double)item.ts_start)/1000.0;
+
+        end_to_end_delay =((double) item.ts_end - (double)item.ts_start)/divisor;
         if (verbose) {
             //say = "SUB> opening file csv...";
             //write_safely(&say);
