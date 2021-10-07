@@ -24,8 +24,8 @@
 #define NUM_MEX_DEFAULT 10
 using namespace std;
 //thread of publisher
-
-bool g_time_mono=false;
+bool g_time_nano_sec=false;
+//bool g_time_mono=false;
 int
 publisher(const char *path, const bool *verbose) {
     zsock_t *pub; // new sock pub
@@ -37,7 +37,6 @@ publisher(const char *path, const bool *verbose) {
     const char *topic; // name of the topic
     int msg_rate_sec = 1; //message rate, mex/sec
     // deserializing file
-
     const char *type_test;
     const char *type_connection;
     const char *port;
@@ -147,17 +146,10 @@ publisher(const char *path, const bool *verbose) {
         //printf("millisecs of sleeping  (INT): %d\n", (int) milli_secs_of_sleeping);
         zclock_sleep((int) milli_secs_of_sleeping); //  Wait for x milliseconds
 
-        if (strcmp(type_test, "LAN")==0)
-        {
-            if(g_time_mono)
-                timestamp= zclock_mono();
-            else
-                timestamp=zclock_time();
-        }
-        else if(strcmp(type_test, "LOCAL")==0){
-            timestamp = zclock_usecs();
-        }
-        timestamp=zclock_usecs();
+        if(g_time_nano_sec)
+            timestamp=zclock_usecs();
+        else
+            timestamp=zclock_time();
         // catching timestamp
         time_string =to_string(timestamp);
         if(verbose)
