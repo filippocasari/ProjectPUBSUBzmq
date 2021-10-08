@@ -17,7 +17,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS" #0.it.pool.ntp.org #|| sudo sntp -sS time.apple.com
 fi
-sudo service ntp stop && ntpq -gq && service ntp start
+sudo ntpdate -u time.apple.com
 ntp_success=$?
     if [[ ntp_success -eq 0 ]]; then
       echo "Test NTP SUCCESS"
@@ -28,7 +28,7 @@ sleep 3
 for ((i = 0; i<10; i++)); do
   mkdir $directory_path"$i"
   for ((c = 0; c <15; c++)); do
-    #sudo ntpdate -u 0.ch.pool.ntp.org
+    #
 
     date +"%FORMAT"
     var=$(date)
