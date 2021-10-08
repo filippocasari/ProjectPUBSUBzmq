@@ -26,10 +26,17 @@ ntp_success=$?
     fi
 sleep 3
 for ((i = 0; i<10; i++)); do
+
   mkdir $directory_path"$i"
   for ((c = 0; c <15; c++)); do
     #
-
+    sudo ntpdate -u time.apple.com
+    ntp_success=$?
+        if [[ ntp_success -eq 0 ]]; then
+          echo "Test NTP SUCCESS"
+        else
+          echo "Test NTP FAILED"
+        fi
     date +"%FORMAT"
     var=$(date)
     echo "##########################################################"
@@ -48,7 +55,7 @@ for ((i = 0; i<10; i++)); do
         }&
 
       done
-      if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 70 secs" && sleep 55
+      if [ $c -eq 0 ] || [ $c -eq 5 ] || [ $c -eq 10 ]; then echo "sleep of 70 secs" && sleep 60
                 else echo "sleep of 60 secs" && sleep 35; fi
       echo "SUBS WILL BE STOPPED"
       killall SUB2
