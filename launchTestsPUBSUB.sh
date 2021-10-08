@@ -25,18 +25,18 @@ ntp_success=$?
       echo "Test NTP FAILED"
     fi
 sleep 3
+#sudo ntpdate -u time.apple.com
+    #ntp_success=$?
+    #    if [[ ntp_success -eq 0 ]]; then
+   #       echo "Test NTP SUCCESS"
+    #    else
+    #      echo "Test NTP FAILED"
+     #   fi
 for ((i = 0; i<10; i++)); do
 
   mkdir $directory_path"$i"
   for ((c = 0; c <15; c++)); do
-    #
-    sudo ntpdate -u time.apple.com
-    ntp_success=$?
-        if [[ ntp_success -eq 0 ]]; then
-          echo "Test NTP SUCCESS"
-        else
-          echo "Test NTP FAILED"
-        fi
+
     date +"%FORMAT"
     var=$(date)
     echo "##########################################################"
