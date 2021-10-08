@@ -10,26 +10,26 @@ echo "ARG 2: $json_path"
 echo "ARG 3: $verbose"
 
 
-directory_path="./MACM1/TEST_2_RESTORED/1SUB_TCP_NET_" # can ben set by the user by argv
+directory_path="./MACM1/TEST_2_RESTORED/1SUB_TCP_NET_3_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo " TEST ON LINUX"  #0.it.pool.ntp.org
 
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS" #0.it.pool.ntp.org #|| sudo sntp -sS time.apple.com
 fi
-
-sleep 3
-for ((i = 0; i<10; i++)); do
-  mkdir $directory_path"$i"
-  for ((c = 0; c <15; c++)); do
-    #sudo ntpdate -u 0.ch.pool.ntp.org
-    service ntp stop && ntpq -gq && service ntp start && continue
-    ntp_success=$?
+sudo service ntp stop && ntpq -gq && service ntp start
+ntp_success=$?
     if [[ ntp_success -eq 0 ]]; then
       echo "Test NTP SUCCESS"
     else
       echo "Test NTP FAILED"
     fi
+sleep 3
+for ((i = 0; i<10; i++)); do
+  mkdir $directory_path"$i"
+  for ((c = 0; c <15; c++)); do
+    #sudo ntpdate -u 0.ch.pool.ntp.org
+
     date +"%FORMAT"
     var=$(date)
     echo "##########################################################"
