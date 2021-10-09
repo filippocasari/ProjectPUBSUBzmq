@@ -17,14 +17,14 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   echo " TESTS ON MAC OS" #0.it.pool.ntp.org #|| sudo sntp -sS time.apple.com
 fi
-sudo ntpdate -u time.apple.com
-ntp_success=$?
-    if [[ ntp_success -eq 0 ]]; then
-      echo "Test NTP SUCCESS"
-    else
-      echo "Test NTP FAILED"
-    fi
-sleep 3
+#sudo ntpdate -u time.apple.com
+#ntp_success=$?
+#    if [[ ntp_success -eq 0 ]]; then
+ #     echo "Test NTP SUCCESS"
+#    else
+ #     echo "Test NTP FAILED"
+ #   fi
+#sleep 3
 #sudo ntpdate -u time.apple.com
     #ntp_success=$?
     #    if [[ ntp_success -eq 0 ]]; then
