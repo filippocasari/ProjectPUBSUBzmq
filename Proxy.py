@@ -7,11 +7,11 @@ def main():
 
     # Socket facing producers
     frontend = context.socket(zmq.XPUB)
-    frontend.bind("tcp://*:5602")
+    frontend.bind("tcp://169.254.124.70:5602")
 
     # Socket facing consumers
     backend = context.socket(zmq.XSUB)
-    backend.bind("tcp://*:5600")
+    backend.connect("tcp://169.254.157.194:5600")
 
     zmq.proxy(frontend, backend)
 
