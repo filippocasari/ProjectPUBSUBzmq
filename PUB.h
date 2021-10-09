@@ -43,7 +43,7 @@ publisher(const char *path, const bool *verbose) {
     const char *ip;
     if (PARAM != nullptr) { // file json found
         if(verbose)
-            puts("PUB> PARAMETERS PUBLISHER: ");
+            puts("SUB> PARAMETERS PUBLISHER: ");
         //int int_value;
         const char *value;
         // starting a new for each for the couple key, value
@@ -90,12 +90,12 @@ publisher(const char *path, const bool *verbose) {
             endpoint.append(topic);
         }
         if(verbose)
-            cout<<"PUB> string for endpoint (from json file): "<< endpoint<<endl;
+            cout<<"SUB> string for endpoint (from json file): "<< endpoint<<endl;
 
         pub = zsock_new_pub(endpoint.c_str());
 
     } else {
-        puts("PUB> error");
+        puts("SUB> error");
         return 2;
     }
     int64_t count = 0;
@@ -103,8 +103,8 @@ publisher(const char *path, const bool *verbose) {
     //size_of_payload = (int) strtol(payload_size, NULL, 10);
     //max_mex = strtol(num_mex, NULL, 10);
     if(verbose){
-        printf("PUB> PAYLOAD SIZE: %d\n", payload_size);
-        printf("PUB> message rate: %d\n", msg_rate_sec);
+        printf("SUB> PAYLOAD SIZE: %d\n", payload_size);
+        printf("SUB> message rate: %d\n", msg_rate_sec);
     }
 
     int64_t timestamp;
@@ -122,10 +122,10 @@ publisher(const char *path, const bool *verbose) {
     endpoint_sync.append(to_string(atoi(port)+1));
 
     auto *syncservice = zsock_new_rep(endpoint_sync.c_str());
-    printf ("PUB> Waiting for subscribers\n");
+    printf ("SUB> Waiting for subscribers\n");
     int subscribers = 0;
 
-    cout<<"PUB> Endpoint for sync service: "<<endpoint_sync<<endl;
+    cout<<"SUB> Endpoint for sync service: "<<endpoint_sync<<endl;
     while (subscribers < SUBSCRIBERS_EXPECTED) {
         //  - wait for synchronization request
         char *stringa;
@@ -133,7 +133,7 @@ publisher(const char *path, const bool *verbose) {
         //  - send synchronization reply
         zsock_send(syncservice, "s", "END");
         subscribers++;
-        cout<<"SUB "<<subscribers<<" SYNCHRONIZED"<<endl;
+        cout<<"PUB "<<subscribers<<" SYNCHRONIZED"<<endl;
     }
 
     zsock_destroy(&syncservice);
@@ -193,7 +193,7 @@ static void startPubThread(zsock_t *pipe, void *args) {
     cout<<"exit code of publisher : "<< rc<<endl;
     //zactor_t *pub_actor = zactor_new(publisher, file_json);
     //zstr_sendx (pub_actor, "BREAK", NULL);
-    //puts("destroying zactor PUB");
+    //puts("destroying zactor SUB");
     //zactor_destroy(&pub_actor);
 }
 #endif //PROJECTPUBSUBZMQ_PUB_H

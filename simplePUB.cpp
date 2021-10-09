@@ -160,7 +160,7 @@ publisher_thread(const char **path) {
         free(stringa);
         //  - send synchronization reply
         zsock_send(syncservice, "s", "END");
-        cout << "SUB " << subscribers << " connected" << endl;
+        cout << "PUB " << subscribers << " connected" << endl;
         subscribers++;
     }
     zclock_sleep(4000);
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
         printf("exit code of publisher : %d", rc);
         //zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
         //zstr_sendx (pub_actor, "BREAK", NULL);
-        //puts("destroying zactor PUB");
+        //puts("destroying zactor SUB");
         //zactor_destroy(&pub_actor);
 
     }

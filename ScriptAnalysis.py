@@ -84,7 +84,7 @@ def plotting_delays_2(x_lim, y_lim, weight_line, x_scrap, y_lim_2):
         ax1.set_title(
             'Average of end to end delays\n '
             'with standard deviation\ntest execution: ' + which_experiment + ' on ' + where + "\nwith "
-            + str(num_sub) + " SUB")
+            + str(num_sub) + " PUB")
         ax1.yaxis.grid(True)
 
         plt.tight_layout()
@@ -192,7 +192,7 @@ def plotting_delays(x_lim, y_lim, weight_line, x_scrap, y_lim_2):
         ax1.set_title(
             'Average of end to end delays\n '
             'with standard deviation\ntest execution: ' + which_experiment + ' on ' + where + "\nwith "
-            + str(num_sub) + " SUB")
+            + str(num_sub) + " PUB")
         ax1.yaxis.grid(True)
 
         plt.tight_layout()

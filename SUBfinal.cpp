@@ -29,7 +29,7 @@ int launchSynchronizationService(const char *ip, const char *port) {
     endpoint_sync.append(":");
     endpoint_sync.append(to_string(atoi(port) + 1));
 
-    cout << "SUB>Endpoint for Sync service: " << endpoint_sync << endl;
+    cout << "PUB>Endpoint for Sync service: " << endpoint_sync << endl;
     zsock_t *syncservice = zsock_new_req(endpoint_sync.c_str());
 
     zsock_send(syncservice, "s", "INIT");
@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
         cout << "FILE JSON NOT FOUND...EXIT" << endl;
         return 2;
     }
-    cout << "SUB>endpoint : " << endpoint_customized << endl;
+    cout << "PUB>endpoint : " << endpoint_customized << endl;
     int success = launchSynchronizationService(ip, port);
     assert(success == 0);
     cout << "Synchronization success" << endl;

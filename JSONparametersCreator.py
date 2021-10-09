@@ -14,13 +14,13 @@ range_payload = [64, 2000, 32000]  # payload (bytes)
 topic = "CAR"  # topic for the publisher and subscribers
 connection_type = "tcp"  # can be tcp or inproc
 endpoint_inproc = "CAR"  # where inproc is set, this is its endpoint
-ip = "127.0.0.1"  # ip of PUB and SUB (if local)
+ip = "127.0.0.1"  # ip of SUB and PUB (if local)
 port = "5600"  # port
 metrics_output_type = "csv"  # can be csv or console (=only stdout)
 num_of_subs = 1  # number of subs, can not be more than one anymore (deprecated). It used zactor to create more thread
 # as subs
 num_consumer_threads = 1  # number of threads who want to eat items of linked-blocking queue
-number_of_messages = 5000  # number of messages that PUB must send
+number_of_messages = 5000  # number of messages that SUB must send
 
 
 def create_dir(path):
@@ -44,7 +44,7 @@ def create_dir(path):
                 print("Error, we can not write/open the file " + string_name, sys.stderr)
 
 
-if (sys.argv[2].upper() == "LAN"):
+if sys.argv[2].upper() == "LAN":
     is_on_LAN = True  # if tests are on LAN, path and configurations are different
 else:
     is_on_LAN = False
@@ -76,10 +76,10 @@ if not os.path.exists(str(cwd + dir_name)):  # if path does not exist yet
             print("this path already exists")
     if is_on_LAN:
 
-        path_of_PUB = cwd + string_temp + "PUB"
-        print("PATH PUB: ", path_of_PUB)
-        path_of_SUB = cwd + string_temp + "SUB"
-        print("PATH SUB: ", path_of_SUB)
+        path_of_PUB = cwd + string_temp + "SUB"
+        print("PATH SUB: ", path_of_PUB)
+        path_of_SUB = cwd + string_temp + "PUB"
+        print("PATH PUB: ", path_of_SUB)
         os.mkdir(path_of_PUB)
         os.mkdir(path_of_SUB)
 

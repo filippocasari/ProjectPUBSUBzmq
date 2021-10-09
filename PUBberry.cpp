@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
         //zactor_t *pub_actor = zactor_new(publisher_thread, cmdstring);
         free(cmdstring);
         //zstr_sendx (pub_actor, "BREAK", NULL);
-        //puts("destroying zactor PUB");
+        //puts("destroying zactor SUB");
         //zactor_destroy(&pub_actor);
     }
 

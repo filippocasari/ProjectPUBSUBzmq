@@ -23,12 +23,12 @@ int main(int argc, char **argv) {
     // THE (DUMB) IDEA IS TO LINK ARG[1], ARG[2] and ARG[3] with the above symbols
     // The final string passed must be: path of file Json + "," + path of Csv + "&" + verbose
     // This rule can definitely be changed, it is awful
-    // starting new thread PUB. Must be initialized before the SUB, because Sync Service is implemented
-    // and PUB must listen on it. SUB will send their messages for sync to the PUB.
+    // starting new thread SUB. Must be initialized before the PUB, because Sync Service is implemented
+    // and SUB must listen on it. PUB will send their messages for sync to the SUB.
     zactor_t *publisher_actor= zactor_new(startPubThread, argv);
 
 
-    zclock_sleep(3000); // just sleep few secs to wait PUB configuration
+    zclock_sleep(3000); // just sleep few secs to wait SUB configuration
     // Let's start our loop to create Subscribers
     string final_string;
     string array_of_strings[NUM_SUB];
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     // join Pub thread
     zactor_destroy(&publisher_actor);
 
-    // short for loop to join our SUB threads
+    // short for loop to join our PUB threads
     for(auto & actor : actors){
         zactor_destroy(&actor);
     }

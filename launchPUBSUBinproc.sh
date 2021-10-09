@@ -54,7 +54,7 @@ for ((i = 0; i<=9; i++)); do
     echo "##########################################################"
     echo "End test $c at $var #########"
     echo "##########################################################"
-   # start-stop-daemon --stop --oknodo --retry 15 -n PUB
+   # start-stop-daemon --stop --oknodo --retry 15 -n SUB
     sleep 3 #sleep 10 secs until next test
 
   done

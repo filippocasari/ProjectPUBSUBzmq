@@ -2,12 +2,14 @@
 cmake CMakeLists.txt || echo "Error to load CMakeLists"
 #cd ./cmake-build-debug || exit
 #test_date=$(date +"%H:%M")
-json_path=$2
+json_path_sub=$2
+json_path_pub=$3
 argument=$1
-verbose=$3
+verbose=$4
 echo "ARG 1: $argument"
-echo "ARG 2: $json_path"
-echo "ARG 3: $verbose"
+echo "ARG 2: $json_path_pub"
+echo "ARG 3: $json_path_sub"
+echo "ARG 4: $verbose"
 
 
 directory_path="./MACM1/TEST_2_RESTORED/1SUB_TCP_NET_3_" # can ben set by the user by argv
@@ -51,7 +53,7 @@ for ((i = 0; i<10; i++)); do
         son_path="/${j}"
         son__path="$directory_path$i$son_path"
         {
-          ./SUB2 "$json_path$c.json" "$son__path" "$verbose"
+          ./SUB2 "$json_path_sub$c.json" "$son__path" "$verbose"
         }&
 
       done
@@ -63,14 +65,14 @@ for ((i = 0; i<10; i++)); do
     if [[ "$argument" == "-p" ]]
     then
       echo "################# START ONLY PUBLISHER ###############"
-      ./PUB2 "$json_path$c.json" "-v"
+      ./PUB2 "$json_path_pub$c.json" "-v"
       sleep 5
 
     elif [[ "$argument" == "-sp" ]]
       then
       echo "MODE: PUB SUB BOTH"
       {
-        ./PUB2 "$json_path$c.json" "-v"
+        ./PUB2 "$json_path_pub$c.json" "-v"
         succ=$?
         if [ $succ -eq 0 ]
         then
@@ -91,7 +93,7 @@ for ((i = 0; i<10; i++)); do
            echo starting sub "$j"
            son_path="/${j}"
            son__path="$directory_path$i$son_path"
-          ./SUB2 "$json_path$c.json" "$son__path" "$verbose"
+          ./SUB2 "$json_path_sub$c.json" "$son__path" "$verbose"
         }&
       done
 
