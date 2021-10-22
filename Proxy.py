@@ -15,7 +15,6 @@ def main():
 
     zmq.proxy(frontend, backend)
 
-    # We never get here…
     frontend.close()
     backend.close()
     context.term()

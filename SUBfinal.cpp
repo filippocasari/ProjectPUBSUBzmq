@@ -25,9 +25,9 @@ void writeSafely(string *what_i_said) {
 
 int launchSynchronizationService(const char *ip, const char *port) {
     string endpoint_sync = "tcp://";
-    endpoint_sync.append(ip);
+    endpoint_sync.append("169.254.157.194");
     endpoint_sync.append(":");
-    endpoint_sync.append(to_string(atoi(port) + 1));
+    endpoint_sync.append(to_string(5601));
 
     cout << "PUB>Endpoint for Sync service: " << endpoint_sync << endl;
     zsock_t *syncservice = zsock_new_req(endpoint_sync.c_str());
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
                     payload = (int) strtol(value, nullptr, 10);
             } else if (strcmp(key, "connection_type") == 0) {
                 type_connection = (char *) value;
-                endpoint_customized = type_connection;
+                endpoint_customized = "tcp";
                 endpoint_customized.append("://");
             }
             else if (strcmp(key, "ip") == 0)
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
                 printf("\t%s: %s\n", key, value);
         }
         if (strcmp(type_connection, "tcp") == 0)
-            endpoint_customized.append(ip).append(":").append(port);
+            endpoint_customized.append("169.254.124.70").append(":").append("5602");
         if (strcmp(type_connection, "inproc") == 0)
             endpoint_customized.append(endpoint_inproc);
 
@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
         cout << "FILE JSON NOT FOUND...EXIT" << endl;
         return 2;
     }
-    cout << "PUB>endpoint : " << endpoint_customized << endl;
+    cout << "SUB>endpoint : " << endpoint_customized << endl;
     int success = launchSynchronizationService(ip, port);
     assert(success == 0);
     cout << "Synchronization success" << endl;

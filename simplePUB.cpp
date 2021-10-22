@@ -17,10 +17,10 @@ const char *endpoint_tcp = "tcp://127.0.0.1:6000";
 
 #define ENDPOINT endpoint_tcp // it can be set by the developer
 #define NUM_MEX_DEFAULT 10
-#define SUBSCRIBERS_EXPECTED 1
+#define SUBSCRIBERS_EXPECTED 7
 using namespace std;
 //thread of publisher
-bool g_time_nano_sec=false;
+bool g_time_nano_sec=true;
 char* get_ip(){
     int fd;
     struct ifreq ifr;
@@ -113,14 +113,15 @@ publisher_thread(const char **path) {
 
         //only for tcp, not for in process connection
         if (strcmp(type_connection, "tcp") == 0) {
-            endpoint_customized = strcat(endpoint_customized, ip);
+            endpoint_customized = strcat(endpoint_customized, "169.254.157.194");
             endpoint_customized = strcat(endpoint_customized, ":");
-            endpoint_customized = strcat(endpoint_customized, port);
+            endpoint_customized = strcat(endpoint_customized, "5600");
         } else if (strcmp(type_connection, "inproc") == 0) {
             endpoint_customized = strcat(endpoint_customized, endpoint_inproc);
         }
         printf("string for endpoint (from json file): %s\t", endpoint_customized);
-
+        //pub= zsock_new(ZMQ_PUB);
+        //zsock_bind(pub,"%s",endpoint_customized);
         pub = zsock_new_pub(endpoint_customized);
 
     } else {
@@ -146,13 +147,13 @@ publisher_thread(const char **path) {
 
     endpoint_sync.append(ip);
     endpoint_sync.append(":");
-    endpoint_sync.append(to_string(atoi(port) + 1));
+    endpoint_sync.append(to_string(5601));
 
     auto *syncservice = zsock_new_rep(endpoint_sync.c_str());
     printf("Waiting for subscribers\n");
     int subscribers = 0;
     zclock_sleep(3000);
-    cout << "Endpoint for sync service: " << endpoint_sync << endl;
+    cout << "PUB>Endpoint for sync service: " << endpoint_sync << endl;
     while (subscribers < SUBSCRIBERS_EXPECTED) {
         //  - wait for synchronization request
         char *stringa;
