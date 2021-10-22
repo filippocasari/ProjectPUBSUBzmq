@@ -2,8 +2,8 @@
 cmake CMakeLists.txt || echo "Error to load CMakeLists"
 #cd ./cmake-build-debug || exit
 #test_date=$(date +"%H:%M")
-json_path_sub=$2
-json_path_pub=$3
+json_path_pub=$2
+json_path_sub=$3
 argument=$1
 verbose=$4
 echo "ARG 1: $argument"
@@ -12,7 +12,7 @@ echo "ARG 3: $json_path_sub"
 echo "ARG 4: $verbose"
 
 
-directory_path="./MACM1/TEST_2_RESTORED/1SUB_TCP_NET_3_" # can ben set by the user by argv
+directory_path="./MACM1/TEST_2_RESTORED/7SUB_TCP_NET_" # can ben set by the user by argv
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo " TEST ON LINUX"  #0.it.pool.ntp.org
 

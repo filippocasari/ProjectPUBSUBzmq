@@ -6,7 +6,7 @@ import os
 # 1) path where create json files
 # 2) if tests will be on lan
 
-  # number * E_3
+# number * E_3
 # msg_rate = [5, 10, 25, 50, 100]
 msg_rate = [200, 400, 600, 800, 1000]  # message rate, unit: messages/sec
 # range_payload = [10, 25, 50, 100, 200, 500, 1000]
@@ -25,17 +25,17 @@ number_of_messages = 5000  # number of messages that SUB must send
 
 def create_dir(path):
     num_test = 0  # just a counter, increase during the program
-    for i in range_payload:
-        for j in msg_rate:
+    for payload in range_payload:
+        for rate in msg_rate:
             string_name = "test_" + str(num_test)
             num_test += 1
-            data = {"msg_rate_sec": j, "number_of_messages": number_of_messages, "topic": topic,
-                    "connection_type": connection_type, "endpoint_inproc": endpoint_inproc, "payload_size_bytes": i,
+            data = {"msg_rate_sec": rate, "number_of_messages": number_of_messages, "topic": topic,
+                    "connection_type": connection_type, "endpoint_inproc": endpoint_inproc, "payload_size_bytes": payload,
                     "ip": ip,
                     "port": port, "metrics_output_type": metrics_output_type,
                     "experiment_name": string_name, "num_of_subs": num_of_subs,
                     "type_test": type_test,
-                    "num_consumer_threads": num_consumer_threads}
+                    "num_thread_consumers_": num_consumer_threads}
             try:
                 with open(path + string_name + ".json", 'w') as outfile:
                     json.dump(data, outfile, indent=2)
