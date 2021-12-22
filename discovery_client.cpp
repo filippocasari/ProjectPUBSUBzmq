@@ -2,6 +2,9 @@
 #include <iostream>
 using namespace std;
 
+
+// really simple sample for discovering with ZMQ
+
 int main(int argc, const char *argv[]){
     int verbose;
     if((string) argv[1] =="-v")
